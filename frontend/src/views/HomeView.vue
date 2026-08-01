@@ -7,10 +7,10 @@
 import { ArrowUpRight, Mail } from 'lucide-vue-next'
 
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
+import RecommendationDeck from '@/components/home/RecommendationDeck.vue'
 import {
   allTechnologies,
   profile,
-  recommendations,
   stats,
 } from '@/data/profile'
 
@@ -126,7 +126,7 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Recommendations (bryllim-style equal cards) ───────── -->
+    <!-- ── Recommendations (bryllim spotlight deck) ──────────── -->
     <section id="recommendations" aria-label="Recommendations" class="py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
@@ -138,34 +138,7 @@ const socials = [
         </RouterLink>
       </div>
 
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <a
-          v-for="rec in recommendations"
-          :key="rec.initials"
-          :href="`mailto:${rec.email ?? 'aromintristan@gmail.com'}`"
-          class="rec-card group flex flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
-        >
-          <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M9 7H6a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2H4v2h1a4 4 0 004-4V7zm11 0h-3a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2h-1v2h1a4 4 0 004-4V7z" />
-          </svg>
-
-          <p class="rec-quote mt-2 line-clamp-5 text-[13.5px] leading-relaxed text-gray-700">
-            {{ rec.quote }}
-          </p>
-
-          <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
-            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
-              {{ rec.initials }}
-            </div>
-            <div class="min-w-0">
-              <div class="truncate text-[12px] font-semibold text-ink">{{ rec.author }}</div>
-              <div class="truncate font-mono text-[9px] uppercase tracking-wider text-gray-400">
-                {{ rec.role }}
-              </div>
-            </div>
-          </div>
-        </a>
-      </div>
+      <RecommendationDeck />
     </section>
 
     <!-- ── Footer ───────────────────────────────────────────── -->
@@ -178,16 +151,4 @@ const socials = [
 </template>
 
 <style scoped>
-.rec-card {
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease;
-}
-.rec-card:hover {
-  box-shadow: 0 18px 40px -22px rgba(10, 10, 10, 0.32);
-  transform: translateY(-3px);
-}
-.rec-card blockquote {
-  font-family: var(--font-serif);
-}
 </style>

@@ -29,6 +29,7 @@ class Project extends Model
         'technologies',
         'url',
         'source_url',
+        'image_url',
         'sort_order',
     ];
 

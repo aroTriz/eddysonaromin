@@ -98,6 +98,24 @@ onMounted(async () => {
           </div>
         </header>
 
+        <!-- Project snapshot image -->
+        <figure class="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <img
+            v-if="project.image_url"
+            :src="project.image_url"
+            :alt="`${project.title} snapshot`"
+            class="aspect-video w-full object-cover"
+            loading="lazy"
+          />
+          <div
+            v-else
+            class="flex aspect-video w-full items-center justify-center bg-gray-50"
+            aria-hidden="true"
+          >
+            <Folder class="h-10 w-10 text-gray-300" :stroke-width="1.2" />
+          </div>
+        </figure>
+
         <section class="mt-10">
           <p class="text-[15.5px] leading-relaxed text-gray-600 md:text-[16px]">
             {{ project.summary }}

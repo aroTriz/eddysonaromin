@@ -27,6 +27,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['HTML', 'CSS', 'JavaScript', 'Cloudflare Pages'],
                 'url' => 'https://trizai-html.pages.dev',
                 'source_url' => null,
+                'image_url' => '/images/projects/triz-ai.jpg',
                 'sort_order' => 1,
             ],
             [
@@ -42,6 +43,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['JavaScript', 'AI', 'Camera API', 'Cloudflare Pages'],
                 'url' => 'https://item-vision.pages.dev',
                 'source_url' => null,
+                'image_url' => '/images/projects/itemvision.jpg',
                 'sort_order' => 2,
             ],
             [
@@ -57,6 +59,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['JavaScript', 'HTML/CSS', 'Game', 'Wordle Clone', 'Cloudflare Pages'],
                 'url' => 'https://wordle-game-bxo.pages.dev',
                 'source_url' => null,
+                'image_url' => '/images/projects/wordle.jpg',
                 'sort_order' => 3,
             ],
             [
@@ -89,6 +92,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['PHP', 'JavaScript', 'MySQL', 'Bootstrap'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 5,
             ],
             [
@@ -104,6 +108,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['Python', 'Machine Learning', 'Flask', 'SQL'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 6,
             ],
             [
@@ -119,6 +124,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['Unity', 'C#', 'AR Foundation', 'Vuforia'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 7,
             ],
             [
@@ -134,6 +140,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['PHP', 'JavaScript', 'MySQL', 'HTML/CSS'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 8,
             ],
             [
@@ -149,6 +156,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['PHP', 'MySQL', 'JavaScript'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 9,
             ],
             [
@@ -164,6 +172,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['PHP', 'JavaScript', 'MySQL', 'HTML/CSS'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 10,
             ],
             [
@@ -179,6 +188,7 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['PHP', 'JavaScript', 'MySQL', 'Networking'],
                 'url' => null,
                 'source_url' => null,
+                'image_url' => null,
                 'sort_order' => 11,
             ],
         ];
