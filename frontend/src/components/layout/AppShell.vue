@@ -3,7 +3,7 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Mail, Menu, Rss, User, X } from 'lucide-vue-next'
+import { Github, Globe, Linkedin, Mail, Menu, Rss, User, X } from 'lucide-vue-next'
 import { ref } from 'vue'
 
 import { profile } from '@/data/profile'
@@ -135,15 +135,47 @@ const contactLinks = [
       <div class="mb-4">
         <ThemeSwitch />
       </div>
+      <div class="mb-3 flex items-center gap-2">
+        <a
+          :href="profile.github"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+          :aria-label="`GitHub — ${profile.github.replace('https://', '')}`"
+          :title="`GitHub — ${profile.github.replace('https://', '')}`"
+        >
+          <Github class="h-3.5 w-3.5" :stroke-width="1.7" />
+        </a>
+        <a
+          :href="profile.linkedin"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+          aria-label="LinkedIn profile"
+          title="LinkedIn"
+        >
+          <Linkedin class="h-3.5 w-3.5" :stroke-width="1.7" />
+        </a>
+        <a
+          :href="`https://${profile.portfolio}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+          aria-label="Portfolio site"
+          title="Portfolio"
+        >
+          <Globe class="h-3.5 w-3.5" :stroke-width="1.7" />
+        </a>
+      </div>
       <p class="text-[12px] leading-relaxed text-gray-400">
         For work, collabs &amp; everything else, reach me at
       </p>
       <a
         :href="`mailto:${profile.email}`"
-        class="mt-1.5 inline-flex w-fit items-center gap-2 font-mono text-[13px] text-ink hover:text-gray-500"
+        class="mt-1.5 inline-flex w-fit max-w-full items-center gap-2 font-mono text-[13px] text-ink hover:text-gray-500"
       >
         <Mail class="h-[1.15em] w-[1.15em] shrink-0" />
-        {{ profile.email }}
+        <span class="break-all leading-snug">{{ profile.email }}</span>
       </a>
     </div>
   </nav>
@@ -243,15 +275,47 @@ const contactLinks = [
             <div class="mb-4">
               <ThemeSwitch />
             </div>
+            <div class="mb-3 flex items-center gap-2">
+              <a
+                :href="profile.github"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+                aria-label="GitHub profile"
+                title="GitHub"
+              >
+                <Github class="h-4 w-4" :stroke-width="1.7" />
+              </a>
+              <a
+                :href="profile.linkedin"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+                aria-label="LinkedIn profile"
+                title="LinkedIn"
+              >
+                <Linkedin class="h-4 w-4" :stroke-width="1.7" />
+              </a>
+              <a
+                :href="`https://${profile.portfolio}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+                aria-label="Portfolio site"
+                title="Portfolio"
+              >
+                <Globe class="h-4 w-4" :stroke-width="1.7" />
+              </a>
+            </div>
             <p class="text-[12px] leading-relaxed text-gray-400">
               For work, collabs &amp; everything else, reach me at
             </p>
             <a
               :href="`mailto:${profile.email}`"
-              class="mt-1.5 inline-flex w-fit items-center gap-2 text-[14px] text-ink hover:text-gray-500"
+              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-2 text-[14px] text-ink hover:text-gray-500"
             >
               <Mail class="h-[1.15em] w-[1.15em] shrink-0" />
-              {{ profile.email }}
+              <span class="break-all leading-snug">{{ profile.email }}</span>
             </a>
           </div>
         </div>

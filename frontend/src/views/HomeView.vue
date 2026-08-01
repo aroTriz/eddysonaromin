@@ -5,6 +5,7 @@
  */
 import { ArrowUpRight, Mail, Star } from 'lucide-vue-next'
 
+import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
 import { allTechnologies, profile, recommendation, stats } from '@/data/profile'
 
@@ -15,36 +16,43 @@ const year = new Date().getFullYear()
 <template>
   <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
     <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section aria-label="Intro" class="reveal">
-      <p class="terminal-comment text-[13px]">// Welcome to my portfolio</p>
-      <h1 class="mt-3 text-[2.1rem] font-semibold leading-[1.1] tracking-tightest md:text-[3.4rem]">
-        Eddyson Tristan
-        <span class="text-gray-400">Aromin</span>
-      </h1>
-      <p class="mt-2 font-mono text-[13px] text-gray-500 md:text-[14px]">
-        const role =
-        <span class="text-ink">'{{ profile.role }}';</span>
-      </p>
+    <section aria-label="Intro" class="reveal grid items-center gap-10 md:grid-cols-[1fr_300px]">
+      <div>
+        <p class="terminal-comment text-[13px]">// Welcome to my portfolio</p>
+        <h1 class="mt-3 text-[2.1rem] font-semibold leading-[1.1] tracking-tightest md:text-[3.4rem]">
+          Eddyson Tristan
+          <span class="text-gray-400">Aromin</span>
+        </h1>
+        <p class="mt-2 font-mono text-[13px] text-gray-500 md:text-[14px]">
+          const role =
+          <span class="text-ink">'{{ profile.role }}';</span>
+        </p>
 
-      <p class="mt-6 max-w-xl text-[15px] leading-relaxed text-gray-600 md:text-[16px]">
-        {{ profile.tagline }}
-      </p>
+        <p class="mt-6 max-w-xl text-[15px] leading-relaxed text-gray-600 md:text-[16px]">
+          {{ profile.tagline }}
+        </p>
 
-      <div class="mt-8 flex flex-wrap items-center gap-4">
-        <RouterLink
-          to="/projects"
-          class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
-        >
-          View My Work
-          <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
-        </RouterLink>
-        <a
-          :href="`mailto:${profile.email}`"
-          class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
-        >
-          Get In Touch
-          <Mail class="h-4 w-4" :stroke-width="1.8" />
-        </a>
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <RouterLink
+            to="/projects"
+            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
+          >
+            View My Work
+            <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
+          </RouterLink>
+          <a
+            :href="`mailto:${profile.email}`"
+            class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
+          >
+            Get In Touch
+            <Mail class="h-4 w-4" :stroke-width="1.8" />
+          </a>
+        </div>
+      </div>
+
+      <!-- Theme-triggered profile video (forward=light / reverse=dark) -->
+      <div class="mx-auto h-[340px] w-[240px] sm:h-[380px] sm:w-[270px]">
+        <ProfileVideo />
       </div>
     </section>
 

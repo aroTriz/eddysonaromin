@@ -89,6 +89,14 @@ const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/** Event name broadcast when the theme changes — components listen for it. */
+export const THEME_CHANGE_EVENT = 'theme-change'
+
+/** Resolve whether a preference string resolves to dark mode. */
+export function resolveIsDark(pref: ThemePreference): boolean {
+  return isDark(pref)
+}
+
 /**
  * Set the theme preference. When the resolved light/dark state changes,
  * animates via a circular reveal from the pointer position.
@@ -106,12 +114,14 @@ export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
 
   if (prefersReducedMotion) {
     crossfade(pref)
-    return
+  } else {
+    const x = event?.clientX ?? window.innerWidth
+    const y = event?.clientY ?? window.innerHeight
+    reveal(pref, x, y)
   }
 
-  const x = event?.clientX ?? window.innerWidth
-  const y = event?.clientY ?? window.innerHeight
-  reveal(pref, x, y)
+  // Notify components (e.g. the theme video) that dark state changed.
+  window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
 }
 
 /**

@@ -5,10 +5,13 @@
    ════════════════════════════════════════════════════════════════════ */
 
 /* ── Ionic base styles (must precede Tailwind) ─────────────────── */
+/* NOTE: typography.css is intentionally NOT imported — it sets an
+   unlayered `a { background-color: transparent }` + default colors that
+   would override Tailwind's layered utilities. All typography comes from
+   Tailwind + this design system instead. */
 @import '@ionic/vue/css/core.css';
 @import '@ionic/vue/css/normalize.css';
 @import '@ionic/vue/css/structure.css';
-@import '@ionic/vue/css/typography.css';
 
 /* ── Tailwind v4 ───────────────────────────────────────────────── */
 @import 'tailwindcss';
@@ -26,6 +29,11 @@
   /* Monochrome palette — flipped by the `dark` class on <html> */
   --color-ink: rgb(var(--ink));
   --color-bg: rgb(var(--bg));
+  /* Remap Tailwind's literal white/black to theme vars so `bg-white`
+     and `text-black` adapt automatically in dark mode (reference site
+     does the same in its tailwind.config). */
+  --color-white: rgb(var(--bg));
+  --color-black: rgb(var(--ink));
   --color-gray-50: rgb(var(--g50));
   --color-gray-100: rgb(var(--g100));
   --color-gray-200: rgb(var(--g200));
@@ -39,6 +47,12 @@
   --color-gray-950: rgb(var(--g950));
 
   --tracking-tightest: -0.045em;
+
+  /* Theme-aware surface & text aliases — flip with html.dark */
+  --color-surface: rgb(var(--bg));
+  --color-card: rgb(var(--g50));
+  --color-muted: rgb(var(--g500));
+  --color-faint: rgb(var(--g400));
 
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-blink: blink 1.8s ease-in-out infinite;
@@ -286,6 +300,41 @@ ion-router-outlet {
 
 ion-content {
   --background: transparent;
+}
+
+/*
+ * This site uses a custom layout (no ion-page / ion-content scroll
+ * containers), so document scrolling must live on the <html> element.
+ * Ionic's structure.css sets `body { position: fixed; overflow: hidden }`
+ * and the runtime injects absolute positioning on ion-app/ion-router-outlet
+ * for app-style internal scrolling — neutralize all of it so the page
+ * scrolls naturally like a normal website.
+ */
+html {
+  position: static;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body {
+  position: static !important;
+  overflow: visible !important;
+  width: auto;
+  height: auto !important;
+  max-height: none !important;
+}
+
+ion-app,
+ion-router-outlet {
+  position: relative !important;
+  display: block !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  contain: none !important;
+  overflow: visible !important;
 }
 
 /* ── Spotlight card deck (home showcase) ───────────────────────── */
