@@ -1,63 +1,112 @@
 <script setup lang="ts">
 /**
- * Home — hero (terminal style), tech marquee, stats, recommendations.
- * Mirrors the bryllim.com feel: mono metadata, halftone, staggered reveal.
+ * Home — mirrors bryllim.com's hero: profile video left, pixel-font
+ * name + intro paragraphs + social links right; stats grid, tech
+ * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, Mail, Star } from 'lucide-vue-next'
+import { ArrowUpRight, Mail } from 'lucide-vue-next'
 
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
-import { allTechnologies, profile, recommendation, stats } from '@/data/profile'
+import {
+  allTechnologies,
+  profile,
+  recommendation,
+  stats,
+} from '@/data/profile'
 
 const marqueeList = [...allTechnologies, ...allTechnologies]
 const year = new Date().getFullYear()
+
+const intro = [
+  "I'm a full-stack engineer. I build modern web & mobile apps, and these days I'm focused on generative AI.",
+  "Right now I'm building cool new stuff every day. I love turning rough ideas into things people actually use.",
+]
+
+const socials = [
+  { label: 'github', href: profile.github },
+  { label: 'linkedin', href: profile.linkedin },
+  { label: 'portfolio', href: `https://${profile.portfolio}` },
+]
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+  <div class="mx-auto w-full max-w-2xl px-6">
     <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section aria-label="Intro" class="reveal grid items-center gap-10 md:grid-cols-[1fr_300px]">
-      <div>
-        <p class="terminal-comment text-[13px]">// Welcome to my portfolio</p>
-        <h1 class="mt-3 text-[2.1rem] font-semibold leading-[1.1] tracking-tightest md:text-[3.4rem]">
-          Eddyson Tristan
-          <span class="text-gray-500">Aromin</span>
-        </h1>
-        <p class="mt-2 font-mono text-[13px] text-gray-500 md:text-[14px]">
-          const role =
-          <span class="text-ink">'{{ profile.role }}';</span>
-        </p>
+    <section class="relative py-16 sm:py-24">
+      <div class="grid gap-9 sm:grid-cols-[16rem_1fr] sm:items-start sm:gap-10">
+        <!-- Video column (left) -->
+        <div class="reveal d1 mx-auto w-full max-w-[16rem] sm:mx-0">
+          <ProfileVideo />
+        </div>
 
-        <p class="mt-6 max-w-xl text-[15px] leading-relaxed text-gray-600 md:text-[16px]">
-          {{ profile.tagline }}
-        </p>
+        <!-- Text column (right) -->
+        <div>
+          <h1 class="reveal d2 font-pixel text-[1.9rem] leading-none sm:text-[2.4rem]">
+            {{ profile.name }}
+          </h1>
 
-        <div class="mt-8 flex flex-wrap items-center gap-4">
-          <RouterLink
-            to="/projects"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
+          <p
+            v-for="(paragraph, i) in intro"
+            :key="i"
+            class="reveal d3 mt-6 text-[15px] leading-relaxed text-gray-600"
+            :class="{ 'mt-5': i > 0 }"
           >
-            View My Work
-            <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
-          </RouterLink>
-          <a
-            :href="`mailto:${profile.email}`"
-            class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
+            {{ paragraph }}
+          </p>
+
+          <!-- links below the intro -->
+          <div
+            class="reveal d4 mt-7 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-gray-500"
           >
-            Get In Touch
-            <Mail class="h-4 w-4" :stroke-width="1.8" />
-          </a>
+            <a
+              v-for="social in socials"
+              :key="social.label"
+              :href="social.href"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-ink"
+            >
+              {{ social.label }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+            </a>
+            <a :href="`mailto:${profile.email}`" class="hover:text-ink">email <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" /></a>
+          </div>
+
+          <div class="reveal d5 mt-8 flex flex-wrap items-center gap-4">
+            <RouterLink
+              to="/projects"
+              class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
+            >
+              View My Work
+              <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
+            </RouterLink>
+            <a
+              :href="`mailto:${profile.email}`"
+              class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
+            >
+              Get In Touch
+              <Mail class="h-4 w-4" :stroke-width="1.8" />
+            </a>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Theme-triggered profile video (forward=light / reverse=dark) -->
-      <div class="mx-auto h-[340px] w-[240px] sm:h-[380px] sm:w-[270px]">
-        <ProfileVideo />
+    <!-- ── Stats ────────────────────────────────────────────── -->
+    <section
+      aria-label="Highlights"
+      class="grid grid-cols-2 divide-x divide-y divide-gray-200 border-t border-gray-200 sm:grid-cols-5 sm:divide-y-0"
+    >
+      <div v-for="stat in stats" :key="stat.label" class="py-6 pr-5 sm:px-5 sm:pl-0">
+        <div class="font-pixel text-lg leading-none text-ink">{{ stat.value }}</div>
+        <div class="mt-2 font-mono text-[10.5px] uppercase tracking-wider text-gray-500">
+          {{ stat.label }}
+        </div>
       </div>
     </section>
 
     <!-- ── Tech marquee ─────────────────────────────────────── -->
-    <section aria-label="Tech stack" class="mt-14">
+    <section aria-label="Tech stack" class="mt-16">
       <p class="terminal-comment mb-4 text-[13px]">// tech stack</p>
       <div class="mask-fade-x overflow-hidden">
         <div class="flex w-max animate-marquee gap-3">
@@ -72,35 +121,15 @@ const year = new Date().getFullYear()
       </div>
     </section>
 
-    <!-- ── Stats ────────────────────────────────────────────── -->
-    <section aria-label="Highlights" class="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-5">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="flex flex-col items-center gap-1 bg-white px-4 py-6 text-center"
-      >
-        <span class="text-[1.6rem] font-semibold tracking-tightest text-ink">{{ stat.value }}</span>
-        <span class="font-mono text-[10.5px] uppercase tracking-wide text-gray-500">{{ stat.label }}</span>
-      </div>
-    </section>
-
     <!-- ── Recommendations ──────────────────────────────────── -->
     <section aria-label="Recommendations" class="mt-16">
       <SectionHeading comment="// recommendations" title="What People Say" />
 
-      <div class="mt-6 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
-        <div class="flex items-center gap-1 text-gray-500" aria-label="5 out of 5 stars">
-          <Star
-            v-for="n in 5"
-            :key="n"
-            class="h-4 w-4 fill-current"
-            :stroke-width="1.4"
-          />
-        </div>
+      <div class="rec-card mt-6 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
         <blockquote class="rec-quote text-[17px] leading-relaxed text-gray-700 md:text-[19px]">
           {{ recommendation.quote }}
         </blockquote>
-        <div class="flex items-center gap-3">
+        <div class="mt-6 flex items-center gap-3">
           <div class="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 font-mono text-[14px] font-semibold text-gray-600">
             LF
           </div>
@@ -119,10 +148,25 @@ const year = new Date().getFullYear()
     </section>
 
     <!-- ── Footer ───────────────────────────────────────────── -->
-    <footer class="mt-16 border-t border-gray-200 pt-6">
+    <footer class="mt-16 border-t border-gray-200 py-8">
       <p class="font-mono text-[12px] text-gray-500">
         © {{ year }} {{ profile.fullName }}. All rights reserved.
       </p>
     </footer>
   </div>
 </template>
+
+<style scoped>
+.rec-card {
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+.rec-card:hover {
+  box-shadow: 0 18px 40px -22px rgba(10, 10, 10, 0.32);
+  transform: translateY(-3px);
+}
+.rec-card blockquote {
+  font-family: var(--font-serif);
+}
+</style>

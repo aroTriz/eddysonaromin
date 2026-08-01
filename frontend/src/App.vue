@@ -3,10 +3,15 @@
  * App — root layout. Combines the halftone backdrop, the app shell
  * (fixed sidebar on lg+, mobile top bar + fullscreen menu below lg),
  * and the routed content, offset for the sidebar on desktop.
+ *
+ * NOTE: uses a plain vue-router <RouterView> instead of Ionic's
+ * <IonRouterOutlet> — Ionic's outlet caches the previous view, which
+ * prevented lazy-loaded pages from re-rendering on SPA navigation
+ * (URL changed, content stayed on the old page).
  */
-import { IonApp, IonRouterOutlet } from '@ionic/vue'
+import { IonApp } from '@ionic/vue'
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 
 import AppShell from '@/components/layout/AppShell.vue'
 import HalftoneBackdrop from '@/components/layout/HalftoneBackdrop.vue'
@@ -29,7 +34,7 @@ const activeRoute = computed(() => (typeof route.name === 'string' ? route.name 
 
     <!-- Routed content — offset by the fixed sidebar width on lg+ -->
     <main class="relative z-10 min-h-dvh lg:pl-56">
-      <IonRouterOutlet />
+      <RouterView />
     </main>
   </IonApp>
 </template>

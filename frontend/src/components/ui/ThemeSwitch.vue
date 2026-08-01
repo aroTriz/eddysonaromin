@@ -1,170 +1,82 @@
 <script setup lang="ts">
 /**
- * ThemeSwitch — sun/moon toggle with in-place icon animation:
- * the knob stays centered; toggling rotates/fades the sun out and
- * the moon in (and vice-versa) — matching the resume site's feel
- * without any position shifting.
+ * ThemeSwitch — 3-option segmented pill (System / Light / Dark) with
+ * tiny icons, matching the bryllim.com theme switcher exactly.
  */
-import { computed } from 'vue'
+import { Monitor, Moon, Sun } from 'lucide-vue-next'
 
 import { useTheme } from '@/composables/useTheme'
+import type { ThemePreference } from '@/composables/useTheme'
 
 const { preference, setTheme } = useTheme()
 
-const isDark = computed(() => {
-  if (preference.value === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-  return preference.value === 'dark'
-})
+const options: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
+  { value: 'system', label: 'System theme', icon: Monitor },
+  { value: 'light', label: 'Light theme', icon: Sun },
+  { value: 'dark', label: 'Dark theme', icon: Moon },
+]
 
-function toggle(event: MouseEvent): void {
-  setTheme(isDark.value ? 'light' : 'dark', event)
+function pick(option: ThemePreference, event: MouseEvent): void {
+  setTheme(option, event)
 }
 </script>
 
 <template>
-  <button
-    type="button"
-    class="theme-toggle"
-    :class="{ dark: isDark }"
-    :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-    :title="isDark ? 'Light mode' : 'Dark mode'"
-    :aria-pressed="isDark"
-    @click="toggle($event)"
+  <div
+    class="theme-switch inline-flex items-center gap-px rounded-full border border-gray-200 p-0.5"
+    role="group"
+    aria-label="Theme"
   >
-    <span class="theme-toggle-track">
-      <span class="theme-toggle-knob" :class="{ dark: isDark }">
-        <!-- Sun -->
-        <svg
-          class="toggle-icon sun"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-        <!-- Moon -->
-        <svg
-          class="toggle-icon moon"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      </span>
-    </span>
-  </button>
+    <button
+      v-for="option in options"
+      :key="option.value"
+      type="button"
+      class="theme-opt inline-flex items-center justify-center rounded-full text-gray-400 transition-colors hover:text-ink"
+      :class="{ 'is-active': preference === option.value }"
+      :title="option.label"
+      :aria-label="option.label"
+      :aria-pressed="preference === option.value"
+      @click="pick(option.value, $event)"
+    >
+      <component :is="option.icon" :stroke-width="1.7" />
+    </button>
+  </div>
 </template>
 
 <style scoped>
-.theme-toggle {
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid rgb(var(--g200));
+  border-radius: 9999px;
+}
+
+.theme-opt {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  outline: none;
-  line-height: 0;
-}
-
-.theme-toggle .theme-toggle-track {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  border-radius: 999px;
-  background: rgb(var(--g300));
-  transition: background 0.3s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.theme-toggle:hover .theme-toggle-track {
-  background: rgb(var(--g400));
-}
-
-.theme-toggle.dark .theme-toggle-track {
-  background: rgb(var(--g600));
-}
-
-/* Knob stays centered — only the icons animate inside it */
-.theme-toggle .theme-toggle-knob {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgb(var(--bg));
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.35s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-.theme-toggle.dark .theme-toggle-knob {
-  background: rgb(var(--g50));
-}
-
-.theme-toggle .toggle-icon {
-  position: absolute;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  color: rgb(var(--g400));
   transition:
-    opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color 0.2s,
+    background-color 0.2s;
 }
 
-/* Sun — visible in light mode */
-.theme-toggle .toggle-icon.sun {
+.theme-opt:hover {
   color: rgb(var(--ink));
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
 }
 
-.theme-toggle.dark .toggle-icon.sun {
-  opacity: 0;
-  transform: rotate(180deg) scale(0.2);
-}
-
-/* Moon — visible in dark mode */
-.theme-toggle .toggle-icon.moon {
+.theme-opt.is-active {
+  background: rgb(var(--g100));
   color: rgb(var(--ink));
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.2);
 }
 
-.theme-toggle.dark .toggle-icon.moon {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-
-.theme-toggle:hover .theme-toggle-knob {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-.theme-toggle:active .theme-toggle-knob {
-  transform: translate(-50%, -50%) scale(0.95);
+.theme-opt svg {
+  width: 13px;
+  height: 13px;
 }
 </style>
