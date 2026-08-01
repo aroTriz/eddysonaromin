@@ -323,6 +323,11 @@ body {
   width: auto;
   height: auto !important;
   max-height: none !important;
+  /* Ionic sets `transform: translateZ(0)` on body — even an identity
+     transform makes body the containing block for `position: fixed`
+     descendants, so the fixed sidebar would scroll with the page.
+     Remove it so fixed/sticky elements anchor to the viewport. */
+  transform: none !important;
 }
 
 ion-app,
