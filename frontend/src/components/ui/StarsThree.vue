@@ -149,8 +149,11 @@ onMounted(() => {
   display: block;
 }
 
-/* Hidden in light mode — shown only when html.dark is active */
-:global(html:not(.dark)) .stars-three {
-  display: none;
-}
+/*
+ * NOTE: This component is only mounted in dark mode (HalftoneBackdrop
+ * uses <StarsThree v-else />), so no light-mode hiding is needed here.
+ * A previous `:global(html:not(.dark)) .stars-three { display:none }`
+ * compiled to `html:not(.dark){display:none}` — which hid the ENTIRE
+ * <html> element in light mode and white-screened the whole site.
+ */
 </style>
