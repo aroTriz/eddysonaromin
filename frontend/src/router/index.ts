@@ -46,6 +46,12 @@ const router = createRouter({
       meta: { title: 'Certifications — Eddyson Aromin' },
     },
     {
+      path: '/recommendations',
+      name: 'recommendations',
+      component: () => import('@/views/RecommendationsView.vue'),
+      meta: { title: 'Recommendations — Eddyson Aromin' },
+    },
+    {
       path: '/blog',
       name: 'blog',
       component: () => import('@/views/BlogView.vue'),

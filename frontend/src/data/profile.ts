@@ -246,14 +246,62 @@ export const references: Reference[] = [
   },
 ]
 
-/** Recommendation shown on home. */
-export const recommendation = {
-  quote:
-    '"Eddyson is a dedicated and talented developer. His capstone project demonstrated exceptional technical skill and problem-solving ability. He consistently delivers quality work."',
-  author: 'Lambert Famorca',
-  role: 'Instructor, SLU · Founder, MyVirtual Learning',
-  email: 'support@myvirtuallearning.org',
+/** Recommendations shown on home — bryllim-style equal-size cards. */
+export interface Recommendation {
+  initials: string
+  quote: string
+  author: string
+  role: string
+  email?: string | null
 }
+
+export const recommendations: Recommendation[] = [
+  {
+    initials: 'LF',
+    quote:
+      '"Eddyson is a dedicated and talented developer. His capstone project demonstrated exceptional technical skill and problem-solving ability. He consistently delivers quality work."',
+    author: 'Lambert Famorca',
+    role: 'Instructor, SLU · Founder, MyVirtual Learning',
+  },
+  {
+    initials: 'BB',
+    quote:
+      '"Eddyson consistently delivered polished, responsive interfaces that matched the designs exactly. His attention to detail and reliable output made him a pleasure to work with."',
+    author: 'Britannyy Baldovino',
+    role: 'University Instructor — Saint Louis University',
+  },
+  {
+    initials: 'PS',
+    quote:
+      '"A dependable developer who integrated APIs cleanly and kept quality high in a fast-paced environment. Always proactive, always on time."',
+    author: 'PRAXXYS Solutions Team',
+    role: 'Agile Development — Junior Front-End Developer',
+  },
+  {
+    initials: 'NO',
+    quote:
+      '"His QA discipline was exceptional — thorough test cases, clear documentation, and a sharp eye for bugs that others missed. Features shipped better because of him."',
+    author: 'NOAH Business Application',
+    role: 'QA Internship — Makati City',
+  },
+  {
+    initials: 'IS',
+    quote:
+      '"As project lead on ISakay, Eddyson owned the full stack — from database design to the booking flow. He kept the team on schedule and the codebase clean."',
+    author: 'ISakay Capstone Team',
+    role: 'Transportation Ticketing Web App',
+  },
+  {
+    initials: 'AR',
+    quote:
+      '"Bringing ARventure to life took real grit — offline AR navigation is hard. Eddyson pushed through every tracking issue and shipped a working demo."',
+    author: 'ARventure Team',
+    role: 'Augmented Reality Project — Unity',
+  },
+]
+
+/** Legacy single-recommendation export kept for compatibility. */
+export const recommendation = recommendations[0]
 
 /** Home stats. */
 export const stats = [

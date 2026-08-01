@@ -7,11 +7,10 @@
 import { ArrowUpRight, Mail } from 'lucide-vue-next'
 
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
-import SectionHeading from '@/components/ui/SectionHeading.vue'
 import {
   allTechnologies,
   profile,
-  recommendation,
+  recommendations,
   stats,
 } from '@/data/profile'
 
@@ -35,9 +34,11 @@ const socials = [
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <section class="relative py-16 sm:py-24">
       <div class="grid gap-9 sm:grid-cols-[16rem_1fr] sm:items-start sm:gap-10">
-        <!-- Video column (left) -->
-        <div class="reveal d1 mx-auto w-full max-w-[16rem] sm:mx-0">
-          <ProfileVideo />
+        <!-- Video column (left) — fixed aspect so the phone doesn't collapse -->
+        <div class="reveal d1 mx-auto w-full max-w-[18rem] sm:mx-0">
+          <div class="aspect-[3/4] w-full">
+            <ProfileVideo />
+          </div>
         </div>
 
         <!-- Text column (right) -->
@@ -92,14 +93,18 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Stats ────────────────────────────────────────────── -->
+    <!-- ── Stats (bryllim-style) ────────────────────────────── -->
     <section
       aria-label="Highlights"
       class="grid grid-cols-2 divide-x divide-y divide-gray-200 border-t border-gray-200 sm:grid-cols-5 sm:divide-y-0"
     >
-      <div v-for="stat in stats" :key="stat.label" class="py-6 pr-5 sm:px-5 sm:pl-0">
+      <div
+        v-for="stat in stats"
+        :key="stat.label"
+        class="flex flex-col items-center py-6 text-center sm:px-4"
+      >
         <div class="font-pixel text-lg leading-none text-ink">{{ stat.value }}</div>
-        <div class="mt-2 font-mono text-[10.5px] uppercase tracking-wider text-gray-500">
+        <div class="mt-2 font-mono text-[11px] uppercase tracking-wider text-gray-500">
           {{ stat.label }}
         </div>
       </div>
@@ -121,29 +126,45 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Recommendations ──────────────────────────────────── -->
-    <section aria-label="Recommendations" class="mt-16">
-      <SectionHeading comment="// recommendations" title="What People Say" />
+    <!-- ── Recommendations (bryllim-style equal cards) ───────── -->
+    <section id="recommendations" aria-label="Recommendations" class="py-14">
+      <div class="mb-8 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
+        <RouterLink
+          to="/recommendations"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          all recommendations <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </RouterLink>
+      </div>
 
-      <div class="rec-card mt-6 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
-        <blockquote class="rec-quote text-[17px] leading-relaxed text-gray-700 md:text-[19px]">
-          {{ recommendation.quote }}
-        </blockquote>
-        <div class="mt-6 flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 font-mono text-[14px] font-semibold text-gray-600">
-            LF
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <a
+          v-for="rec in recommendations"
+          :key="rec.initials"
+          :href="`mailto:${rec.email ?? 'aromintristan@gmail.com'}`"
+          class="rec-card group flex flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
+        >
+          <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M9 7H6a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2H4v2h1a4 4 0 004-4V7zm11 0h-3a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2h-1v2h1a4 4 0 004-4V7z" />
+          </svg>
+
+          <p class="rec-quote mt-2 line-clamp-5 text-[13.5px] leading-relaxed text-gray-700">
+            {{ rec.quote }}
+          </p>
+
+          <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
+              {{ rec.initials }}
+            </div>
+            <div class="min-w-0">
+              <div class="truncate text-[12px] font-semibold text-ink">{{ rec.author }}</div>
+              <div class="truncate font-mono text-[9px] uppercase tracking-wider text-gray-400">
+                {{ rec.role }}
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-[14px] font-semibold text-ink">{{ recommendation.author }}</p>
-            <p class="font-mono text-[12px] text-gray-500">{{ recommendation.role }}</p>
-            <a
-              :href="`mailto:${recommendation.email}`"
-              class="font-mono text-[12px] text-gray-500 underline underline-offset-2 hover:text-ink"
-            >
-              {{ recommendation.email }}
-            </a>
-          </div>
-        </div>
+        </a>
       </div>
     </section>
 

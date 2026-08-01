@@ -8,8 +8,7 @@
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointerleave="onPointerUp"
-  >
-    <!-- Front: profile.sh with theme video -->
+  >    <!-- Front: profile.sh with theme video -->
     <div class="phone-face phone-front">
       <div class="terminal-bar">
         <span class="dot-red"></span>

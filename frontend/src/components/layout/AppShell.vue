@@ -34,6 +34,7 @@ const navGroups = [
       { label: 'Experience', to: '/experience', name: 'experience', icon: undefined },
       { label: 'Stack', to: '/stack', name: 'stack', icon: undefined },
       { label: 'Certifications', to: '/certifications', name: 'certifications', icon: undefined },
+      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: undefined },
     ],
   },
   {
@@ -172,10 +173,10 @@ const contactLinks = [
       </p>
       <a
         :href="`mailto:${profile.email}`"
-        class="mt-1.5 inline-flex w-fit max-w-full items-center gap-2 font-mono text-[13px] text-ink hover:text-gray-500"
+        class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 font-mono text-[10.5px] text-ink hover:text-gray-500"
       >
-        <Mail class="h-[1.15em] w-[1.15em] shrink-0" />
-        <span class="break-all leading-snug">{{ profile.email }}</span>
+        <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
+        <span class="whitespace-nowrap">{{ profile.email }}</span>
       </a>
     </div>
   </nav>
@@ -312,10 +313,10 @@ const contactLinks = [
             </p>
             <a
               :href="`mailto:${profile.email}`"
-              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-2 text-[14px] text-ink hover:text-gray-500"
+              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 text-[11px] text-ink hover:text-gray-500"
             >
-              <Mail class="h-[1.15em] w-[1.15em] shrink-0" />
-              <span class="break-all leading-snug">{{ profile.email }}</span>
+              <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
+              <span class="whitespace-nowrap">{{ profile.email }}</span>
             </a>
           </div>
         </div>
