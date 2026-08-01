@@ -22,7 +22,7 @@ const tagStyles: Record<string, string> = {
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Resume ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Experience, education &amp; achievements</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Experience, education &amp; achievements</p>
     </Reveal>
 
     <!-- ── Work experience ──────────────────────────────────── -->
@@ -37,7 +37,7 @@ const tagStyles: Record<string, string> = {
           class="rounded-xl border border-gray-200 bg-white p-6"
         >
           <div class="flex flex-wrap items-center gap-3">
-            <span class="font-mono text-[12px] text-gray-400">{{ job.period }}</span>
+            <span class="font-mono text-[12px] text-gray-500">{{ job.period }}</span>
             <span
               class="rounded-full px-2.5 py-0.5 font-mono text-[11px]"
               :class="tagStyles[job.tag] ?? 'bg-gray-100 text-gray-700'"
@@ -46,7 +46,7 @@ const tagStyles: Record<string, string> = {
             </span>
           </div>
           <h3 class="mt-3 flex items-start gap-2 text-[17px] font-semibold tracking-tight text-ink">
-            <Building2 class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.6" />
+            <Building2 class="mt-0.5 h-4 w-4 shrink-0 text-gray-500" :stroke-width="1.6" />
             {{ job.title }}
           </h3>
           <p class="mt-0.5 font-mono text-[13px] text-gray-500">@{{ job.company }}</p>
@@ -57,7 +57,7 @@ const tagStyles: Record<string, string> = {
               :key="highlight"
               class="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-gray-600"
             >
-              <span class="mt-0.5 font-mono text-gray-400" aria-hidden="true">&gt;</span>
+              <span class="mt-0.5 font-mono text-gray-500" aria-hidden="true">&gt;</span>
               {{ highlight }}
             </li>
           </ul>
@@ -77,7 +77,7 @@ const tagStyles: Record<string, string> = {
           class="rounded-xl border border-gray-200 bg-white p-6"
         >
           <div class="flex flex-wrap items-center gap-3">
-            <span class="font-mono text-[12px] text-gray-400">{{ edu.period }}</span>
+            <span class="font-mono text-[12px] text-gray-500">{{ edu.period }}</span>
             <span
               class="rounded-full px-2.5 py-0.5 font-mono text-[11px]"
               :class="tagStyles[edu.tag] ?? 'bg-gray-100 text-gray-700'"
@@ -86,7 +86,7 @@ const tagStyles: Record<string, string> = {
             </span>
           </div>
           <h3 class="mt-3 flex items-start gap-2 text-[17px] font-semibold tracking-tight text-ink">
-            <GraduationCap class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.6" />
+            <GraduationCap class="mt-0.5 h-4 w-4 shrink-0 text-gray-500" :stroke-width="1.6" />
             {{ edu.title }}
           </h3>
           <p class="mt-0.5 font-mono text-[13px] text-gray-500">@{{ edu.school }}</p>

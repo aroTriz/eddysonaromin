@@ -126,7 +126,7 @@ const contactLinks = [
     </div>
 
     <div class="mt-4 border-y border-gray-200 py-3.5">
-      <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-400">
+      <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500">
         <b class="presence-num font-bold text-ink">1</b> person viewing now
       </p>
     </div>
@@ -167,7 +167,7 @@ const contactLinks = [
           <Globe class="h-3.5 w-3.5" :stroke-width="1.7" />
         </a>
       </div>
-      <p class="text-[12px] leading-relaxed text-gray-400">
+      <p class="text-[12px] leading-relaxed text-gray-500">
         For work, collabs &amp; everything else, reach me at
       </p>
       <a
@@ -307,7 +307,7 @@ const contactLinks = [
                 <Globe class="h-4 w-4" :stroke-width="1.7" />
               </a>
             </div>
-            <p class="text-[12px] leading-relaxed text-gray-400">
+            <p class="text-[12px] leading-relaxed text-gray-500">
               For work, collabs &amp; everything else, reach me at
             </p>
             <a

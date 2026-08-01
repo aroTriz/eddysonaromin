@@ -23,7 +23,7 @@ withDefaults(
 
 <template>
   <!-- Loading -->
-  <div v-if="loading" class="flex flex-col items-center justify-center gap-3 py-16 text-gray-400">
+  <div v-if="loading" class="flex flex-col items-center justify-center gap-3 py-16 text-gray-500">
     <LoaderCircle class="h-6 w-6 animate-spin" :stroke-width="1.6" />
     <span class="font-mono text-[13px]">loading...</span>
   </div>
@@ -49,7 +49,7 @@ withDefaults(
   <!-- Empty -->
   <div
     v-else-if="empty"
-    class="flex flex-col items-center justify-center gap-3 py-16 text-gray-400"
+    class="flex flex-col items-center justify-center gap-3 py-16 text-gray-500"
   >
     <Inbox class="h-6 w-6" :stroke-width="1.6" />
     <span class="font-mono text-[13px]">{{ emptyMessage }}</span>

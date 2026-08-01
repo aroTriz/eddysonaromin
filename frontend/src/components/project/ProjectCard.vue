@@ -19,13 +19,13 @@ defineProps<{
     class="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300"
   >
     <div class="flex items-start justify-between gap-2">
-      <div class="flex items-center gap-2 font-mono text-[12px] text-gray-400">
+      <div class="flex items-center gap-2 font-mono text-[12px] text-gray-500">
         <Folder class="h-3.5 w-3.5" :stroke-width="1.6" />
         {{ project.category }}
       </div>
       <span
         v-if="project.url"
-        class="text-gray-400 transition-colors group-hover:text-ink"
+        class="text-gray-500 transition-colors group-hover:text-ink"
         :title="`Open ${project.title} live`"
       >
         <ExternalLink class="h-4 w-4" :stroke-width="1.6" />
@@ -35,7 +35,7 @@ defineProps<{
     <div>
       <h3 class="flex items-center gap-1.5 text-[17px] font-semibold tracking-tight text-ink">
         {{ project.title }}
-        <span class="font-mono text-[12px] font-normal text-gray-400">
+        <span class="font-mono text-[12px] font-normal text-gray-500">
           // {{ projectTypeLabel(project.type) }}
         </span>
       </h3>
@@ -48,14 +48,14 @@ defineProps<{
       <TechTag v-for="tech in project.technologies.slice(0, 4)" :key="tech" :label="tech" />
       <span
         v-if="project.technologies.length > 4"
-        class="font-mono text-[11px] leading-6 text-gray-400"
+        class="font-mono text-[11px] leading-6 text-gray-500"
       >
         +{{ project.technologies.length - 4 }}
       </span>
     </div>
 
     <span
-      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-400 transition-colors group-hover:text-ink"
+      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink"
     >
       view project
       <ArrowUpRight class="h-3.5 w-3.5" :stroke-width="1.8" />

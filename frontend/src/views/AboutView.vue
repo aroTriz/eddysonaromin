@@ -29,7 +29,7 @@ const info = [
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ About Me ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Get to know the developer behind the code</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Get to know the developer behind the code</p>
     </Reveal>
 
     <!-- ── Bio + info ───────────────────────────────────────── -->
@@ -49,7 +49,7 @@ const info = [
             :key="item.label"
             class="flex flex-col gap-0.5 border-b border-gray-100 pb-2.5 last:border-0"
           >
-            <dt class="font-mono text-[11.5px] text-gray-400">{{ item.label }}</dt>
+            <dt class="font-mono text-[11.5px] text-gray-500">{{ item.label }}</dt>
             <dd class="text-[13.5px] text-ink">{{ item.value }}</dd>
           </div>
         </dl>

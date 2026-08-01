@@ -16,7 +16,7 @@ import { competencies, stackGroups } from '@/data/profile'
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Stack ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Technologies and tools I work with</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Technologies and tools I work with</p>
     </Reveal>
 
     <!-- ── Grouped stack ────────────────────────────────────── -->
@@ -27,7 +27,7 @@ import { competencies, stackGroups } from '@/data/profile'
         :delay="i % 3"
         class="rounded-xl border border-gray-200 bg-white p-6"
       >
-        <h2 class="flex items-center gap-2 font-mono text-[12.5px] uppercase tracking-wide text-gray-400">
+        <h2 class="flex items-center gap-2 font-mono text-[12.5px] uppercase tracking-wide text-gray-500">
           <Wrench class="h-3.5 w-3.5" :stroke-width="1.6" />
           {{ group.label }}
         </h2>

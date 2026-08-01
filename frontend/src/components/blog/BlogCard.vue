@@ -26,7 +26,7 @@ function formatDate(iso: string | null): string {
     :to="`/blog/${post.slug}`"
     class="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300"
   >
-    <div class="flex items-center gap-2 font-mono text-[12px] text-gray-400">
+    <div class="flex items-center gap-2 font-mono text-[12px] text-gray-500">
       <CalendarDays class="h-3.5 w-3.5" :stroke-width="1.6" />
       {{ formatDate(post.published_at) }}
     </div>
@@ -43,7 +43,7 @@ function formatDate(iso: string | null): string {
     </div>
 
     <span
-      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-400 transition-colors group-hover:text-ink"
+      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink"
     >
       read post
       <ArrowUpRight class="h-3.5 w-3.5" :stroke-width="1.8" />

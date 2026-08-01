@@ -1,11 +1,12 @@
 <script setup lang="ts">
 /**
- * Page-wide backdrop — halftone dot field in light mode, animated
- * starfield in dark mode. Decorative, pointer-events disabled.
+ * Page-wide backdrop — halftone dot field in light mode, 3D rotating
+ * star sphere (Three.js, from the resume site) in dark mode.
+ * Decorative, pointer-events disabled.
  */
 import { computed } from 'vue'
 
-import Starfield from '@/components/ui/Starfield.vue'
+import StarsThree from '@/components/ui/StarsThree.vue'
 import { useTheme } from '@/composables/useTheme'
 
 const { preference } = useTheme()
@@ -27,7 +28,7 @@ const isDark = computed(() => {
       <div class="halftone mask-bl absolute bottom-0 left-0 h-[60vh] w-[55vw] opacity-[0.13]"></div>
     </template>
 
-    <!-- Dark mode: animated starfield (resume site look) -->
-    <Starfield v-else />
+    <!-- Dark mode: 3D rotating star sphere (resume site look) -->
+    <StarsThree v-else />
   </div>
 </template>

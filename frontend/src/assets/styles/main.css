@@ -138,12 +138,14 @@ html.dark {
 }
 
 /* Themed base — no flash before utilities compile */
-html,
-body {
-  background-color: rgb(var(--bg));
-  color: rgb(var(--ink));
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+@layer base {
+  html,
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--ink));
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 }
 
 ::selection {
@@ -274,32 +276,39 @@ button {
   font-family: var(--font-serif);
 }
 
-/* ── Ionic overrides — keep app look like the reference site ──── */
-ion-app {
-  --ion-background-color: transparent;
-  --ion-color-primary: rgb(var(--ink));
-  background-color: transparent;
-  font-family: var(--font-sans);
-  color: rgb(var(--ink));
-}
+/*
+ * Element-level theme defaults live in `@layer base` (NOT unlayered).
+ * Unlayered CSS beats Tailwind's layered utilities regardless of
+ * specificity — if these sat outside the layer, `ion-app a { color }`
+ * would override every `text-gray-*` / `text-bg` utility on links.
+ */
+@layer base {
+  ion-app {
+    --ion-background-color: transparent;
+    --ion-color-primary: rgb(var(--ink));
+    background-color: transparent;
+    font-family: var(--font-sans);
+    color: rgb(var(--ink));
+  }
 
-/* Neutralize Ionic's default link color & typography blues */
-ion-app a {
-  color: inherit;
-  text-decoration: none;
-}
+  /* Neutralize Ionic's default link color & typography blues */
+  ion-app a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-ion-app body,
-body {
-  font-family: var(--font-sans);
-}
+  ion-app body,
+  body {
+    font-family: var(--font-sans);
+  }
 
-ion-router-outlet {
-  background-color: transparent;
-}
+  ion-router-outlet {
+    background-color: transparent;
+  }
 
-ion-content {
-  --background: transparent;
+  ion-content {
+    --background: transparent;
+  }
 }
 
 /*
@@ -490,6 +499,12 @@ ion-router-outlet {
 
 /* ── Utility: text with mono metadata look (terminal vibe) ─────── */
 .terminal-comment {
-  color: rgb(var(--g400));
+  color: rgb(var(--g500));
+  font-family: var(--font-mono);
+}
+
+/* Dimmer variant for purely decorative metadata (still >= 4.5:1 in light) */
+.terminal-comment-dim {
+  color: rgb(var(--g500));
   font-family: var(--font-mono);
 }

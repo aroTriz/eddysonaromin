@@ -11,7 +11,7 @@ import { ArrowLeft } from 'lucide-vue-next'
     <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
       [ 404 ]
     </h1>
-    <p class="mt-2 font-mono text-[13px] text-gray-400">
+    <p class="mt-2 font-mono text-[13px] text-gray-500">
       // The page you're looking for doesn't exist.
     </p>
 

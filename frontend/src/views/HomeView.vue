@@ -21,7 +21,7 @@ const year = new Date().getFullYear()
         <p class="terminal-comment text-[13px]">// Welcome to my portfolio</p>
         <h1 class="mt-3 text-[2.1rem] font-semibold leading-[1.1] tracking-tightest md:text-[3.4rem]">
           Eddyson Tristan
-          <span class="text-gray-400">Aromin</span>
+          <span class="text-gray-500">Aromin</span>
         </h1>
         <p class="mt-2 font-mono text-[13px] text-gray-500 md:text-[14px]">
           const role =
@@ -80,7 +80,7 @@ const year = new Date().getFullYear()
         class="flex flex-col items-center gap-1 bg-white px-4 py-6 text-center"
       >
         <span class="text-[1.6rem] font-semibold tracking-tightest text-ink">{{ stat.value }}</span>
-        <span class="font-mono text-[10.5px] uppercase tracking-wide text-gray-400">{{ stat.label }}</span>
+        <span class="font-mono text-[10.5px] uppercase tracking-wide text-gray-500">{{ stat.label }}</span>
       </div>
     </section>
 
@@ -89,7 +89,7 @@ const year = new Date().getFullYear()
       <SectionHeading comment="// recommendations" title="What People Say" />
 
       <div class="mt-6 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
-        <div class="flex items-center gap-1 text-gray-400" aria-label="5 out of 5 stars">
+        <div class="flex items-center gap-1 text-gray-500" aria-label="5 out of 5 stars">
           <Star
             v-for="n in 5"
             :key="n"
@@ -106,7 +106,7 @@ const year = new Date().getFullYear()
           </div>
           <div>
             <p class="text-[14px] font-semibold text-ink">{{ recommendation.author }}</p>
-            <p class="font-mono text-[12px] text-gray-400">{{ recommendation.role }}</p>
+            <p class="font-mono text-[12px] text-gray-500">{{ recommendation.role }}</p>
             <a
               :href="`mailto:${recommendation.email}`"
               class="font-mono text-[12px] text-gray-500 underline underline-offset-2 hover:text-ink"
@@ -120,7 +120,7 @@ const year = new Date().getFullYear()
 
     <!-- ── Footer ───────────────────────────────────────────── -->
     <footer class="mt-16 border-t border-gray-200 pt-6">
-      <p class="font-mono text-[12px] text-gray-400">
+      <p class="font-mono text-[12px] text-gray-500">
         © {{ year }} {{ profile.fullName }}. All rights reserved.
       </p>
     </footer>

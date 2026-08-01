@@ -150,7 +150,7 @@ function formatDate(iso: string | null): string {
   <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
     <RouterLink
       to="/blog"
-      class="inline-flex items-center gap-1.5 font-mono text-[13px] text-gray-400 hover:text-ink"
+      class="inline-flex items-center gap-1.5 font-mono text-[13px] text-gray-500 hover:text-ink"
     >
       <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
       back to blog
@@ -160,7 +160,7 @@ function formatDate(iso: string | null): string {
       <template v-if="post">
         <article class="mt-6">
           <header>
-            <div class="flex items-center gap-2 font-mono text-[12.5px] text-gray-400">
+            <div class="flex items-center gap-2 font-mono text-[12.5px] text-gray-500">
               <CalendarDays class="h-3.5 w-3.5" :stroke-width="1.6" />
               {{ formatDate(post.published_at) }}
             </div>

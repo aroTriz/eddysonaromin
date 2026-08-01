@@ -45,7 +45,7 @@ const contactInfo = [
 ]
 
 const fieldClass =
-  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[13.5px] text-ink placeholder:text-gray-400 focus:border-gray-400 focus:outline-none'
+  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[13.5px] text-ink placeholder:text-gray-500 focus:border-gray-400 focus:outline-none'
 </script>
 
 <template>
@@ -55,7 +55,7 @@ const fieldClass =
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Contact ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Let's build something together</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Let's build something together</p>
     </Reveal>
 
     <div class="mt-10 grid gap-6 md:grid-cols-5">
@@ -65,7 +65,7 @@ const fieldClass =
 
         <form class="space-y-4" novalidate @submit.prevent="onSubmit">
           <div>
-            <label for="name" class="mb-1 block font-mono text-[11.5px] text-gray-400">
+            <label for="name" class="mb-1 block font-mono text-[11.5px] text-gray-500">
               // your_name
             </label>
             <input
@@ -80,7 +80,7 @@ const fieldClass =
           </div>
 
           <div>
-            <label for="email" class="mb-1 block font-mono text-[11.5px] text-gray-400">
+            <label for="email" class="mb-1 block font-mono text-[11.5px] text-gray-500">
               // your_email
             </label>
             <input
@@ -95,7 +95,7 @@ const fieldClass =
           </div>
 
           <div>
-            <label for="subject" class="mb-1 block font-mono text-[11.5px] text-gray-400">
+            <label for="subject" class="mb-1 block font-mono text-[11.5px] text-gray-500">
               // subject
             </label>
             <input
@@ -108,7 +108,7 @@ const fieldClass =
           </div>
 
           <div>
-            <label for="message" class="mb-1 block font-mono text-[11.5px] text-gray-400">
+            <label for="message" class="mb-1 block font-mono text-[11.5px] text-gray-500">
               // message
             </label>
             <textarea
@@ -161,11 +161,11 @@ const fieldClass =
           >
             <component
               :is="item.icon"
-              class="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
+              class="mt-0.5 h-4 w-4 shrink-0 text-gray-500"
               :stroke-width="1.6"
             />
             <div>
-              <dt class="font-mono text-[11.5px] text-gray-400">{{ item.label }}</dt>
+              <dt class="font-mono text-[11.5px] text-gray-500">{{ item.label }}</dt>
               <dd>
                 <a
                   v-if="item.href"

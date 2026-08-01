@@ -36,7 +36,7 @@ onMounted(load)
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Blog ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Notes on building, learning &amp; shipping</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Notes on building, learning &amp; shipping</p>
     </Reveal>
 
     <AsyncState

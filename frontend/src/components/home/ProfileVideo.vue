@@ -269,7 +269,7 @@ onUnmounted(() => {
 .terminal-title {
   margin-left: 16px;
   font-size: 12px;
-  color: rgb(var(--g500));
+  color: rgb(var(--g600));
   font-family: var(--font-mono);
 }
 .dot-red,
@@ -333,7 +333,7 @@ onUnmounted(() => {
   font-weight: 500;
 }
 .fr {
-  color: rgb(var(--g500));
+  color: rgb(var(--g600));
   font-style: italic;
 }
 .back-body {
@@ -360,7 +360,7 @@ onUnmounted(() => {
 }
 .bl {
   font-size: 11px;
-  color: rgb(var(--g500));
+  color: rgb(var(--g600));
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -48,7 +48,7 @@ watchEffect(() => {
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Portfolio ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Academic and personal projects I've built</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Academic and personal projects I've built</p>
     </Reveal>
 
     <!-- ── Filters ──────────────────────────────────────────── -->

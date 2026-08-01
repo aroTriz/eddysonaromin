@@ -12,8 +12,10 @@
     "@ionic/vue": "^8.8.16",
     "@ionic/vue-router": "^8.8.16",
     "@tailwindcss/vite": "^4.3.3",
+    "@types/three": "^0.185.3",
     "lucide-vue-next": "^1.0.0",
     "tailwindcss": "^4.3.3",
+    "three": "^0.185.1",
     "vue": "^3.5.40",
     "vue-router": "^4.6.4"
   },

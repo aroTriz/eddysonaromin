@@ -16,7 +16,7 @@ import { affiliations, certifications, references } from '@/data/profile'
       <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
         [ Certifications ]
       </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-400">// Credentials, affiliations &amp; references</p>
+      <p class="mt-1 font-mono text-[13px] text-gray-500">// Credentials, affiliations &amp; references</p>
     </Reveal>
 
     <!-- ── Certifications ───────────────────────────────────── -->
@@ -31,13 +31,13 @@ import { affiliations, certifications, references } from '@/data/profile'
           class="rounded-xl border border-gray-200 bg-white p-5"
         >
           <div class="flex items-start gap-3">
-            <Award class="mt-0.5 h-5 w-5 shrink-0 text-gray-400" :stroke-width="1.6" />
+            <Award class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" :stroke-width="1.6" />
             <div>
               <h3 class="text-[15px] font-semibold leading-snug tracking-tight text-ink">
                 {{ cert.title }}
               </h3>
               <p class="mt-1 font-mono text-[12.5px] text-gray-500">{{ cert.issuer }}</p>
-              <p class="mt-0.5 font-mono text-[12px] text-gray-400">{{ cert.year }}</p>
+              <p class="mt-0.5 font-mono text-[12px] text-gray-500">{{ cert.year }}</p>
             </div>
           </div>
         </Reveal>
@@ -56,7 +56,7 @@ import { affiliations, certifications, references } from '@/data/profile'
           class="rounded-xl border border-gray-200 bg-white p-5"
         >
           <div class="flex items-start gap-3">
-            <BadgeCheck class="mt-0.5 h-5 w-5 shrink-0 text-gray-400" :stroke-width="1.6" />
+            <BadgeCheck class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" :stroke-width="1.6" />
             <div>
               <h3 class="text-[15px] font-semibold tracking-tight text-ink">{{ affiliation.org }}</h3>
               <p class="mt-0.5 font-mono text-[12.5px] text-gray-500">{{ affiliation.role }}</p>
@@ -86,14 +86,14 @@ import { affiliations, certifications, references } from '@/data/profile'
             </div>
             <div>
               <h3 class="flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
-                <UserRound class="h-3.5 w-3.5 text-gray-400" :stroke-width="1.6" />
+                <UserRound class="h-3.5 w-3.5 text-gray-500" :stroke-width="1.6" />
                 {{ reference.name }}
               </h3>
               <p class="mt-0.5 text-[12.5px] text-gray-500">{{ reference.title }}</p>
               <a
                 v-if="reference.email"
                 :href="`mailto:${reference.email}`"
-                class="mt-1 inline-block font-mono text-[12px] text-gray-400 underline underline-offset-2 hover:text-ink"
+                class="mt-1 inline-block font-mono text-[12px] text-gray-500 underline underline-offset-2 hover:text-ink"
               >
                 {{ reference.email }}
               </a>
