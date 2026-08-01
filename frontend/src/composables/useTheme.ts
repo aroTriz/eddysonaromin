@@ -14,15 +14,15 @@ function isDark(pref: ThemePreference): boolean {
   )
 }
 
-/** Read the persisted preference, defaulting to light like the reference. */
+/** Read the persisted preference, defaulting to "system" on first visit. */
 function readPreference(): ThemePreference {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored === 'dark' || stored === 'light' || stored === 'system'
       ? stored
-      : 'light'
+      : 'system'
   } catch {
-    return 'light'
+    return 'system'
   }
 }
 

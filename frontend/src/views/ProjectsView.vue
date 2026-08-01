@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
  * Projects — filterable grid (All / category / type) served by the Laravel API.
+ * When "All" is active, projects are grouped by category (Personal / Academic)
+ * with a separator between the two groups.
  */
-import { ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import AsyncState from '@/components/ui/AsyncState.vue'
@@ -38,6 +40,21 @@ async function load(): Promise<void> {
 watchEffect(() => {
   void load()
 })
+
+/** Personal projects (grouped only when "All" is active). */
+const personalProjects = computed(() =>
+  activeFilter.value === '' ? projects.value.filter((p) => p.category === 'personal') : [],
+)
+
+/** Academic projects (grouped only when "All" is active). */
+const academicProjects = computed(() =>
+  activeFilter.value === '' ? projects.value.filter((p) => p.category === 'academic') : [],
+)
+
+/** Single-list projects (when a specific filter is active). */
+const listedProjects = computed(() =>
+  activeFilter.value !== '' ? projects.value : [],
+)
 </script>
 
 <template>
@@ -77,8 +94,33 @@ watchEffect(() => {
       empty-message="No projects match this filter."
       :on-retry="load"
     >
-      <div class="mt-8 grid gap-4 sm:grid-cols-2">
-        <ProjectCard v-for="project in projects" :key="project.slug" :project="project" />
+      <!-- All → grouped with separator -->
+      <template v-if="activeFilter === ''">
+        <div class="mt-10">
+          <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
+            personal projects
+          </p>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <ProjectCard v-for="project in personalProjects" :key="project.slug" :project="project" />
+          </div>
+        </div>
+
+        <!-- separator line between the two groups -->
+        <div class="my-10 h-px bg-gray-200" aria-hidden="true" />
+
+        <div>
+          <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
+            academic projects
+          </p>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <ProjectCard v-for="project in academicProjects" :key="project.slug" :project="project" />
+          </div>
+        </div>
+      </template>
+
+      <!-- Specific filter → flat grid -->
+      <div v-else class="mt-8 grid gap-4 sm:grid-cols-2">
+        <ProjectCard v-for="project in listedProjects" :key="project.slug" :project="project" />
       </div>
     </AsyncState>
   </div>
