@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * ThemeSwitch — animated light/dark toggle with a sliding knob and
- * rotating sun/moon icons, matching the resume site's navbar toggle.
- * Keeps the light/dark/system semantics from useTheme: the switch
- * flips light <-> dark, and "system" is used for the initial value.
+ * ThemeSwitch — sun/moon toggle with in-place icon animation:
+ * the knob stays centered; toggling rotates/fades the sun out and
+ * the moon in (and vice-versa) — matching the resume site's feel
+ * without any position shifting.
  */
 import { computed } from 'vue'
 
@@ -108,25 +108,24 @@ function toggle(event: MouseEvent): void {
   background: rgb(var(--g600));
 }
 
+/* Knob stays centered — only the icons animate inside it */
 .theme-toggle .theme-toggle-knob {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 50%;
+  left: 50%;
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: rgb(var(--bg));
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition:
-    left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 0.35s ease;
+  transition: background 0.35s ease;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .theme-toggle.dark .theme-toggle-knob {
-  left: calc(100% - 22px);
   background: rgb(var(--g50));
 }
 
@@ -137,6 +136,7 @@ function toggle(event: MouseEvent): void {
     transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Sun — visible in light mode */
 .theme-toggle .toggle-icon.sun {
   color: rgb(var(--ink));
   opacity: 1;
@@ -148,6 +148,7 @@ function toggle(event: MouseEvent): void {
   transform: rotate(180deg) scale(0.2);
 }
 
+/* Moon — visible in dark mode */
 .theme-toggle .toggle-icon.moon {
   color: rgb(var(--ink));
   opacity: 0;
@@ -164,6 +165,6 @@ function toggle(event: MouseEvent): void {
 }
 
 .theme-toggle:active .theme-toggle-knob {
-  transform: scale(0.95);
+  transform: translate(-50%, -50%) scale(0.95);
 }
 </style>
