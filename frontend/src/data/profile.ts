@@ -34,6 +34,8 @@ export interface ExperienceEntry {
   tag: 'Professional' | 'Internship'
   title: string
   company: string
+  /** Company logo path (from the Resume project) — shown on /experience. */
+  logo?: string
   description: string
   highlights: string[]
 }
@@ -45,6 +47,7 @@ export const experiences: ExperienceEntry[] = [
     tag: 'Professional',
     title: 'Junior Front-End Developer',
     company: 'PRAXXYS SOLUTIONS',
+    logo: '/images/logos/praxxys-logo.png',
     description:
       'Working in an Agile/Fast Phased development environment. Developing user interfaces that match designs exactly using modern frameworks. Collaborating on mobile and web development with AI research and innovation.',
     highlights: [
@@ -61,6 +64,7 @@ export const experiences: ExperienceEntry[] = [
     tag: 'Internship',
     title: 'Quality Assurance Analyst & Business Application Developer',
     company: 'NOAH BUSINESS APPLICATION',
+    logo: '/images/logos/noah-logo.png',
     description:
       'University Internship at Makati City, Metro Manila. Ensured system features and elements met company standards through rigorous testing and documentation.',
     highlights: [
@@ -77,6 +81,8 @@ export interface EducationEntry {
   tag: string
   title: string
   school: string
+  /** School logo path (from the Resume project) — shown on /experience. */
+  logo?: string
   detail: string
 }
 
@@ -86,6 +92,7 @@ export const education: EducationEntry[] = [
     tag: 'Graduated',
     title: 'BS Information Technology',
     school: 'Saint Louis University',
+    logo: '/images/logos/slu-logo.svg',
     detail: 'SAMCIS | Bachelor of Science in Information Technology. Baguio City, Benguet, Philippines.',
   },
 ]

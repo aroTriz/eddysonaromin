@@ -98,13 +98,14 @@ const pagedPosts = computed(() => {
       empty-message="No posts published yet."
       :on-retry="load"
     >
-      <!-- List view: stacked horizontal cards (bryllim-style) -->
-      <div v-if="view === 'list'" class="flex flex-col gap-6">
+      <!-- List view: stacked horizontal cards (bryllim-exact: each card
+           is padded 24px 0 with a 1px top border — no container gap) -->
+      <div v-if="view === 'list'" class="flex flex-col">
         <BlogCard v-for="post in pagedPosts" :key="post.slug" :post="post" layout="list" />
       </div>
 
-      <!-- Grid view: 3 columns (bryllim-style) -->
-      <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- Grid view: 3 columns, gap-x-6 gap-y-8 (bryllim-exact) -->
+      <div v-else class="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
         <BlogCard v-for="post in pagedPosts" :key="post.slug" :post="post" layout="grid" />
       </div>
 

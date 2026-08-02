@@ -35,12 +35,16 @@ const readingTime = computed(() => {
   <RouterLink
     :to="`/blog/${post.slug}`"
     class="post-card group"
-    :class="layout === 'grid' ? 'flex flex-col' : 'flex gap-5'"
+    :class="layout === 'grid'
+      ? 'flex flex-col'
+      : 'flex items-start gap-5 border-t border-gray-200 py-6'"
   >
     <!-- thumbnail (gradient placeholder with monogram) -->
     <div
-      class="post-thumb relative shrink-0 self-start overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
-      :class="layout === 'grid' ? 'aspect-[8/5] w-full' : 'h-[100px] w-[150px]'"
+      class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
+      :class="layout === 'grid'
+        ? 'mb-[0.9rem] aspect-[16/10] w-full'
+        : 'h-[92px] w-[136px] flex-none'"
     >
       <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
         <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">EA</span>
@@ -56,8 +60,12 @@ const readingTime = computed(() => {
         {{ post.title }}
       </h2>
       <!-- Fixed 2-line excerpt block: 1-line and 2-line descriptions occupy
-           the same height so every card in the list stays the same size. -->
-      <p class="post-excerpt mt-1.5 line-clamp-2 h-[3.25em] text-[14px] leading-relaxed text-gray-500">
+           the same height so every card in the list stays the same size.
+           Hidden in grid view (bryllim hides it there). -->
+      <p
+        v-if="layout !== 'grid'"
+        class="post-excerpt mt-1.5 line-clamp-2 h-[3.25em] text-[14px] leading-relaxed text-gray-500"
+      >
         {{ post.excerpt }}
       </p>
       <div class="mt-2.5 flex items-center gap-2 font-mono text-[11px] text-gray-400">

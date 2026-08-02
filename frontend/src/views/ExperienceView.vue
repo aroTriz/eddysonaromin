@@ -1,22 +1,10 @@
 <script setup lang="ts">
 /**
- * Experience — bryllim-style timeline: company rail (initials avatar +
- * vertical line) + company header + role cards with period/description.
+ * Experience — bryllim-style timeline: company/school logo rail
+ * (round logo avatar + vertical line) + company header + role cards
+ * with period/description.
  */
-import { GraduationCap } from 'lucide-vue-next'
-
 import { education, experiences } from '@/data/profile'
-
-/** Initials for the company avatar. */
-function initials(name: string): string {
-  return name
-    .replace(/[^A-Za-z ]/g, '')
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 </script>
 
 <template>
@@ -41,10 +29,14 @@ function initials(name: string): string {
       >
         <!-- logo rail -->
         <div class="flex flex-col items-center">
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink"
-          >
-            {{ initials(job.company) }}
+          <img
+            v-if="job.logo"
+            :src="job.logo"
+            :alt="`${job.company} logo`"
+            class="h-12 w-12 shrink-0 rounded-full border border-gray-200 bg-white object-contain p-1.5 shadow-[0_0_0_3px_rgb(var(--bg)),0_0_0_4px_rgb(var(--g200))]"
+          />
+          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink">
+            {{ job.company.charAt(0) }}
           </div>
           <div v-if="i < experiences.length - 1" class="mt-2 w-px flex-1 bg-gray-200"></div>
         </div>
@@ -87,10 +79,14 @@ function initials(name: string): string {
         class="reveal relative flex gap-4 sm:gap-5"
       >
         <div class="flex flex-col items-center">
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white"
-          >
-            <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
+          <img
+            v-if="edu.logo"
+            :src="edu.logo"
+            :alt="`${edu.school} logo`"
+            class="h-12 w-12 shrink-0 rounded-full border border-gray-200 bg-white object-contain p-1.5 shadow-[0_0_0_3px_rgb(var(--bg)),0_0_0_4px_rgb(var(--g200))]"
+          />
+          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white">
+            <span class="font-pixel text-[12px] text-ink">{{ edu.school.charAt(0) }}</span>
           </div>
         </div>
 
