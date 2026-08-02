@@ -50,9 +50,8 @@ const pagedPosts = computed(() => {
     <!-- Header (bryllim-style with view toggle) -->
     <header class="mb-10 flex items-start justify-between gap-4">
       <div>
-        <p class="terminal-comment mb-2 text-[13px]">$ ls ./blog/</p>
         <h1 class="font-pixel text-2xl leading-none">blog</h1>
-        <p class="mt-2.5 max-w-xl text-[15px] leading-relaxed text-gray-600">
+        <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-600">
           Notes on building, learning & shipping.
         </p>
       </div>

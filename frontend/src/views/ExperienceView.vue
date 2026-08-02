@@ -15,7 +15,7 @@ import { education, experiences } from '@/data/profile'
       <h1 class="font-pixel text-2xl leading-none">experience</h1>
     </header>
 
-    <p class="reveal mb-14 max-w-xl text-[15px] leading-relaxed text-gray-600">
+    <p class="reveal mb-14 mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
       Hands-on experience across web and mobile development, QA, and AI research —
       from Agile teams at a solutions studio to a QA internship at a business application firm.
     </p>

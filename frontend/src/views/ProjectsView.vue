@@ -84,7 +84,7 @@ const listedProjects = computed(() =>
     <Reveal>
       <p class="terminal-comment text-[13px]">$ ls ./projects/</p>
       <h1 class="mt-3 font-pixel text-2xl leading-none">projects</h1>
-      <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-600">
+      <p class="mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
         Academic and personal projects I've designed and built — spanning web apps,
         mobile, games, AI tools, and more.
       </p>
