@@ -69,17 +69,17 @@ const listedProjects = computed(() =>
       </p>
     </Reveal>
 
-    <!-- ── Filters ──────────────────────────────────────────── -->
+    <!-- ── Filters (rounded-full pill chips) ────────────────── -->
     <Reveal :delay="1" class="mt-8 flex flex-wrap gap-2">
       <button
         v-for="filter in filters"
         :key="filter.value"
         type="button"
-        class="rounded-full border px-4 py-1.5 font-mono text-[12.5px] transition-colors"
+        class="rounded-full border px-4 py-2 font-mono text-[12.5px] shadow-sm transition-colors"
         :class="
           activeFilter === filter.value
-            ? 'border-ink bg-ink text-bg'
-            : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink'
+            ? 'border-gray-900 bg-gray-900 text-white'
+            : 'border-gray-300 bg-white text-gray-600 hover:border-gray-500 hover:text-ink'
         "
         @click="activeFilter = filter.value"
       >

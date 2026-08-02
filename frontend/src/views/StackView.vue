@@ -25,7 +25,7 @@ import { competencies, stackGroups } from '@/data/profile'
         v-for="(group, i) in stackGroups"
         :key="group.label"
         :delay="i % 3"
-        class="rounded-xl border border-gray-200 bg-white p-6"
+        class="rounded-xl border border-gray-300 bg-white shadow-sm bg-white p-6"
       >
         <h2 class="flex items-center gap-2 font-mono text-[12.5px] uppercase tracking-wide text-gray-500">
           <Wrench class="h-3.5 w-3.5" :stroke-width="1.6" />
@@ -35,7 +35,7 @@ import { competencies, stackGroups } from '@/data/profile'
           <span
             v-for="tech in group.items"
             :key="tech"
-            class="rounded-full border border-gray-200 px-3 py-1 font-mono text-[12px] text-gray-600"
+            class="rounded-full border border-gray-300 bg-white shadow-sm px-3 py-1 font-mono text-[12px] text-gray-600"
           >
             {{ tech }}
           </span>
@@ -56,7 +56,7 @@ import { competencies, stackGroups } from '@/data/profile'
           v-for="(competency, i) in competencies"
           :key="competency.title"
           :delay="i % 3"
-          class="rounded-xl border border-gray-200 bg-white p-5"
+          class="rounded-xl border border-gray-300 bg-white shadow-sm bg-white p-5"
         >
           <h3 class="text-[15px] font-semibold tracking-tight text-ink">{{ competency.title }}</h3>
           <p class="mt-2 text-[13.5px] leading-relaxed text-gray-500">{{ competency.description }}</p>

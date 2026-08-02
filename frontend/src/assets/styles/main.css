@@ -5,12 +5,13 @@
    ════════════════════════════════════════════════════════════════════ */
 
 /* ── Ionic base styles (must precede Tailwind) ─────────────────── */
-/* NOTE: typography.css is intentionally NOT imported — it sets an
-   unlayered `a { background-color: transparent }` + default colors that
-   would override Tailwind's layered utilities. All typography comes from
-   Tailwind + this design system instead. */
+/* NOTE: typography.css + normalize.css are intentionally NOT imported.
+   typography.css sets an unlayered `a { background-color: transparent }`
+   that overrides Tailwind's layered utilities, and normalize.css ships an
+   unlayered `button { border:0; border-radius:0; padding:0 }` reset that
+   kills Tailwind's rounded-full/border/padding on every button. Tailwind's
+   own preflight (properly layered) handles resets instead. */
 @import '@ionic/vue/css/core.css';
-@import '@ionic/vue/css/normalize.css';
 @import '@ionic/vue/css/structure.css';
 
 /* ── Tailwind v4 ───────────────────────────────────────────────── */
