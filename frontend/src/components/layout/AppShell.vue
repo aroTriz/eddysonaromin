@@ -62,7 +62,7 @@ const navGroups = [
     links: [
       { label: 'Projects', to: '/projects', name: 'projects', icon: undefined },
       { label: 'Experience', to: '/experience', name: 'experience', icon: undefined },
-      { label: 'Stack', to: '/stack', name: 'stack', icon: undefined },
+      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: undefined },
       { label: 'Certifications', to: '/certifications', name: 'certifications', icon: undefined },
       { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: undefined },
     ],

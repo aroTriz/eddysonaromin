@@ -12,7 +12,7 @@ import { stackGroups } from '@/data/profile'
     <!-- header -->
     <header class="mb-12">
       <p class="terminal-comment mb-3 text-[13px]">$ ls ./stack/</p>
-      <h1 class="font-pixel text-2xl leading-none">stack</h1>
+      <h1 class="font-pixel text-2xl leading-none">tech stack</h1>
       <p class="mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
         Technologies and tools I work with — from frontend frameworks to backend, mobile, and data.
       </p>
