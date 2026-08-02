@@ -27,7 +27,8 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['HTML', 'CSS', 'JavaScript', 'Cloudflare Pages'],
                 'url' => 'https://trizai-html.pages.dev',
                 'source_url' => null,
-                'image_url' => '/images/projects/triz-ai.jpg',
+                'image_url' => '/images/projects/triz-ai-shot.png',
+                'favicon_url' => '/images/projects/icons/triz-ai.svg',
                 'sort_order' => 1,
             ],
             [
@@ -43,7 +44,8 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['JavaScript', 'AI', 'Camera API', 'Cloudflare Pages'],
                 'url' => 'https://item-vision.pages.dev',
                 'source_url' => null,
-                'image_url' => '/images/projects/itemvision.jpg',
+                'image_url' => '/images/projects/itemvision-ai-shot.png',
+                'favicon_url' => '/images/projects/icons/itemvision-ai.svg',
                 'sort_order' => 2,
             ],
             [
@@ -59,7 +61,8 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['JavaScript', 'HTML/CSS', 'Game', 'Wordle Clone', 'Cloudflare Pages'],
                 'url' => 'https://wordle-game-bxo.pages.dev',
                 'source_url' => null,
-                'image_url' => '/images/projects/wordle.jpg',
+                'image_url' => '/images/projects/wordle-shot.png',
+                'favicon_url' => '/images/projects/icons/wordle.svg',
                 'sort_order' => 3,
             ],
             [
@@ -75,6 +78,8 @@ class ProjectSeeder extends Seeder
                 'technologies' => ['JavaScript', 'HTML/CSS', 'Typing Test', 'Cloudflare Pages'],
                 'url' => 'https://type-monk-e.pages.dev',
                 'source_url' => null,
+                'image_url' => '/images/projects/type-monk-e-shot.png',
+                'favicon_url' => null,
                 'sort_order' => 4,
             ],
 

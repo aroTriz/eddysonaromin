@@ -5,8 +5,10 @@
  * marquee, and serif recommendation card below.
  */
 import { ArrowUpRight, GraduationCap, Mail } from 'lucide-vue-next'
+import { ref } from 'vue'
 
 import BlogSection from '@/components/home/BlogSection.vue'
+import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
@@ -18,6 +20,8 @@ import {
   recommendations,
   stats,
 } from '@/data/profile'
+
+const emailModalRef = ref<InstanceType<typeof EmailModal> | null>(null)
 
 const marqueeList = [...allTechnologies, ...allTechnologies]
 const year = new Date().getFullYear()
@@ -75,7 +79,14 @@ const socials = [
             >
               {{ social.label }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
             </a>
-            <a :href="`mailto:${profile.email}`" class="hover:text-ink">email <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" /></a>
+            <button
+              type="button"
+              class="hover:text-ink"
+              aria-haspopup="dialog"
+              @click="emailModalRef?.openModal()"
+            >
+              email <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+            </button>
           </div>
 
           <div class="reveal d5 mt-8 flex flex-wrap items-center gap-4">
@@ -86,13 +97,15 @@ const socials = [
               View My Work
               <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
             </RouterLink>
-            <a
-              :href="`mailto:${profile.email}`"
+            <button
+              type="button"
               class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              aria-haspopup="dialog"
+              @click="emailModalRef?.openModal()"
             >
               Get In Touch
               <Mail class="h-4 w-4" :stroke-width="1.8" />
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -290,6 +303,9 @@ const socials = [
       </p>
     </footer>
   </div>
+
+  <!-- Email "say hello" modal (bryllim-style) -->
+  <EmailModal ref="emailModalRef" />
 </template>
 
 <style scoped>

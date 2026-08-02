@@ -58,7 +58,7 @@ const listedProjects = computed(() =>
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+  <div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-16">
     <!-- ── Header ───────────────────────────────────────────── -->
     <Reveal>
       <p class="terminal-comment text-[13px]">$ ls ./projects/</p>
@@ -100,7 +100,7 @@ const listedProjects = computed(() =>
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             personal projects
           </p>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in personalProjects" :key="project.slug" :project="project" />
           </div>
         </div>
@@ -112,14 +112,14 @@ const listedProjects = computed(() =>
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             academic projects
           </p>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in academicProjects" :key="project.slug" :project="project" />
           </div>
         </div>
       </template>
 
       <!-- Specific filter → flat grid -->
-      <div v-else class="mt-8 grid gap-4 sm:grid-cols-2">
+      <div v-else class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ProjectCard v-for="project in listedProjects" :key="project.slug" :project="project" />
       </div>
     </AsyncState>

@@ -30,6 +30,7 @@ class Project extends Model
         'url',
         'source_url',
         'image_url',
+        'favicon_url',
         'sort_order',
     ];
 
