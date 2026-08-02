@@ -346,7 +346,7 @@ const socials = [
 
     <!-- ── Footer ───────────────────────────────────────────── -->
     <footer class="mt-16 border-t border-gray-200 py-8">
-      <p class="font-mono text-[12px] text-gray-500">
+      <p class="text-center font-mono text-[12px] text-gray-500">
         © {{ year }} {{ profile.fullName }}. All rights reserved.
       </p>
     </footer>
