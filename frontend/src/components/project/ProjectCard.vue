@@ -45,12 +45,12 @@ defineProps<{
     </div>
 
     <div class="mt-auto flex flex-wrap gap-1.5 pt-1">
-      <TechTag v-for="tech in project.technologies.slice(0, 4)" :key="tech" :label="tech" />
+      <TechTag v-for="tech in project.technologies.slice(0, 3)" :key="tech" :label="tech" />
       <span
-        v-if="project.technologies.length > 4"
+        v-if="project.technologies.length > 3"
         class="font-mono text-[11px] leading-6 text-gray-500"
       >
-        +{{ project.technologies.length - 4 }}
+        +{{ project.technologies.length - 3 }}
       </span>
     </div>
 

@@ -219,6 +219,34 @@ const socials = [
           </div>
         </div>
       </div>
+
+      <!-- Stack panel (bryllim-exact: h3 + view all + mono pills) -->
+      <div class="mt-10">
+        <div class="flex items-baseline justify-between">
+          <h3 class="text-[15px] font-semibold tracking-tight text-ink">Stack</h3>
+          <RouterLink
+            to="/stack"
+            class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          >
+            view all <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+          </RouterLink>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span
+            v-for="tech in allTechnologies.slice(0, 12)"
+            :key="tech"
+            class="rounded-md border border-gray-200 bg-white px-2.5 py-1 font-mono text-[12px] text-gray-600"
+          >
+            {{ tech }}
+          </span>
+          <RouterLink
+            to="/stack"
+            class="font-mono text-[12px] text-gray-500 hover:text-ink"
+          >
+            + more
+          </RouterLink>
+        </div>
+      </div>
     </section>
 
     <!-- ── Certifications (bryllim-style grid) ───────────────── -->

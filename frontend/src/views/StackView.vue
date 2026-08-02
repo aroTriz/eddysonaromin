@@ -34,7 +34,7 @@ import { competencies, stackGroups } from '@/data/profile'
           <span
             v-for="tech in group.items"
             :key="tech"
-            class="rounded-full border border-gray-300 bg-white shadow-sm px-3 py-1 font-mono text-[12px] text-gray-600"
+            class="rounded-md border border-gray-200 bg-white px-2.5 py-1 font-mono text-[12px] text-gray-600"
           >
             {{ tech }}
           </span>
