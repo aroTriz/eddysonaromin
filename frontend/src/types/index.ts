@@ -17,6 +17,7 @@ export interface Project {
     | 'ar-mobile'
     | 'networking'
   summary: string
+  tagline: string | null
   description: string | null
   role: string | null
   year: string | null

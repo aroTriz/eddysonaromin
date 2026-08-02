@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * Certifications — education credentials, affiliations and references.
+ * Certifications — education credentials and references.
  */
-import { Award, BadgeCheck, UserRound } from 'lucide-vue-next'
+import { Award, UserRound } from 'lucide-vue-next'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
-import { affiliations, certifications, references } from '@/data/profile'
+import { certifications, references } from '@/data/profile'
 </script>
 
 <template>
@@ -20,7 +20,7 @@ import { affiliations, certifications, references } from '@/data/profile'
 
     <!-- ── Certifications ───────────────────────────────────── -->
     <section aria-label="Certifications" class="mt-10">
-      <SectionHeading comment="// certifications" title="[ Credentials ]" blurb="Academic and professional certificates" />
+      <SectionHeading comment="// certifications" title="credentials" blurb="Academic and professional certificates" />
 
       <div class="mt-6 grid gap-4 sm:grid-cols-2">
         <Reveal
@@ -43,32 +43,9 @@ import { affiliations, certifications, references } from '@/data/profile'
       </div>
     </section>
 
-    <!-- ── Affiliations ─────────────────────────────────────── -->
-    <section aria-label="Affiliations" class="mt-14">
-      <SectionHeading comment="// affiliations" title="[ Affiliations ]" blurb="Communities and organizations" />
-
-      <div class="mt-6 grid gap-4 sm:grid-cols-2">
-        <Reveal
-          v-for="(affiliation, i) in affiliations"
-          :key="affiliation.org"
-          :delay="i % 3"
-          class="rounded-xl border border-gray-200 bg-white p-5"
-        >
-          <div class="flex items-start gap-3">
-            <BadgeCheck class="mt-0.5 h-5 w-5 shrink-0 text-gray-500" :stroke-width="1.6" />
-            <div>
-              <h3 class="text-[15px] font-semibold tracking-tight text-ink">{{ affiliation.org }}</h3>
-              <p class="mt-0.5 font-mono text-[12.5px] text-gray-500">{{ affiliation.role }}</p>
-              <p class="mt-2 text-[13.5px] leading-relaxed text-gray-500">{{ affiliation.detail }}</p>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-
     <!-- ── References ───────────────────────────────────────── -->
     <section aria-label="References" class="mt-14">
-      <SectionHeading comment="// references" title="[ References ]" blurb="People I've worked with" />
+      <SectionHeading comment="// references" title="references" blurb="People I've worked with" />
 
       <div class="mt-6 grid gap-4 sm:grid-cols-2">
         <Reveal

@@ -46,7 +46,7 @@ import { competencies, stackGroups } from '@/data/profile'
     <section aria-label="Core competencies" class="mt-14">
       <SectionHeading
         comment="// core-competencies"
-        title="[ Core Competencies ]"
+        title="core competencies"
         blurb="Key areas of expertise"
       />
 

@@ -61,7 +61,7 @@ const socials = [
           <!-- typewriter role line below the video -->
           <div class="mt-4 flex items-center justify-center font-mono text-[12px] text-gray-500">
             <span class="whitespace-nowrap">
-              const role = '{{ displayedRole }}'
+              const role = '{{ displayedRole }}
               <span
                 class="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-[2px] bg-gray-500"
                 :style="{ opacity: caretOn ? 1 : 0 }"

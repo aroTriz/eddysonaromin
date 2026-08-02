@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AskController;
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\GithubController;
@@ -27,4 +28,6 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/contact', [ContactController::class, 'store']);
 
     Route::get('/github/{username}/contributions', [GithubController::class, 'contributions']);
+
+    Route::post('/ask', [AskController::class, 'answer']);
 });

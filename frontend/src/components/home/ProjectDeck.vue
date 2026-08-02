@@ -6,10 +6,13 @@
  */
 import { ArrowUpRight, Folder } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { fetchProjects } from '@/services/api'
 import type { Project } from '@/types'
 import { projectTypeLabel } from '@/utils/format'
+
+const router = useRouter()
 
 const projects = ref<Project[]>([])
 const order = ref<number[]>([])
@@ -52,6 +55,18 @@ function activate(index: number): void {
   }
   order.value = current
 }
+
+/** Center card → navigate to the project's slug detail page. */
+function openProject(index: number): void {
+  if (slotClass(index) !== 'is-center') {
+    activate(index)
+    return
+  }
+  const project = projects.value[order.value[index]]
+  if (project) {
+    void router.push(`/projects/${project.slug}`)
+  }
+}
 </script>
 
 <template>
@@ -72,32 +87,25 @@ function activate(index: number): void {
       role="button"
       tabindex="0"
       :aria-label="`Show ${projects[idx].title}`"
-      @click="activate(i)"
-      @keydown.enter="activate(i)"
-      @keydown.space.prevent="activate(i)"
+      @click="openProject(i)"
+      @keydown.enter="openProject(i)"
+      @keydown.space.prevent="openProject(i)"
     >
       <div class="flex flex-wrap items-center gap-1.5">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white">
-          {{ projects[idx].type.replace('-', ' ') }}
-        </span>
-        <span
-          v-for="tech in projects[idx].technologies.slice(0, 1)"
-          :key="tech"
-          class="rounded-full border border-gray-300 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-gray-500"
-        >
-          {{ tech }}
+          {{ projectTypeLabel(projects[idx].type) }}
         </span>
       </div>
 
       <div class="mt-4 flex items-center gap-3.5">
         <div
           v-if="projects[idx].favicon_url"
-          class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          class="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
           <img
             :src="projects[idx].favicon_url"
             :alt="`${projects[idx].title} icon`"
-            class="h-7 w-7 object-contain"
+            class="h-full w-full object-cover"
             loading="lazy"
           />
         </div>
@@ -110,13 +118,13 @@ function activate(index: number): void {
         <h3 class="font-pixel text-base leading-tight text-ink">{{ projects[idx].title }}</h3>
       </div>
 
-      <p class="mt-3 line-clamp-4 text-[13px] leading-relaxed text-gray-600">
-        {{ projects[idx].summary }}
+      <p class="mt-3 line-clamp-3 text-[13px] leading-relaxed text-gray-600">
+        {{ projects[idx].tagline ?? projects[idx].summary }}
       </p>
 
       <div class="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
         <span class="font-mono text-[9px] uppercase tracking-wider text-gray-400">
-          {{ projectTypeLabel(projects[idx].type) }}
+          {{ projects[idx].year }}
         </span>
         <span
           class="inline-flex items-center gap-1 font-mono text-[10px] text-gray-500 group-hover:text-ink"

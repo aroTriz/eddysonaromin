@@ -8,9 +8,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 <template>
   <div class="mx-auto flex w-full max-w-3xl flex-col items-start px-6 py-24 md:py-32">
     <p class="terminal-comment text-[13px]">$ cat ./404.md</p>
-    <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-      [ 404 ]
-    </h1>
+    <h1 class="mt-3 font-pixel text-2xl leading-none">404</h1>
     <p class="mt-2 font-mono text-[13px] text-gray-500">
       // The page you're looking for doesn't exist.
     </p>

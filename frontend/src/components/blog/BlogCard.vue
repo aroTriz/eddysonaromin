@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * BlogCard — used in the blog index. Links to the slug-based post page.
+ * BlogCard — bryllim-style single-column blog card:
+ * thumbnail + mono date + serif title + 2-line excerpt + Read · N min.
  */
-import { ArrowUpRight, CalendarDays } from 'lucide-vue-next'
+import { computed } from 'vue'
 
 import type { BlogPost } from '@/types'
-import TechTag from '@/components/ui/TechTag.vue'
 
-defineProps<{
+const props = defineProps<{
   post: BlogPost
 }>()
 
@@ -19,34 +19,43 @@ function formatDate(iso: string | null): string {
     day: 'numeric',
   })
 }
+
+const readingTime = computed(() => {
+  const words = props.post.content.split(/\s+/).length
+  return `${Math.max(1, Math.round(words / 200))} min`
+})
 </script>
 
 <template>
   <RouterLink
     :to="`/blog/${post.slug}`"
-    class="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300"
+    class="post-card group flex flex-col gap-4 sm:flex-row"
   >
-    <div class="flex items-center gap-2 font-mono text-[12px] text-gray-500">
-      <CalendarDays class="h-3.5 w-3.5" :stroke-width="1.6" />
-      {{ formatDate(post.published_at) }}
+    <!-- thumbnail (gradient placeholder with monogram — no images needed) -->
+    <div class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 sm:w-44">
+      <div
+        class="flex h-36 w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white sm:h-full"
+      >
+        <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">
+          EA
+        </span>
+      </div>
     </div>
 
-    <h3 class="text-[17px] font-semibold leading-snug tracking-tight text-ink">
-      {{ post.title }}
-    </h3>
-    <p class="line-clamp-3 text-[13.5px] leading-relaxed text-gray-500">
-      {{ post.excerpt }}
-    </p>
-
-    <div class="mt-auto flex flex-wrap gap-1.5 pt-1">
-      <TechTag v-for="tag in post.tags?.slice(0, 3)" :key="tag" :label="tag" />
+    <!-- body -->
+    <div class="post-body min-w-0 flex-1 py-1">
+      <time class="font-mono text-[11.5px] text-gray-400">{{ formatDate(post.published_at) }}</time>
+      <h2 class="mt-1 font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500">
+        {{ post.title }}
+      </h2>
+      <p class="post-excerpt mt-1.5 line-clamp-2 text-[14px] leading-relaxed text-gray-500">
+        {{ post.excerpt }}
+      </p>
+      <div class="mt-2.5 flex items-center gap-2 font-mono text-[11px] text-gray-400">
+        <span class="group-hover:text-ink">Read</span>
+        <span class="text-gray-300" aria-hidden="true">·</span>
+        <span>{{ readingTime }}</span>
+      </div>
     </div>
-
-    <span
-      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink"
-    >
-      read post
-      <ArrowUpRight class="h-3.5 w-3.5" :stroke-width="1.8" />
-    </span>
   </RouterLink>
 </template>

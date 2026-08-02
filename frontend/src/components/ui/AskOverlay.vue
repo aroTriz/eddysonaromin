@@ -12,6 +12,7 @@
  *  5. "as for your question" → "i don't want to waste tokens on that" →
  *     opens Google search for the query.
  */
+import { X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 const open = ref(false)
@@ -24,6 +25,9 @@ const titleText = ref('what do you want to ask?')
 const isShimmer = ref(false)
 const bubbleOn = ref(false)
 const bubbleText = ref('')
+const answering = ref(false)
+const answerText = ref('')
+const answerError = ref('')
 
 const titleEl = ref<HTMLElement | null>(null)
 const textInput = ref<HTMLInputElement | null>(null)
@@ -174,12 +178,29 @@ async function submit(): Promise<void> {
   }
 
   await setTitle('as for your question')
-  await sleep(2000)
-  await setTitle("i don't want to waste tokens on that, search for it yourself :)")
-  await sleep(2200)
+  await sleep(1800)
 
-  window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank', 'noopener')
-  close()
+  // ── actually answer via the OpenAI-compatible backend (eddgpt/OpenAI) ──
+  answering.value = true
+  answerError.value = ''
+  await setTitle('answering...', true)
+  try {
+    const res = await fetch('/api/v1/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: query }),
+    })
+    const payload = await res.json()
+    if (!res.ok) {
+      throw new Error(payload.error || 'Failed to get an answer.')
+    }
+    answerText.value = payload.answer
+  } catch (err) {
+    answerError.value = err instanceof Error ? err.message : 'Something went wrong.'
+  } finally {
+    answering.value = false
+    isShimmer.value = false
+  }
 }
 
 function openAsk(): void {
@@ -191,6 +212,9 @@ function openAsk(): void {
   bubbleOn.value = false
   bubbleText.value = ''
   isShimmer.value = false
+  answering.value = false
+  answerText.value = ''
+  answerError.value = ''
   titleText.value = 'what do you want to ask?'
   document.documentElement.style.overflow = 'hidden'
   requestAnimationFrame(() => {
@@ -252,9 +276,19 @@ defineExpose({ openAsk })
         @click="close"
       ></div>
 
+      <!-- close (X) button — plain X, no border, always available to exit -->
+      <button
+        type="button"
+        class="absolute right-5 top-5 z-20 inline-flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-ink"
+        aria-label="Close"
+        @click="close"
+      >
+        <X class="h-5 w-5" :stroke-width="1.8" />
+      </button>
+
       <!-- content -->
       <div
-        class="relative z-10 flex w-full max-w-[760px] flex-col items-start gap-6 pl-0 text-left transition-all duration-300 sm:pl-[9vw]"
+        class="relative z-10 flex w-full max-w-[760px] flex-col items-start gap-6 pl-0 pr-10 text-left transition-all duration-300 sm:pl-[9vw]"
         :class="isOpen ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'"
         @click="textInput?.focus()"
       >
@@ -274,6 +308,20 @@ defineExpose({ openAsk })
         >
           {{ titleText }}
         </h2>
+
+        <!-- AI answer (shown after the question is answered) -->
+        <div
+          v-if="answerText || answerError"
+          class="ask-answer"
+          @click.stop
+        >
+          <p v-if="answerError" class="text-[14px] leading-relaxed text-red-600">
+            {{ answerError }}
+          </p>
+          <p v-else class="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-700">
+            {{ answerText }}
+          </p>
+        </div>
 
         <!-- typing field — hidden after submit -->
         <div
@@ -318,6 +366,15 @@ defineExpose({ openAsk })
   border-radius: 14px;
   border-top-left-radius: 5px;
   word-break: break-word;
+}
+.ask-answer {
+  max-width: min(90vw, 620px);
+  background: rgb(var(--bg));
+  border: 1px solid rgb(var(--g200));
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 32px -18px rgba(10, 10, 10, 0.25);
+  animation: bubble-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ask-bubble.is-on {
   display: block;

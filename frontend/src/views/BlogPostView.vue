@@ -3,12 +3,12 @@
  * BlogPost — slug-driven post page. Renders markdown-ish content from the
  * API into styled HTML with safe, simple formatting (no external deps).
  */
-import { ArrowLeft, CalendarDays } from 'lucide-vue-next'
+import { ArrowLeft } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AsyncState from '@/components/ui/AsyncState.vue'
-import TechTag from '@/components/ui/TechTag.vue'
+import { profile } from '@/data/profile'
 import { fetchBlogPost } from '@/services/api'
 import type { BlogPost } from '@/types'
 
@@ -16,6 +16,13 @@ const route = useRoute()
 const post = ref<BlogPost | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+/** Estimate reading time — ~200 words per minute. */
+const readingTime = computed(() => {
+  if (!post.value) return '1 min'
+  const words = post.value.content.split(/\s+/).length
+  return `${Math.max(1, Math.round(words / 200))} min read`
+})
 
 async function load(): Promise<void> {
   loading.value = true
@@ -160,16 +167,23 @@ function formatDate(iso: string | null): string {
       <template v-if="post">
         <article class="mt-6">
           <header>
-            <div class="flex items-center gap-2 font-mono text-[12.5px] text-gray-500">
-              <CalendarDays class="h-3.5 w-3.5" :stroke-width="1.6" />
-              {{ formatDate(post.published_at) }}
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-wider text-gray-400">
+              <time>{{ formatDate(post.published_at) }}</time>
+              <span class="text-gray-300" aria-hidden="true">·</span>
+              <span>{{ readingTime }} min read</span>
             </div>
-            <h1 class="mt-3 text-[1.9rem] font-semibold leading-tight tracking-tightest md:text-[2.5rem]">
+
+            <h1 class="mt-3 font-serif text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[34px]">
               {{ post.title }}
             </h1>
-            <p class="mt-4 text-[15px] leading-relaxed text-gray-500">{{ post.excerpt }}</p>
-            <div v-if="post.tags?.length" class="mt-4 flex flex-wrap gap-2">
-              <TechTag v-for="tag in post.tags" :key="tag" :label="tag" />
+
+            <p class="mt-3 text-[16px] leading-relaxed text-gray-500">{{ post.excerpt }}</p>
+
+            <div class="mt-5 flex items-center gap-2.5 border-t border-gray-200 pt-5">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+                EA
+              </div>
+              <div class="text-[13px] font-medium text-ink">{{ profile.fullName }}</div>
             </div>
           </header>
 

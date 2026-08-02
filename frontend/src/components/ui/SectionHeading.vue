@@ -1,23 +1,27 @@
 <script setup lang="ts">
 /**
- * Section heading — terminal-style comment label + title + optional blurb.
+ * SectionHeading — bryllim-style section header:
+ * mono comment label + font-pixel lowercase title + optional blurb.
+ * Brackets in the title are stripped (kept for callers' convenience).
  */
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   /** Mono comment shown above the title, e.g. "// projects" */
   comment: string
-  /** The section title, e.g. "[ Projects ]" */
+  /** The section title — "[ Projects ]" renders as "projects". */
   title: string
   /** Optional short description under the title. */
   blurb?: string
 }>()
+
+const cleanTitle = computed(() => props.title.replace(/\[|\]/g, '').trim())
 </script>
 
 <template>
   <div>
     <p class="terminal-comment text-[13px]">{{ comment }}</p>
-    <h2 class="mt-1.5 text-[1.75rem] font-semibold leading-tight tracking-tightest md:text-[2.1rem]">
-      {{ title }}
-    </h2>
-    <p v-if="blurb" class="mt-2 max-w-xl text-[15px] text-gray-500">{{ blurb }}</p>
+    <h2 class="mt-1.5 font-pixel text-2xl leading-none">{{ cleanTitle }}</h2>
+    <p v-if="blurb" class="mt-3 max-w-xl text-[15px] leading-relaxed text-gray-600">{{ blurb }}</p>
   </div>
 </template>

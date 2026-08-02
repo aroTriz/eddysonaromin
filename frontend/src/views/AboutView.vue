@@ -58,7 +58,7 @@ const info = [
     <section aria-label="Tech stack" class="mt-16">
       <SectionHeading
         comment="// tech-stack"
-        title="[ Tech Stack ]"
+        title="tech stack"
         blurb="Technologies I work with — always in motion"
       />
       <Reveal :delay="1" class="mt-6 flex flex-wrap gap-2.5">
@@ -76,7 +76,7 @@ const info = [
     <section aria-label="Interests" class="mt-16">
       <SectionHeading
         comment="// interests"
-        title="[ Beyond the Code ]"
+        title="beyond the code"
         blurb="Things I enjoy when I'm not programming"
       />
       <Reveal :delay="1" class="mt-6 flex flex-wrap gap-2.5">

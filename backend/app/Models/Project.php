@@ -22,6 +22,7 @@ class Project extends Model
         'category',
         'type',
         'summary',
+        'tagline',
         'description',
         'role',
         'year',

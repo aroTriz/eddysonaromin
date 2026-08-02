@@ -3,7 +3,7 @@
  * ProjectDetail — slug-driven project page. Fetches by slug from the API,
  * handles loading / error / not-found states.
  */
-import { ArrowLeft, ArrowUpRight, CalendarDays, ExternalLink, Folder } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, ExternalLink, Folder } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -84,16 +84,6 @@ onMounted(async () => {
             >
               view live
               <ExternalLink class="h-3.5 w-3.5" :stroke-width="1.8" />
-            </a>
-            <a
-              v-if="project.source_url"
-              :href="project.source_url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
-            >
-              source
-              <ArrowUpRight class="h-3.5 w-3.5" :stroke-width="1.8" />
             </a>
           </div>
         </header>
