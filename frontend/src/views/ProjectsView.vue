@@ -2,7 +2,9 @@
 /**
  * Projects — filterable grid (All / category / type) served by the Laravel API.
  * When "All" is active, projects are grouped by category (Personal / Academic)
- * with a separator between the two groups. Paginated 9 per page via `?page=`.
+ * with a separator between the two groups. Each category is paginated
+ * independently — 8 per category per page (4 cols × 2 rows) — so the 9th+
+ * item of a category rolls onto the next page while keeping the headers.
  */
 import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
@@ -14,7 +16,8 @@ import Reveal from '@/components/ui/Reveal.vue'
 import { fetchProjects } from '@/services/api'
 import type { Project } from '@/types'
 
-const PROJECTS_PER_PAGE = 9
+/** Items per category per page (4 columns × 2 rows). */
+const PROJECTS_PER_PAGE = 8
 
 const filters = [
   { label: 'All', value: '' },
@@ -53,29 +56,40 @@ const page = computed(() => {
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1
 })
 
-/** Projects on the current page — personal group first, then academic. */
-const pagedProjects = computed(() => {
-  const ordered = activeFilter.value === ''
-    ? [...projects.value.filter((p) => p.category === 'personal'), ...projects.value.filter((p) => p.category === 'academic')]
-    : projects.value
+/** All personal projects (unpaginated). */
+const personalAll = computed(() =>
+  projects.value.filter((p) => p.category === 'personal'),
+)
+
+/** All academic projects (unpaginated). */
+const academicAll = computed(() =>
+  projects.value.filter((p) => p.category === 'academic'),
+)
+
+/** Personal projects on the current page (8 per category per page). */
+const personalProjects = computed(() => {
   const start = (page.value - 1) * PROJECTS_PER_PAGE
-  return ordered.slice(start, start + PROJECTS_PER_PAGE)
+  return personalAll.value.slice(start, start + PROJECTS_PER_PAGE)
 })
 
-/** Personal slice of the current page (grouped only when "All" is active). */
-const personalProjects = computed(() =>
-  activeFilter.value === '' ? pagedProjects.value.filter((p) => p.category === 'personal') : [],
-)
-
-/** Academic slice of the current page (grouped only when "All" is active). */
-const academicProjects = computed(() =>
-  activeFilter.value === '' ? pagedProjects.value.filter((p) => p.category === 'academic') : [],
-)
+/** Academic projects on the current page (8 per category per page). */
+const academicProjects = computed(() => {
+  const start = (page.value - 1) * PROJECTS_PER_PAGE
+  return academicAll.value.slice(start, start + PROJECTS_PER_PAGE)
+})
 
 /** Single-list projects on the current page (when a specific filter is active). */
-const listedProjects = computed(() =>
-  activeFilter.value !== '' ? pagedProjects.value : [],
-)
+const listedProjects = computed(() => {
+  if (activeFilter.value === '') return []
+  const start = (page.value - 1) * PROJECTS_PER_PAGE
+  return projects.value.slice(start, start + PROJECTS_PER_PAGE)
+})
+
+/** Total pages = the largest category's page count (keeps headers together). */
+const paginationTotal = computed(() => {
+  if (activeFilter.value !== '') return projects.value.length
+  return Math.max(personalAll.value.length, academicAll.value.length)
+})
 </script>
 
 <template>
@@ -146,7 +160,7 @@ const listedProjects = computed(() =>
       </div>
 
       <!-- Pagination (bryllim-exact: ← prev · N / M · next →) -->
-      <Pagination :total="projects.length" :page-size="PROJECTS_PER_PAGE" />
+      <Pagination :total="paginationTotal" :page-size="PROJECTS_PER_PAGE" />
     </AsyncState>
   </div>
 </template>
