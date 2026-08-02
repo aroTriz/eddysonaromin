@@ -127,7 +127,7 @@ const fieldClass =
           >
             <LoaderCircle v-if="submitting" class="h-4 w-4 animate-spin" :stroke-width="1.8" />
             <Send v-else class="h-4 w-4" :stroke-width="1.8" />
-            {{ submitting ? 'sending...' : '$ Send Message' }}
+            {{ submitting ? 'sending...' : 'Send Message' }}
           </button>
 
           <p

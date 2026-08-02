@@ -166,7 +166,14 @@ function formatDate(iso: string | null): string {
     <AsyncState :loading="loading" :error="error" :on-retry="load">
       <template v-if="post">
         <article class="mt-6">
-          <header>
+          <!-- Landscape hero image (matches BlogCard's gradient + monogram style) -->
+          <div class="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+            <div class="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
+              <span class="font-pixel text-4xl text-gray-300 sm:text-5xl">EA</span>
+            </div>
+          </div>
+
+          <header class="mt-8">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-wider text-gray-400">
               <time>{{ formatDate(post.published_at) }}</time>
               <span class="text-gray-300" aria-hidden="true">·</span>

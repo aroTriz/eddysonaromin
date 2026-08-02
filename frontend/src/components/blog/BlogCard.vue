@@ -39,8 +39,8 @@ const readingTime = computed(() => {
   >
     <!-- thumbnail (gradient placeholder with monogram) -->
     <div
-      class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
-      :class="layout === 'grid' ? 'aspect-[8/5] w-full' : 'w-[136px]'"
+      class="post-thumb relative shrink-0 self-start overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
+      :class="layout === 'grid' ? 'aspect-[8/5] w-full' : 'h-[100px] w-[150px]'"
     >
       <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
         <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">EA</span>
@@ -50,10 +50,14 @@ const readingTime = computed(() => {
     <!-- body -->
     <div class="post-body min-w-0 flex-1 py-1">
       <time class="font-mono text-[11.5px] text-gray-400">{{ formatDate(post.published_at) }}</time>
-      <h2 class="mt-1 font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500">
+      <h2
+        class="post-title mt-1 line-clamp-2 h-[2.75em] font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500"
+      >
         {{ post.title }}
       </h2>
-      <p class="post-excerpt mt-1.5 line-clamp-2 text-[14px] leading-relaxed text-gray-500">
+      <!-- Fixed 2-line excerpt block: 1-line and 2-line descriptions occupy
+           the same height so every card in the list stays the same size. -->
+      <p class="post-excerpt mt-1.5 line-clamp-2 h-[3.25em] text-[14px] leading-relaxed text-gray-500">
         {{ post.excerpt }}
       </p>
       <div class="mt-2.5 flex items-center gap-2 font-mono text-[11px] text-gray-400">
