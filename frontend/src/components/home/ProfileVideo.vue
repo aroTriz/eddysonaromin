@@ -336,38 +336,45 @@ onUnmounted(() => {
   font-style: italic;
 }
 .back-body {
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow-y: auto;
 }
 .back-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 24px;
+  gap: 4px;
+  padding: 14px 16px;
   width: 100%;
 }
 .br {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-left: 2px solid rgb(var(--g300));
-  transition: border-color 0.2s;
+  border-radius: 0 8px 8px 0;
+  background: rgb(var(--g50));
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 .br:hover {
   border-left-color: rgb(var(--ink));
+  background: rgb(var(--g100));
 }
 .bl {
-  font-size: 11px;
+  font-size: 9.5px;
   color: rgb(var(--g600));
   font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 .bv {
-  font-size: 13px;
+  font-size: 12px;
   color: rgb(var(--ink));
   font-family: var(--font-mono);
-  word-break: break-all;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 </style>
