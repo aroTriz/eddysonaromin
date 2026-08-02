@@ -355,11 +355,24 @@ ion-router-outlet {
 .deck {
   position: relative;
   height: 19rem;
-  overflow: visible;
+  margin-inline: calc(50% - 50vw);
+  overflow-x: clip;
+  overflow-y: visible;
+}
+@supports not (overflow-x: clip) {
+  .deck {
+    overflow-x: hidden;
+  }
 }
 @media (min-width: 640px) {
   .deck {
     height: 17rem;
+  }
+}
+@media (min-width: 768px) {
+  .deck {
+    margin-inline: 0;
+    overflow: visible;
   }
 }
 .deck-card {

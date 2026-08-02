@@ -4,12 +4,17 @@
  * name + intro paragraphs + social links right; stats grid, tech
  * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, Mail } from 'lucide-vue-next'
+import { ArrowUpRight, GraduationCap, Mail, Users } from 'lucide-vue-next'
 
+import BlogSection from '@/components/home/BlogSection.vue'
+import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
 import {
+  affiliations,
   allTechnologies,
+  certifications,
+  experiences,
   profile,
   recommendations,
   stats,
@@ -114,8 +119,8 @@ const socials = [
     <!-- ── Tech marquee ─────────────────────────────────────── -->
     <section aria-label="Tech stack" class="mt-16">
       <p class="terminal-comment mb-4 text-[13px]">// tech stack</p>
-      <div class="mask-fade-x overflow-hidden">
-        <div class="flex w-max animate-marquee gap-3">
+      <div class="overflow-hidden">
+        <div class="mask-fade-x flex w-max animate-marquee gap-3">
           <span
             v-for="(tech, i) in marqueeList"
             :key="`${tech}-${i}`"
@@ -125,6 +130,21 @@ const socials = [
           </span>
         </div>
       </div>
+    </section>
+
+    <!-- ── Blog (bryllim-style list) ─────────────────────────── -->
+    <section id="blog" aria-label="Blog" class="relative py-14">
+      <div class="mb-8 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">01 — blog</h2>
+        <RouterLink
+          to="/blog"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          all posts <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </RouterLink>
+      </div>
+
+      <BlogSection />
     </section>
 
     <!-- ── Projects spotlight deck (bryllim-style, personal only) ── -->
@@ -140,6 +160,67 @@ const socials = [
       </div>
 
       <ProjectDeck />
+    </section>
+
+    <!-- ── Experience (bryllim-style rows) ───────────────────── -->
+    <section id="experience" aria-label="Experience" class="py-14">
+      <div class="mb-6 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">03 — experience</h2>
+        <RouterLink
+          to="/experience"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          full history <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </RouterLink>
+      </div>
+
+      <div class="divide-y divide-gray-200 border-y border-gray-200">
+        <div
+          v-for="job in experiences"
+          :key="job.title"
+          class="group grid grid-cols-12 items-baseline gap-3 py-2.5 hover:bg-gray-50/80"
+        >
+          <div class="col-span-2 font-mono text-[11px] text-gray-400">{{ job.period }}</div>
+          <div class="col-span-10 text-[14px] font-medium text-ink sm:col-span-6">{{ job.title }}</div>
+          <div class="col-span-12 text-[13px] text-gray-500 sm:col-span-4 sm:text-right">
+            {{ job.company }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Certifications (bryllim-style grid) ───────────────── -->
+    <section id="certifications" aria-label="Certifications" class="py-14">
+      <div class="mb-8 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">04 — certifications</h2>
+        <RouterLink
+          to="/certifications"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          all certifications <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </RouterLink>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <RouterLink
+          v-for="cert in certifications"
+          :key="cert.title"
+          to="/certifications"
+          class="group relative flex flex-col items-center rounded-xl bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)]"
+        >
+          <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-lg border border-gray-200/70"></span>
+          <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
+            <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
+          </div>
+          <h3 class="relative mt-3 text-[13px] font-semibold leading-snug text-ink">{{ cert.title }}</h3>
+          <p class="relative mt-1 font-mono text-[9.5px] uppercase tracking-wider text-gray-400">{{ cert.issuer }}</p>
+          <div class="relative mt-3 flex items-center gap-1.5 text-gray-300 group-hover:text-ink">
+            <span class="font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 group-hover:text-ink">
+              {{ cert.year }}
+            </span>
+          </div>
+        </RouterLink>
+      </div>
     </section>
 
     <!-- ── Recommendations (bryllim 3-card grid) ──────────────── -->
@@ -182,6 +263,55 @@ const socials = [
           </div>
         </a>
       </div>
+    </section>
+
+    <!-- ── Affiliations (bryllim-style list) ─────────────────── -->
+    <section id="affiliations" aria-label="Affiliations" class="py-14">
+      <div class="mb-7 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">06 — affiliations</h2>
+        <RouterLink
+          to="/certifications"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          all affiliations <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </RouterLink>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
+        <RouterLink
+          v-for="aff in affiliations"
+          :key="aff.org"
+          to="/certifications"
+          class="group inline-flex items-center gap-3"
+        >
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5">
+            <Users class="h-5 w-5 text-gray-400" :stroke-width="1.6" />
+          </div>
+          <div>
+            <div class="text-[13px] font-medium leading-snug text-ink group-hover:text-gray-500">{{ aff.org }}</div>
+            <div class="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-gray-400">{{ aff.role }}</div>
+          </div>
+        </RouterLink>
+      </div>
+    </section>
+
+    <!-- ── GitHub (bryllim-style halftone graph) ──────────────── -->
+    <section id="github" aria-label="GitHub" class="py-14">
+      <div class="mb-6 flex items-baseline justify-between">
+        <h2 class="font-pixel text-sm text-gray-400">07 — github</h2>
+        <a
+          :href="profile.github"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+        >
+          {{ profile.github.replace('https://', '') }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+        </a>
+      </div>
+
+      <a :href="profile.github" target="_blank" rel="noopener noreferrer" class="group block">
+        <GitHubContributions />
+      </a>
     </section>
 
     <!-- ── Footer ───────────────────────────────────────────── -->

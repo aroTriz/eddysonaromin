@@ -207,6 +207,16 @@ export const certifications: Certification[] = [
     issuer: 'Saint Louis University (SAMCIS)',
     year: '2025',
   },
+  {
+    title: 'Agile & Fast-Phased Development',
+    issuer: 'PRAXXYS SOLUTIONS',
+    year: '2026',
+  },
+  {
+    title: 'Quality Assurance & Testing',
+    issuer: 'NOAH Business Application',
+    year: '2025',
+  },
 ]
 
 export interface Affiliation {
@@ -220,6 +230,16 @@ export const affiliations: Affiliation[] = [
     org: 'MyVirtual Learning',
     role: 'Developer Connection',
     detail: 'Connected with the founder via the ISakay / capstone mentorship community.',
+  },
+  {
+    org: 'PRAXXYS Solutions',
+    role: 'Junior Front-End Developer',
+    detail: 'Agile development team — web & mobile engineering with AI research.',
+  },
+  {
+    org: 'SLU — SAMCIS',
+    role: 'BSIT Alumni',
+    detail: 'School of Accountancy, Management, Computing and Information Studies.',
   },
 ]
 
