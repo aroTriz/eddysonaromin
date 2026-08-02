@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
 import { Github, Linkedin, Mail, Menu, Rss, User, Wrench, X } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 import AskOverlay from '@/components/ui/AskOverlay.vue'
 import { profile } from '@/data/profile'
@@ -30,6 +30,17 @@ function closeMobileMenu(): void {
   mobileOpen.value = false
   document.documentElement.style.overflow = ''
 }
+
+/** ⌘K / Alt+K — open the "ask anything" overlay (bryllim-style). */
+function onGlobalKeydown(e: KeyboardEvent): void {
+  if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    askRef.value?.openAsk()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onGlobalKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown))
 
 /**
  * Nav groups mirror bryllim.com's sidebar: three divisions separated by
@@ -118,7 +129,7 @@ const navGroups = [
       class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
       @click="askRef?.openAsk()"
     >
-      <span>Ask anything</span>
+      <span>ask anything</span>
       <span class="inline-flex items-center gap-1">
         <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
           {{ isMac ? '⌘' : 'Alt' }}
@@ -307,6 +318,6 @@ const navGroups = [
     </div>
   </Teleport>
 
-  <!-- Ask anything overlay (⌘K / Alt+K) -->
+  <!-- Ask anything overlay (bryllim-style, ⌘K / Alt+K) -->
   <AskOverlay ref="askRef" />
 </template>

@@ -60,13 +60,13 @@ const socials = [
 
           <!-- typewriter role line below the video -->
           <div class="mt-4 flex items-center justify-center font-mono text-[12px] text-gray-500">
-            <span class="whitespace-nowrap">
-              const role = '{{ displayedRole }}
-              <span
+            <span class="whitespace-nowrap"
+              >const role = '{{ displayedRole }}<span
                 class="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-[2px] bg-gray-500"
                 :style="{ opacity: caretOn ? 1 : 0 }"
-              ></span>'
-            </span>
+              ></span
+              >'</span
+            >
           </div>
         </div>
 
@@ -156,7 +156,7 @@ const socials = [
           <span
             v-for="(tech, i) in marqueeList"
             :key="`${tech}-${i}`"
-            class="rounded-full border border-gray-200 px-4 py-1.5 font-mono text-[13px] text-gray-600"
+            class="rounded-full border border-gray-300 bg-gray-100 px-4 py-1.5 font-mono text-[13px] text-gray-700"
           >
             {{ tech }}
           </span>

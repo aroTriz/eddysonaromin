@@ -83,14 +83,14 @@ onMounted(load)
       empty-message="No posts published yet."
       :on-retry="load"
     >
-      <!-- List view: stacked cards -->
-      <div v-if="view === 'list'" class="space-y-6">
-        <BlogCard v-for="post in posts" :key="post.slug" :post="post" />
+      <!-- List view: stacked horizontal cards (bryllim-style) -->
+      <div v-if="view === 'list'" class="flex flex-col gap-6">
+        <BlogCard v-for="post in posts" :key="post.slug" :post="post" layout="list" />
       </div>
 
-      <!-- Grid view: 2 columns -->
-      <div v-else class="grid gap-4 sm:grid-cols-2">
-        <BlogCard v-for="post in posts" :key="post.slug" :post="post" />
+      <!-- Grid view: 3 columns (bryllim-style) -->
+      <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <BlogCard v-for="post in posts" :key="post.slug" :post="post" layout="grid" />
       </div>
     </AsyncState>
   </div>

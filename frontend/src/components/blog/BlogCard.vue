@@ -1,15 +1,20 @@
 <script setup lang="ts">
 /**
- * BlogCard — bryllim-style single-column blog card:
- * thumbnail + mono date + serif title + 2-line excerpt + Read · N min.
+ * BlogCard — bryllim-style blog card, adapts to list/grid layout:
+ *  - list: horizontal (thumb left ~136px, body right, gap 20px)
+ *  - grid: vertical (thumb full-width 8:5, body below)
  */
 import { computed } from 'vue'
 
 import type { BlogPost } from '@/types'
 
-const props = defineProps<{
-  post: BlogPost
-}>()
+const props = withDefaults(
+  defineProps<{
+    post: BlogPost
+    layout?: 'list' | 'grid'
+  }>(),
+  { layout: 'list' },
+)
 
 function formatDate(iso: string | null): string {
   if (!iso) return ''
@@ -29,16 +34,16 @@ const readingTime = computed(() => {
 <template>
   <RouterLink
     :to="`/blog/${post.slug}`"
-    class="post-card group flex flex-col gap-4 sm:flex-row"
+    class="post-card group"
+    :class="layout === 'grid' ? 'flex flex-col' : 'flex gap-5'"
   >
-    <!-- thumbnail (gradient placeholder with monogram — no images needed) -->
-    <div class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 sm:w-44">
-      <div
-        class="flex h-36 w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white sm:h-full"
-      >
-        <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">
-          EA
-        </span>
+    <!-- thumbnail (gradient placeholder with monogram) -->
+    <div
+      class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
+      :class="layout === 'grid' ? 'aspect-[8/5] w-full' : 'w-[136px]'"
+    >
+      <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
+        <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">EA</span>
       </div>
     </div>
 
