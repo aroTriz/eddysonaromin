@@ -44,6 +44,7 @@ const intro = [
 const socials = [
   { label: 'github', href: profile.github },
   { label: 'linkedin', href: profile.linkedin },
+  { label: 'instagram', href: profile.instagram },
 ]
 </script>
 

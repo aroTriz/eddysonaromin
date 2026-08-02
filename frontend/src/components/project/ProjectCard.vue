@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
  * ProjectCard — used in project grids. Links to the slug-based detail page.
+ * Tech tags live on the slug page only (see ProjectDetailView).
  */
 import { ArrowUpRight, ExternalLink, Folder } from 'lucide-vue-next'
 
 import type { Project } from '@/types'
-import TechTag from '@/components/ui/TechTag.vue'
 import { projectTypeLabel } from '@/utils/format'
 
 defineProps<{
@@ -44,18 +44,8 @@ defineProps<{
       </p>
     </div>
 
-    <div class="mt-auto flex flex-wrap gap-1.5 pt-1">
-      <TechTag v-for="tech in project.technologies.slice(0, 3)" :key="tech" :label="tech" />
-      <span
-        v-if="project.technologies.length > 3"
-        class="font-mono text-[11px] leading-6 text-gray-500"
-      >
-        +{{ project.technologies.length - 3 }}
-      </span>
-    </div>
-
     <span
-      class="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink"
+      class="mt-auto inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink"
     >
       view project
       <ArrowUpRight class="h-3.5 w-3.5" :stroke-width="1.8" />

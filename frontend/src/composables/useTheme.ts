@@ -42,7 +42,11 @@ const preference = ref<ThemePreference>(readPreference())
 
 /** Apply the `dark` class to <html> without any transition. */
 function applyClass(pref: ThemePreference): void {
-  document.documentElement.classList.toggle('dark', isDark(pref))
+  const root = document.documentElement
+  root.classList.toggle('dark', isDark(pref))
+  // Release the inline background set by the pre-paint <head> script so the
+  // CSS variables in main.css take over from here.
+  root.style.backgroundColor = ''
 }
 
 /** Soft crossfade fallback for browsers without View Transitions. */

@@ -5,17 +5,19 @@ import type { Profile } from '@/types'
  * Kept here as the single source of truth for personal details.
  */
 export const profile: Profile = {
-  name: 'Eddyson Tristan Aromin',
-  fullName: 'Eddyson Tristan Aromin',
+  name: 'Eddyson Tristan B. Aromin',
+  fullName: 'Eddyson Tristan B. Aromin',
   tagline: 'BS Information Technology graduate from Saint Louis University Baguio. Skilled in Software Development, Web Development, Database Management, System Administration, Data Analytics, and Quality Assurance. Eager to launch my professional career, continuously learn, and contribute to impactful projects.',
   role: 'Junior Front-End Developer',
   degree: 'BS Information Technology',
   university: 'Saint Louis University',
-  location: 'Quezon City, Metro Manila, Philippines 1103',
+  location: 'Quezon City, Metro Manila, Philippines, 1103',
+  hometown: 'Loakan Proper, Baguio City, Benguet, Philippines, 2600',
   email: 'aromintristan@gmail.com',
   phone: '+63 945 261 6251',
   github: 'https://github.com/EddysonA15',
   linkedin: 'https://linkedin.com/in/eddyson-tristan-aromin-2956992a1',
+  instagram: 'https://www.instagram.com/eiii_dye/',
   portfolio: 'eddysona15.github.io',
   languages: ['English (Fluent)', 'Filipino (Fluent)'],
   bio: [

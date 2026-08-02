@@ -14,6 +14,26 @@
     <meta name="author" content="Eddyson Tristan B. Aromin" />
     <meta name="robots" content="index, follow" />
 
+    <!-- Pre-paint theme: runs in <head> before any paint. Applies the
+         persisted preference to <html> AND sets the background inline so a
+         refresh never flashes white in dark mode. Matches --bg in main.css
+         (light #fff / dark rgb(12 12 15)). The app clears the inline bg
+         once it mounts (useTheme), letting the CSS variables take over. -->
+    <script>
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system'
+          var hour = new Date().getHours()
+          var dark =
+            pref === 'dark' || (pref === 'system' && !(hour >= 7 && hour < 18))
+          var root = document.documentElement
+          if (dark) root.classList.add('dark')
+          root.style.backgroundColor = dark ? '#0c0c0f' : '#ffffff'
+        } catch (e) {}
+      })()
+    </script>
+
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Eddyson Aromin" />
@@ -38,32 +58,7 @@
     />
   </head>
   <body>
-    <!-- Pre-paint theme: sets the page background immediately from the
-         persisted preference so a refresh never flashes white in dark mode.
-         Matches --bg in main.css (light #fff / dark rgb(12 12 15)). -->
-    <style>
-      html {
-        background-color: #ffffff;
-      }
-      html.dark {
-        background-color: #0c0c0f;
-      }
-    </style>
     <div id="app"></div>
-    <!-- Apply the persisted theme BEFORE paint to prevent a light-mode flash
-         on refresh (mirrors useTheme's resolution: stored pref, else system). -->
-    <script>
-      ;(function () {
-        try {
-          var stored = localStorage.getItem('theme')
-          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system'
-          var hour = new Date().getHours()
-          var dark =
-            pref === 'dark' || (pref === 'system' && !(hour >= 7 && hour < 18))
-          if (dark) document.documentElement.classList.add('dark')
-        } catch (e) {}
-      })()
-    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

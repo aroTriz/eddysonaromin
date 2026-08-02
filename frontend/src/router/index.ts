@@ -40,6 +40,12 @@ const router = createRouter({
       meta: { title: 'Services — Eddyson Aromin' },
     },
     {
+      path: '/shop',
+      name: 'shop',
+      component: () => import('@/views/ShopView.vue'),
+      meta: { title: 'Shop — Eddyson Aromin' },
+    },
+    {
       path: '/stack',
       name: 'stack',
       component: () => import('@/views/StackView.vue'),

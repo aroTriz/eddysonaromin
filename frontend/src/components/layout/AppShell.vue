@@ -3,7 +3,7 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Github, Linkedin, Mail, Menu, Rss, User, Wrench, X } from 'lucide-vue-next'
+import { Github, Linkedin, Mail, Menu, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import AskOverlay from '@/components/ui/AskOverlay.vue'
@@ -53,6 +53,7 @@ const navGroups = [
   {
     label: 'g1',
     links: [
+      { label: 'Shop', to: '/shop', name: 'shop', icon: ShoppingBag },
       { label: 'Services', to: '/services', name: 'services', icon: Wrench },
       { label: 'Blog', to: '/blog', name: 'blog', icon: Rss },
     ],

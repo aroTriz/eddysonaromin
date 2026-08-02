@@ -65,10 +65,12 @@ export interface Profile {
   degree: string
   university: string
   location: string
+  hometown: string
   email: string
   phone: string
   github: string
   linkedin: string
+  instagram: string
   portfolio: string
   languages: string[]
   bio: string[]

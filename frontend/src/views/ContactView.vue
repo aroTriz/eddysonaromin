@@ -200,11 +200,19 @@ const fieldClass =
             </a>
           </div>
         </div>
-
-        <p class="mt-6 rounded-lg border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[12.5px] text-gray-500">
-          {{ profile.available }}
-        </p>
       </Reveal>
     </div>
+
+    <!-- ── Map (Google Maps embed — current location) ─────────── -->
+    <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <iframe
+        title="Eddyson's location on Google Maps"
+        src="https://www.google.com/maps?q=Quezon+City,+Metro+Manila,+Philippines&output=embed"
+        class="block h-[320px] w-full border-0"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen
+      ></iframe>
+    </Reveal>
   </div>
 </template>

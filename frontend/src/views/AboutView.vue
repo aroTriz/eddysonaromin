@@ -16,6 +16,7 @@ const info = [
   { label: '// degree', value: profile.degree },
   { label: '// university', value: profile.university },
   { label: '// location', value: profile.location },
+  { label: '// hometown', value: profile.hometown },
   { label: '// email', value: profile.email },
   { label: '// phone', value: profile.phone },
   { label: '// languages', value: profile.languages.join(', ') },
@@ -65,7 +66,7 @@ const info = [
         <span
           v-for="tech in allTechnologies"
           :key="tech"
-          class="rounded-full border border-gray-300 bg-white shadow-sm px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600"
+          class="rounded-md border border-gray-300 bg-white shadow-sm px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600"
         >
           {{ tech }}
         </span>
@@ -83,7 +84,7 @@ const info = [
         <span
           v-for="interest in interests"
           :key="interest"
-          class="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white shadow-sm px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white shadow-sm px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-gray-300" aria-hidden="true" />
           {{ interest }}
