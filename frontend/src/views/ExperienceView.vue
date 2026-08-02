@@ -33,7 +33,7 @@ import { education, experiences } from '@/data/profile'
             v-if="job.logo"
             :src="job.logo"
             :alt="`${job.company} logo`"
-            class="h-12 w-12 shrink-0 rounded-full border border-gray-200 bg-white object-contain p-1.5 shadow-[0_0_0_3px_rgb(var(--bg)),0_0_0_4px_rgb(var(--g200))]"
+            class="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-white object-contain p-1.5"
           />
           <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink">
             {{ job.company.charAt(0) }}
@@ -83,7 +83,7 @@ import { education, experiences } from '@/data/profile'
             v-if="edu.logo"
             :src="edu.logo"
             :alt="`${edu.school} logo`"
-            class="h-12 w-12 shrink-0 rounded-full border border-gray-200 bg-white object-contain p-1.5 shadow-[0_0_0_3px_rgb(var(--bg)),0_0_0_4px_rgb(var(--g200))]"
+            class="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-white object-contain p-1.5"
           />
           <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white">
             <span class="font-pixel text-[12px] text-ink">{{ edu.school.charAt(0) }}</span>

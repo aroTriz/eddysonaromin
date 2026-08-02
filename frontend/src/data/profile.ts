@@ -130,8 +130,12 @@ export const stackGroups: StackGroup[] = [
     items: ['Python', 'Machine Learning', 'Data Analytics', 'SQL'],
   },
   {
-    label: 'Design & Tools',
-    items: ['Figma', 'Canva', 'Git'],
+    label: 'Developer Tools',
+    items: ['Git', 'GitHub', 'VS Code'],
+  },
+  {
+    label: 'Design',
+    items: ['Figma', 'Canva'],
   },
 ]
 
