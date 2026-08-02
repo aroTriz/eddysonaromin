@@ -2,15 +2,19 @@
 /**
  * Projects — filterable grid (All / category / type) served by the Laravel API.
  * When "All" is active, projects are grouped by category (Personal / Academic)
- * with a separator between the two groups.
+ * with a separator between the two groups. Paginated 9 per page via `?page=`.
  */
 import { computed, ref, watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
 
+import Pagination from '@/components/ui/Pagination.vue'
 import ProjectCard from '@/components/project/ProjectCard.vue'
 import AsyncState from '@/components/ui/AsyncState.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import { fetchProjects } from '@/services/api'
 import type { Project } from '@/types'
+
+const PROJECTS_PER_PAGE = 9
 
 const filters = [
   { label: 'All', value: '' },
@@ -22,6 +26,8 @@ const activeFilter = ref<(typeof filters)[number]['value']>('')
 const projects = ref<Project[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+const route = useRoute()
 
 async function load(): Promise<void> {
   loading.value = true
@@ -41,19 +47,34 @@ watchEffect(() => {
   void load()
 })
 
-/** Personal projects (grouped only when "All" is active). */
+/** Current page from the `?page=` query. */
+const page = computed(() => {
+  const raw = Number(route.query.page)
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1
+})
+
+/** Projects on the current page — personal group first, then academic. */
+const pagedProjects = computed(() => {
+  const ordered = activeFilter.value === ''
+    ? [...projects.value.filter((p) => p.category === 'personal'), ...projects.value.filter((p) => p.category === 'academic')]
+    : projects.value
+  const start = (page.value - 1) * PROJECTS_PER_PAGE
+  return ordered.slice(start, start + PROJECTS_PER_PAGE)
+})
+
+/** Personal slice of the current page (grouped only when "All" is active). */
 const personalProjects = computed(() =>
-  activeFilter.value === '' ? projects.value.filter((p) => p.category === 'personal') : [],
+  activeFilter.value === '' ? pagedProjects.value.filter((p) => p.category === 'personal') : [],
 )
 
-/** Academic projects (grouped only when "All" is active). */
+/** Academic slice of the current page (grouped only when "All" is active). */
 const academicProjects = computed(() =>
-  activeFilter.value === '' ? projects.value.filter((p) => p.category === 'academic') : [],
+  activeFilter.value === '' ? pagedProjects.value.filter((p) => p.category === 'academic') : [],
 )
 
-/** Single-list projects (when a specific filter is active). */
+/** Single-list projects on the current page (when a specific filter is active). */
 const listedProjects = computed(() =>
-  activeFilter.value !== '' ? projects.value : [],
+  activeFilter.value !== '' ? pagedProjects.value : [],
 )
 </script>
 
@@ -97,7 +118,7 @@ const listedProjects = computed(() =>
     >
       <!-- All → grouped with separator -->
       <template v-if="activeFilter === ''">
-        <div class="mt-10">
+        <div v-if="personalProjects.length" class="mt-10">
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             personal projects
           </p>
@@ -107,9 +128,9 @@ const listedProjects = computed(() =>
         </div>
 
         <!-- separator line between the two groups -->
-        <div class="my-10 h-px bg-gray-200" aria-hidden="true" />
+        <div v-if="personalProjects.length && academicProjects.length" class="my-10 h-px bg-gray-200" aria-hidden="true" />
 
-        <div>
+        <div v-if="academicProjects.length">
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             academic projects
           </p>
@@ -123,6 +144,9 @@ const listedProjects = computed(() =>
       <div v-else class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ProjectCard v-for="project in listedProjects" :key="project.slug" :project="project" />
       </div>
+
+      <!-- Pagination (bryllim-exact: ← prev · N / M · next →) -->
+      <Pagination :total="projects.length" :page-size="PROJECTS_PER_PAGE" />
     </AsyncState>
   </div>
 </template>
