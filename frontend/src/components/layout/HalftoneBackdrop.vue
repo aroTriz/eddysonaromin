@@ -7,17 +7,11 @@
 import { computed } from 'vue'
 
 import StarsThree from '@/components/ui/StarsThree.vue'
-import { useTheme } from '@/composables/useTheme'
+import { resolveIsDark, useTheme } from '@/composables/useTheme'
 
 const { preference } = useTheme()
 
-const isDark = computed(() => {
-  const dark =
-    preference.value === 'dark' ||
-    (preference.value === 'system' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches)
-  return dark
-})
+const isDark = computed(() => resolveIsDark(preference.value))
 </script>
 
 <template>

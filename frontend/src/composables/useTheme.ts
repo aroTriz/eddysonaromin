@@ -1,16 +1,28 @@
-import { ref, watchEffect } from 'vue'
+import { getCurrentInstance, onScopeDispose, ref, watchEffect } from 'vue'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
 
 const STORAGE_KEY = 'theme'
 
+/**
+ * System-theme daylight window (local time):
+ *   light  → 7:00 AM – 5:59 PM
+ *   dark   → 6:00 PM – 6:59 AM
+ */
+const DAYLIGHT_START_HOUR = 7
+const DAYLIGHT_END_HOUR = 18
+
+/** Whether the current local time falls inside the daylight window. */
+function isDaylight(now = new Date()): boolean {
+  const hour = now.getHours()
+  return hour >= DAYLIGHT_START_HOUR && hour < DAYLIGHT_END_HOUR
+}
+
 /** Resolve whether a preference resolves to dark mode. */
 function isDark(pref: ThemePreference): boolean {
   return (
     pref === 'dark' ||
-    (pref === 'system' &&
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches)
+    (pref === 'system' && !isDaylight())
   )
 }
 
@@ -126,22 +138,38 @@ export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
 
 /**
  * Reactive theme composable. Apply `class="dark"` on <html> automatically
- * based on the user's preference and system changes.
+ * based on the user's preference. In "system" mode the theme follows the
+ * current time of day (light during daylight hours, dark at night) and
+ * flips automatically at dawn/dusk.
  */
 export function useTheme() {
   watchEffect(() => applyClass(preference.value))
 
-  // Follow the OS when the user is on "system".
+  let timer: ReturnType<typeof setInterval> | undefined
+
   if (typeof window !== 'undefined') {
-    window
-      .matchMedia('(prefers-color-scheme: dark)')
-      .addEventListener('change', () => {
-        if (preference.value === 'system') applyClass('system')
-      })
+    // In "system" mode, re-evaluate every 30s so the theme adapts to the
+    // current time (auto-flips at 7:00 AM and 6:00 PM local time).
+    timer = setInterval(() => {
+      if (preference.value !== 'system') return
+      const dark = isDark('system')
+      const applied = document.documentElement.classList.contains('dark')
+      if (dark !== applied) {
+        applyClass('system')
+        window.dispatchEvent(
+          new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark } }),
+        )
+      }
+    }, 30_000)
   }
+
+  // Clean up the timer when the app is disposed (HMR safety).
+  const vm = getCurrentInstance()
+  vm && onScopeDispose(() => clearInterval(timer))
 
   return {
     preference,
     setTheme,
+    isDaylight,
   }
 }
