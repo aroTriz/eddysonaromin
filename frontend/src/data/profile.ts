@@ -38,6 +38,16 @@ export interface ExperienceEntry {
   company: string
   /** Company logo path (from the Resume project) — shown on /experience. */
   logo?: string
+  /** Company website — opens in a new tab when the logo is clicked. */
+  url?: string
+  /** Short description shown in the hover tooltip. */
+  tooltipDesc?: string
+  /** Image shown at the top of the hover tooltip. */
+  image?: string
+  /** Photo album shown in the album modal (swiper). */
+  albums?: string[]
+  /** Certificate images shown in the certificate modal (swiper). */
+  certificates?: string[]
   description: string
   highlights: string[]
 }
@@ -48,8 +58,18 @@ export const experiences: ExperienceEntry[] = [
     year: '2025 — 2026',
     tag: 'Professional',
     title: 'Junior Front-End Developer',
-    company: 'PRAXXYS SOLUTIONS',
+    company: 'PRAXXYS Solutions Inc.',
     logo: '/images/logos/praxxys-logo.png',
+    url: 'https://www.praxxys.ph/',
+    tooltipDesc:
+      'An AI, e-commerce, web, and mobile app design & development solutions company. PRAXXYS builds digital products for enterprise clients — from global e-commerce platforms to AI-powered web and mobile applications.',
+    image: '/images/companies/praxxys.webp',
+    albums: [
+      '/images/albums/praxxys/praxxys-1.jpg',
+      '/images/albums/praxxys/praxxys-2.jpg',
+      '/images/albums/praxxys/praxxys-3.jpg',
+    ],
+    certificates: ['/images/certificates/praxxys-cert.jpg'],
     description:
       'Working in an Agile/Fast Phased development environment. Developing user interfaces that match designs exactly using modern frameworks. Collaborating on mobile and web development with AI research and innovation.',
     highlights: [
@@ -65,8 +85,18 @@ export const experiences: ExperienceEntry[] = [
     year: '2025',
     tag: 'Internship',
     title: 'Quality Assurance Analyst & Business Application Developer',
-    company: 'NOAH BUSINESS APPLICATION',
+    company: 'NOAH Business Application',
     logo: '/images/logos/noah-logo.png',
+    url: 'https://noahapplication.com/',
+    tooltipDesc:
+      'A business applications company providing document management, workflow automation, and enterprise solutions. NOAH builds business applications that streamline documentation, forms, and processes for organizations.',
+    image: '/images/companies/noah.jpg',
+    albums: [
+      '/images/albums/noah/noah-1.jpg',
+      '/images/albums/noah/noah-2.jpg',
+      '/images/albums/noah/noah-3.jpg',
+    ],
+    certificates: ['/images/certificates/noah-cert.jpg'],
     description:
       'University Internship at Makati City, Metro Manila. Ensured system features and elements met company standards through rigorous testing and documentation.',
     highlights: [
@@ -85,6 +115,16 @@ export interface EducationEntry {
   school: string
   /** School logo path (from the Resume project) — shown on /experience. */
   logo?: string
+  /** School website — opens in a new tab when the logo is clicked. */
+  url?: string
+  /** Short description shown in the hover tooltip. */
+  tooltipDesc?: string
+  /** Image shown at the top of the hover tooltip. */
+  image?: string
+  /** Photo album shown in the album modal (swiper). */
+  albums?: string[]
+  /** Certificate images shown in the certificate modal (swiper). */
+  certificates?: string[]
   detail: string
 }
 
@@ -95,6 +135,16 @@ export const education: EducationEntry[] = [
     title: 'BS Information Technology',
     school: 'Saint Louis University',
     logo: '/images/logos/slu-logo.svg',
+    url: 'https://www.slu.edu.ph/',
+    tooltipDesc:
+      'A premier Catholic university in Baguio City, Philippines, founded by the CICM missionaries. SLU is known for its strong programs in engineering, information technology, health sciences, and teacher education.',
+    image: '/images/companies/slu.jpg',
+    albums: [
+      '/images/albums/slu/slu-1.jpg',
+      '/images/albums/slu/slu-2.jpg',
+      '/images/albums/slu/slu-3.jpg',
+    ],
+    certificates: ['/images/certificates/slu-cert.jpg'],
     detail: 'SAMCIS | Bachelor of Science in Information Technology. Baguio City, Benguet, Philippines.',
   },
 ]
@@ -226,7 +276,7 @@ export const certifications: Certification[] = [
   },
   {
     title: 'Agile & Fast-Phased Development',
-    issuer: 'PRAXXYS SOLUTIONS',
+    issuer: 'PRAXXYS Solutions Inc.',
     year: '2026',
   },
   {
@@ -249,7 +299,7 @@ export const affiliations: Affiliation[] = [
     detail: 'Connected with the founder via the ISakay / capstone mentorship community.',
   },
   {
-    org: 'PRAXXYS Solutions',
+    org: 'PRAXXYS Solutions Inc.',
     role: 'Junior Front-End Developer',
     detail: 'Agile development team — web & mobile engineering with AI research.',
   },
@@ -311,14 +361,14 @@ export const recommendations: Recommendation[] = [
     initials: 'PS',
     quote:
       '"A dependable developer who integrated APIs cleanly and kept quality high in a fast-paced environment. Always proactive, always on time."',
-    author: 'PRAXXYS Solutions Team',
+    author: 'PRAXXYS Solutions Inc. Team',
     role: 'Agile Development — Junior Front-End Developer',
   },
   {
     initials: 'NO',
     quote:
       '"His QA discipline was exceptional — thorough test cases, clear documentation, and a sharp eye for bugs that others missed. Features shipped better because of him."',
-    author: 'NOAH Business Application',
+    author: 'NOAH Business Application Team',
     role: 'QA Internship — Makati City',
   },
   {

@@ -1,10 +1,65 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
- * Experience — bryllim-style timeline: company/school logo rail
- * (round logo avatar + vertical line) + company header + role cards
- * with period/description.
+ * Experience — timeline with clickable company/school logos (open site in a
+ * new tab), a floating hover tooltip to the left of each logo (image on top +
+ * short description), and album / certificate buttons that open a centered
+ * modal with a swiper of photos or certificates.
  */
+import { ArrowLeft, ArrowRight, Award, Images, X } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+
 import { education, experiences } from '@/data/profile'
+
+const hovered = ref<string | null>(null)
+
+interface ModalState {
+  title: string
+  items: string[]
+  index: number
+}
+
+const modal = ref<ModalState | null>(null)
+
+function show(name: string): void {
+  hovered.value = name
+}
+function hide(): void {
+  hovered.value = null
+}
+
+function openModal(title: string, items: string[] | undefined): void {
+  if (!items || items.length === 0) return
+  modal.value = { title, items, index: 0 }
+  document.documentElement.style.overflow = 'hidden'
+}
+
+function closeModal(): void {
+  modal.value = null
+  document.documentElement.style.overflow = ''
+}
+
+const currentImage = computed(() => {
+  if (!modal.value) return ''
+  return modal.value.items[modal.value.index]
+})
+
+function prevImage(): void {
+  if (!modal.value) return
+  modal.value.index =
+    (modal.value.index - 1 + modal.value.items.length) % modal.value.items.length
+}
+
+function nextImage(): void {
+  if (!modal.value) return
+  modal.value.index = (modal.value.index + 1) % modal.value.items.length
+}
+
+function onKeydown(e: KeyboardEvent): void {
+  if (!modal.value) return
+  if (e.key === 'Escape') closeModal()
+  if (e.key === 'ArrowLeft') prevImage()
+  if (e.key === 'ArrowRight') nextImage()
+}
 </script>
 
 <template>
@@ -29,21 +84,88 @@ import { education, experiences } from '@/data/profile'
       >
         <!-- logo rail -->
         <div class="flex flex-col items-center">
-          <img
-            v-if="job.logo"
-            :src="job.logo"
-            :alt="`${job.company} logo`"
-            class="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-[#ffffff] object-contain p-1.5"
-          />
-          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink">
-            {{ job.company.charAt(0) }}
+          <div class="relative">
+            <!-- clickable logo → company site -->
+            <a
+              v-if="job.logo"
+              :href="job.url ?? '#'"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block h-12 w-12 rounded-lg border border-gray-200 bg-[#ffffff] p-1.5 transition-transform hover:scale-105"
+              :aria-label="`Open ${job.company} website`"
+              @mouseenter="show(job.company)"
+              @mouseleave="hide"
+            >
+              <img
+                :src="job.logo"
+                :alt="`${job.company} logo`"
+                class="h-full w-full object-contain"
+              />
+            </a>
+            <div
+              v-else
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink"
+            >
+              {{ job.company.charAt(0) }}
+            </div>
+
+            <!-- floating tooltip (left of logo) -->
+            <Transition name="float">
+              <div
+                v-if="hovered === job.company && job.tooltipDesc"
+                class="absolute right-full top-1/2 z-30 mr-4 w-64 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                @mouseenter="show(job.company)"
+                @mouseleave="hide"
+              >
+                <img
+                  v-if="job.image"
+                  :src="job.image"
+                  :alt="`${job.company} photo`"
+                  class="aspect-[16/10] w-full object-cover"
+                  loading="lazy"
+                />
+                <div class="p-3.5">
+                  <p class="text-[13px] font-semibold leading-snug text-ink">
+                    {{ job.company }}
+                  </p>
+                  <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
+                    {{ job.tooltipDesc }}
+                  </p>
+                </div>
+              </div>
+            </Transition>
           </div>
           <div v-if="i < experiences.length - 1" class="mt-2 w-px flex-1 bg-gray-200"></div>
         </div>
 
         <!-- content -->
         <div class="flex-1 pb-12">
-          <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ job.company }}</h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ job.company }}</h2>
+            <!-- album + certificate buttons -->
+            <div class="flex items-center gap-1.5">
+              <button
+                v-if="job.albums?.length"
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                :title="`${job.company} photos`"
+                :aria-label="`Open ${job.company} album`"
+                @click="openModal(`${job.company} — photos`, job.albums)"
+              >
+                <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+              <button
+                v-if="job.certificates?.length"
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                :title="`${job.company} certificates`"
+                :aria-label="`Open ${job.company} certificates`"
+                @click="openModal(`${job.company} — certificates`, job.certificates)"
+              >
+                <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+            </div>
+          </div>
           <p class="mt-1 font-mono text-[12px] text-gray-500">{{ job.tag }}</p>
 
           <div class="mt-5">
@@ -79,19 +201,86 @@ import { education, experiences } from '@/data/profile'
         class="reveal relative flex gap-4 sm:gap-5"
       >
         <div class="flex flex-col items-center">
-          <img
-            v-if="edu.logo"
-            :src="edu.logo"
-            :alt="`${edu.school} logo`"
-            class="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-[#ffffff] object-contain p-1.5"
-          />
-          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white">
-            <span class="font-pixel text-[12px] text-ink">{{ edu.school.charAt(0) }}</span>
+          <div class="relative">
+            <!-- clickable logo → school site -->
+            <a
+              v-if="edu.logo"
+              :href="edu.url ?? '#'"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block h-12 w-12 rounded-lg border border-gray-200 bg-[#ffffff] p-1.5 transition-transform hover:scale-105"
+              :aria-label="`Open ${edu.school} website`"
+              @mouseenter="show(edu.school)"
+              @mouseleave="hide"
+            >
+              <img
+                :src="edu.logo"
+                :alt="`${edu.school} logo`"
+                class="h-full w-full object-contain"
+              />
+            </a>
+            <div
+              v-else
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white"
+            >
+              <span class="font-pixel text-[12px] text-ink">{{ edu.school.charAt(0) }}</span>
+            </div>
+
+            <!-- floating tooltip (left of logo) -->
+            <Transition name="float">
+              <div
+                v-if="hovered === edu.school && edu.tooltipDesc"
+                class="absolute right-full top-1/2 z-30 mr-4 w-64 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                @mouseenter="show(edu.school)"
+                @mouseleave="hide"
+              >
+                <img
+                  v-if="edu.image"
+                  :src="edu.image"
+                  :alt="`${edu.school} photo`"
+                  class="aspect-[16/10] w-full object-cover"
+                  loading="lazy"
+                />
+                <div class="p-3.5">
+                  <p class="text-[13px] font-semibold leading-snug text-ink">
+                    {{ edu.school }}
+                  </p>
+                  <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
+                    {{ edu.tooltipDesc }}
+                  </p>
+                </div>
+              </div>
+            </Transition>
           </div>
         </div>
 
         <div class="flex-1">
-          <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.school }}</h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.school }}</h2>
+            <!-- album + certificate buttons -->
+            <div class="flex items-center gap-1.5">
+              <button
+                v-if="edu.albums?.length"
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                :title="`${edu.school} photos`"
+                :aria-label="`Open ${edu.school} album`"
+                @click="openModal(`${edu.school} — photos`, edu.albums)"
+              >
+                <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+              <button
+                v-if="edu.certificates?.length"
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                :title="`${edu.school} certificates`"
+                :aria-label="`Open ${edu.school} certificates`"
+                @click="openModal(`${edu.school} — certificates`, edu.certificates)"
+              >
+                <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+            </div>
+          </div>
           <p class="mt-1 font-mono text-[12px] text-gray-500">{{ edu.tag }}</p>
 
           <div class="mt-5">
@@ -106,5 +295,116 @@ import { education, experiences } from '@/data/profile'
         </div>
       </div>
     </div>
+
+    <!-- centered swiper modal (album / certificates) -->
+    <Teleport to="body">
+      <div
+        v-if="modal"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-5"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="modal.title"
+        @keydown="onKeydown"
+      >
+        <!-- blurred backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
+
+        <!-- panel -->
+        <div
+          class="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_40px_90px_-20px_rgba(0,0,0,0.5)]"
+        >
+          <!-- header -->
+          <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
+            <p class="font-mono text-[12px] text-gray-500">{{ modal.title }}</p>
+            <button
+              type="button"
+              class="text-gray-400 transition hover:text-ink"
+              aria-label="Close"
+              @click="closeModal"
+            >
+              <X class="h-4 w-4" :stroke-width="1.8" />
+            </button>
+          </div>
+
+          <!-- swiper body -->
+          <div class="relative bg-gray-50">
+            <img
+              :src="currentImage"
+              :alt="`${modal.title} ${modal.index + 1}`"
+              class="mx-auto max-h-[60vh] w-auto object-contain"
+            />
+
+            <!-- arrows -->
+            <button
+              v-if="modal.items.length > 1"
+              type="button"
+              class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+              aria-label="Previous image"
+              @click="prevImage"
+            >
+              <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
+            </button>
+            <button
+              v-if="modal.items.length > 1"
+              type="button"
+              class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+              aria-label="Next image"
+              @click="nextImage"
+            >
+              <ArrowRight class="h-4 w-4" :stroke-width="1.8" />
+            </button>
+          </div>
+
+          <!-- dots -->
+          <div
+            v-if="modal.items.length > 1"
+            class="flex justify-center gap-1.5 border-t border-gray-100 py-3"
+          >
+            <button
+              v-for="(item, j) in modal.items"
+              :key="item"
+              type="button"
+              class="h-1.5 rounded-full transition-all"
+              :class="j === modal.index ? 'w-5 bg-ink' : 'w-1.5 bg-gray-300'"
+              :aria-label="`Go to image ${j + 1}`"
+              @click="modal.index = j"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* gentle floating animation for the tooltip */
+.float-enter-active,
+.float-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.float-enter-from,
+.float-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(8px) scale(0.96);
+}
+/* once entered, keep a slow float up/down */
+.float-enter-active {
+  animation: tooltip-float 3s ease-in-out 0.35s infinite;
+}
+.float-enter-to,
+.float-leave-from {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0) scale(1);
+}
+@keyframes tooltip-float {
+  0%,
+  100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% - 6px));
+  }
+}
+</style>
