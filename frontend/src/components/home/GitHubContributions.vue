@@ -1,38 +1,48 @@
 <script setup lang="ts">
 /**
- * GitHubContributions — bryllim-style halftone contribution graph.
- * A generated dot grid that mimics the GitHub contribution heatmap,
- * rendered in the current theme color (ink).
+ * GitHubContributions — EXACT replica of bryllim.com's halftone
+ * GitHub contribution graph. Same 7×53 grid, same circle radii,
+ * same opacity mapping — only the theme color (ink) is dynamic.
+ *
+ * Grid spacing is 13px; the viewBox is 689×91 like the reference.
  */
-const WEEKS = 26
-const DAYS = 7
+const GRID: number[][] = [
+  [2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 3.8, 0, 1.1, 0, 2.7, 0, 2.7, 0, 2.7, 0, 3.8, 0, 1.1, 0, 3.8, 0, 1.1, 0, 1.1, 0, 2.7, 0, 3.8, 0, 2.7, 0, 1.1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1.1, 0, 2.7, 0, 2.7, 0, 3.8, 0, 2.7, 0, 2.7, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 4.8, 0, 4.8, 0, 2.7, 0, 2.7, 0, 2.7, 0, 2.7, 0, 4.8, 0, 2.7, 0, 2.7],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3.8, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 3.8, 0, 1.1, 0, 3.8, 0, 2.7, 0, 3.8, 0, 5.7, 0, 2.7, 0, 3.8, 0, 1.1, 0, 2.7, 0, 1.1, 0, 4.8, 0, 2.7, 0, 4.8],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3.8, 0, 1.1, 0, 3.8, 0, 2.7, 0, 4.8, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 4.8, 0, 3.8, 0, 3.8, 0, 5.7, 0, 2.7, 0, 3.8, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 2.7],
+]
 
-// Deterministic pseudo-random so the graph is stable across renders.
-function seededRandom(seed: number): () => number {
-  let s = seed
-  return () => {
-    s = (s * 9301 + 49297) % 233280
-    return s / 233280
-  }
+const SPACING = 13
+const OFFSET = 6.5
+
+/** Exact opacity mapping from the reference:
+ *  - empty cell (0) → tiny faint dot (0.05)
+ *  - real r=1.1 dot → faint (0.12)
+ *  - activity dots → bold (0.92) */
+function radiusOpacity(cell: number): number {
+  if (cell === 0) return 0.05
+  if (cell <= 1.1) return 0.12
+  return 0.92
 }
 
-const rand = seededRandom(20260802)
-
-// Build cells: 0 = empty, 1-4 = intensity
-const cells: number[] = []
-for (let i = 0; i < WEEKS * DAYS; i++) {
-  const r = rand()
-  if (r < 0.45) cells.push(0)
-  else if (r < 0.7) cells.push(1)
-  else if (r < 0.85) cells.push(2)
-  else if (r < 0.95) cells.push(3)
-  else cells.push(4)
-}
-
-const gap = 4
-const size = 9
-
-const opacities = [0.1, 0.3, 0.55, 0.75, 0.95]
+/** Flat list of (x, y, radius, opacity) for every cell — all 371 dots,
+ *  matching the reference: empty cells render as tiny faint dots (r=1.1),
+ *  activity cells render with their pattern radius. */
+const dots: { x: number; y: number; r: number; op: number }[] = []
+GRID.forEach((row, y) => {
+  row.forEach((cell, x) => {
+    dots.push({
+      x: OFFSET + x * SPACING,
+      y: OFFSET + y * SPACING,
+      r: cell > 0 ? cell : 1.1,
+      op: radiusOpacity(cell),
+    })
+  })
+})
 </script>
 
 <template>
@@ -40,19 +50,17 @@ const opacities = [0.1, 0.3, 0.55, 0.75, 0.95]
     viewBox="0 0 689 91"
     class="h-auto w-full text-ink"
     preserveAspectRatio="xMidYMid meet"
-    aria-label="GitHub contribution graph"
+    aria-label="GitHub contribution graph, halftone style"
     role="img"
   >
-    <g>
-      <circle
-        v-for="(level, i) in cells"
-        :key="i"
-        :cx="6.5 + (i % WEEKS) * (size + gap) + size / 2"
-        :cy="6.5 + Math.floor(i / WEEKS) * (size + gap) + size / 2"
-        :r="size / 2 - 0.5"
-        fill="currentColor"
-        :opacity="level ? opacities[level - 1] : 0.05"
-      />
-    </g>
+    <circle
+      v-for="dot in dots"
+      :key="`${dot.x}-${dot.y}`"
+      :cx="dot.x"
+      :cy="dot.y"
+      :r="dot.r"
+      fill="currentColor"
+      :opacity="dot.op"
+    />
   </svg>
 </template>

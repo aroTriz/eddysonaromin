@@ -4,14 +4,13 @@
  * name + intro paragraphs + social links right; stats grid, tech
  * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, GraduationCap, Mail, Users } from 'lucide-vue-next'
+import { ArrowUpRight, GraduationCap, Mail } from 'lucide-vue-next'
 
 import BlogSection from '@/components/home/BlogSection.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
 import {
-  affiliations,
   allTechnologies,
   certifications,
   experiences,
@@ -265,40 +264,10 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Affiliations (bryllim-style list) ─────────────────── -->
-    <section id="affiliations" aria-label="Affiliations" class="py-14">
-      <div class="mb-7 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">06 — affiliations</h2>
-        <RouterLink
-          to="/certifications"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
-        >
-          all affiliations <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
-        </RouterLink>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
-        <RouterLink
-          v-for="aff in affiliations"
-          :key="aff.org"
-          to="/certifications"
-          class="group inline-flex items-center gap-3"
-        >
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5">
-            <Users class="h-5 w-5 text-gray-400" :stroke-width="1.6" />
-          </div>
-          <div>
-            <div class="text-[13px] font-medium leading-snug text-ink group-hover:text-gray-500">{{ aff.org }}</div>
-            <div class="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-gray-400">{{ aff.role }}</div>
-          </div>
-        </RouterLink>
-      </div>
-    </section>
-
     <!-- ── GitHub (bryllim-style halftone graph) ──────────────── -->
     <section id="github" aria-label="GitHub" class="py-14">
       <div class="mb-6 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">07 — github</h2>
+        <h2 class="font-pixel text-sm text-gray-400">06 — github</h2>
         <a
           :href="profile.github"
           target="_blank"
