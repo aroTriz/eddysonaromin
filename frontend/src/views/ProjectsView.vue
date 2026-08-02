@@ -59,13 +59,14 @@ const listedProjects = computed(() =>
 
 <template>
   <div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-16">
-    <!-- ── Header ───────────────────────────────────────────── -->
+    <!-- ── Header (bryllim-style) ────────────────────────────── -->
     <Reveal>
       <p class="terminal-comment text-[13px]">$ ls ./projects/</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Portfolio ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Academic and personal projects I've built</p>
+      <h1 class="mt-3 font-pixel text-2xl leading-none">projects</h1>
+      <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-600">
+        Academic and personal projects I've designed and built — spanning web apps,
+        mobile, games, AI tools, and more.
+      </p>
     </Reveal>
 
     <!-- ── Filters ──────────────────────────────────────────── -->
