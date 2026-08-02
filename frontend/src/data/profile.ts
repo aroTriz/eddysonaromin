@@ -62,14 +62,9 @@ export const experiences: ExperienceEntry[] = [
     logo: '/images/logos/praxxys-logo.png',
     url: 'https://www.praxxys.ph/',
     tooltipDesc:
-      'An AI, e-commerce, web, and mobile app design & development solutions company. PRAXXYS builds digital products for enterprise clients — from global e-commerce platforms to AI-powered web and mobile applications.',
-    image: '/images/companies/praxxys.webp',
-    albums: [
-      '/images/albums/praxxys/praxxys-1.jpg',
-      '/images/albums/praxxys/praxxys-2.jpg',
-      '/images/albums/praxxys/praxxys-3.jpg',
-    ],
-    certificates: ['/images/certificates/praxxys-cert.jpg'],
+      'An AI, e-commerce, web, and mobile app design & development company.',
+    albums: [],
+    certificates: [],
     description:
       'Working in an Agile/Fast Phased development environment. Developing user interfaces that match designs exactly using modern frameworks. Collaborating on mobile and web development with AI research and innovation.',
     highlights: [
@@ -89,14 +84,9 @@ export const experiences: ExperienceEntry[] = [
     logo: '/images/logos/noah-logo.png',
     url: 'https://noahapplication.com/',
     tooltipDesc:
-      'A business applications company providing document management, workflow automation, and enterprise solutions. NOAH builds business applications that streamline documentation, forms, and processes for organizations.',
-    image: '/images/companies/noah.jpg',
-    albums: [
-      '/images/albums/noah/noah-1.jpg',
-      '/images/albums/noah/noah-2.jpg',
-      '/images/albums/noah/noah-3.jpg',
-    ],
-    certificates: ['/images/certificates/noah-cert.jpg'],
+      'A business applications company providing document management and workflow automation solutions.',
+    albums: [],
+    certificates: [],
     description:
       'University Internship at Makati City, Metro Manila. Ensured system features and elements met company standards through rigorous testing and documentation.',
     highlights: [
@@ -137,14 +127,9 @@ export const education: EducationEntry[] = [
     logo: '/images/logos/slu-logo.svg',
     url: 'https://www.slu.edu.ph/',
     tooltipDesc:
-      'A premier Catholic university in Baguio City, Philippines, founded by the CICM missionaries. SLU is known for its strong programs in engineering, information technology, health sciences, and teacher education.',
-    image: '/images/companies/slu.jpg',
-    albums: [
-      '/images/albums/slu/slu-1.jpg',
-      '/images/albums/slu/slu-2.jpg',
-      '/images/albums/slu/slu-3.jpg',
-    ],
-    certificates: ['/images/certificates/slu-cert.jpg'],
+      'A premier Catholic university in Baguio City known for engineering, IT, and health sciences programs.',
+    albums: [],
+    certificates: [],
     detail: 'SAMCIS | Bachelor of Science in Information Technology. Baguio City, Benguet, Philippines.',
   },
 ]

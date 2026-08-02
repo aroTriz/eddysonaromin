@@ -28,8 +28,7 @@ function hide(): void {
 }
 
 function openModal(title: string, items: string[] | undefined): void {
-  if (!items || items.length === 0) return
-  modal.value = { title, items, index: 0 }
+  modal.value = { title, items: items ?? [], index: 0 }
   document.documentElement.style.overflow = 'hidden'
 }
 
@@ -113,22 +112,36 @@ function onKeydown(e: KeyboardEvent): void {
             <Transition name="float">
               <div
                 v-if="hovered === job.company && job.tooltipDesc"
-                class="absolute right-full top-1/2 z-30 mr-4 w-64 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
                 @mouseenter="show(job.company)"
                 @mouseleave="hide"
               >
-                <img
+                <!-- landscape image or "no image" placeholder -->
+                <div
                   v-if="job.image"
-                  :src="job.image"
-                  :alt="`${job.company} photo`"
-                  class="aspect-[16/10] w-full object-cover"
-                  loading="lazy"
-                />
+                  class="aspect-[16/10] w-full overflow-hidden"
+                >
+                  <img
+                    :src="job.image"
+                    :alt="`${job.company} photo`"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div
+                  v-else
+                  class="flex aspect-[16/10] w-full items-center justify-center bg-gray-50"
+                >
+                  <div class="flex flex-col items-center gap-1.5 text-gray-300">
+                    <Images class="h-7 w-7" :stroke-width="1.4" />
+                    <span class="font-mono text-[10px] text-gray-400">no image</span>
+                  </div>
+                </div>
                 <div class="p-3.5">
                   <p class="text-[13px] font-semibold leading-snug text-ink">
                     {{ job.company }}
                   </p>
-                  <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
+                  <p class="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-gray-600">
                     {{ job.tooltipDesc }}
                   </p>
                 </div>
@@ -145,7 +158,7 @@ function onKeydown(e: KeyboardEvent): void {
             <!-- album + certificate buttons -->
             <div class="flex items-center gap-1.5">
               <button
-                v-if="job.albums?.length"
+                v-if="true"
                 type="button"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} photos`"
@@ -155,7 +168,7 @@ function onKeydown(e: KeyboardEvent): void {
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="job.certificates?.length"
+                v-if="true"
                 type="button"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} certificates`"
@@ -230,17 +243,31 @@ function onKeydown(e: KeyboardEvent): void {
             <Transition name="float">
               <div
                 v-if="hovered === edu.school && edu.tooltipDesc"
-                class="absolute right-full top-1/2 z-30 mr-4 w-64 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
                 @mouseenter="show(edu.school)"
                 @mouseleave="hide"
               >
-                <img
+                <!-- landscape image or "no image" placeholder -->
+                <div
                   v-if="edu.image"
-                  :src="edu.image"
-                  :alt="`${edu.school} photo`"
-                  class="aspect-[16/10] w-full object-cover"
-                  loading="lazy"
-                />
+                  class="aspect-[16/10] w-full overflow-hidden"
+                >
+                  <img
+                    :src="edu.image"
+                    :alt="`${edu.school} photo`"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div
+                  v-else
+                  class="flex aspect-[16/10] w-full items-center justify-center bg-gray-50"
+                >
+                  <div class="flex flex-col items-center gap-1.5 text-gray-300">
+                    <Images class="h-7 w-7" :stroke-width="1.4" />
+                    <span class="font-mono text-[10px] text-gray-400">no image</span>
+                  </div>
+                </div>
                 <div class="p-3.5">
                   <p class="text-[13px] font-semibold leading-snug text-ink">
                     {{ edu.school }}
@@ -260,7 +287,7 @@ function onKeydown(e: KeyboardEvent): void {
             <!-- album + certificate buttons -->
             <div class="flex items-center gap-1.5">
               <button
-                v-if="edu.albums?.length"
+                v-if="true"
                 type="button"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${edu.school} photos`"
@@ -270,7 +297,7 @@ function onKeydown(e: KeyboardEvent): void {
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="edu.certificates?.length"
+                v-if="true"
                 type="button"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${edu.school} certificates`"
@@ -309,9 +336,9 @@ function onKeydown(e: KeyboardEvent): void {
         <!-- blurred backdrop -->
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
 
-        <!-- panel -->
+        <!-- panel (landscape, default size) -->
         <div
-          class="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_40px_90px_-20px_rgba(0,0,0,0.5)]"
+          class="relative z-10 w-full max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_40px_90px_-20px_rgba(0,0,0,0.5)]"
         >
           <!-- header -->
           <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
@@ -326,33 +353,43 @@ function onKeydown(e: KeyboardEvent): void {
             </button>
           </div>
 
-          <!-- swiper body -->
-          <div class="relative bg-gray-50">
-            <img
-              :src="currentImage"
-              :alt="`${modal.title} ${modal.index + 1}`"
-              class="mx-auto max-h-[60vh] w-auto object-contain"
-            />
+          <!-- swiper body — landscape stage with a default 16/10 ratio -->
+          <div class="relative aspect-[16/10] w-full bg-gray-50">
+            <template v-if="modal.items.length > 0">
+              <img
+                :src="currentImage"
+                :alt="`${modal.title} ${modal.index + 1}`"
+                class="absolute inset-0 h-full w-full object-contain"
+              />
 
-            <!-- arrows -->
-            <button
-              v-if="modal.items.length > 1"
-              type="button"
-              class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
-              aria-label="Previous image"
-              @click="prevImage"
-            >
-              <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
-            </button>
-            <button
-              v-if="modal.items.length > 1"
-              type="button"
-              class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
-              aria-label="Next image"
-              @click="nextImage"
-            >
-              <ArrowRight class="h-4 w-4" :stroke-width="1.8" />
-            </button>
+              <!-- arrows -->
+              <button
+                v-if="modal.items.length > 1"
+                type="button"
+                class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+                aria-label="Previous image"
+                @click="prevImage"
+              >
+                <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
+              </button>
+              <button
+                v-if="modal.items.length > 1"
+                type="button"
+                class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+                aria-label="Next image"
+                @click="nextImage"
+              >
+                <ArrowRight class="h-4 w-4" :stroke-width="1.8" />
+              </button>
+            </template>
+
+            <!-- no image placeholder -->
+            <div v-else class="flex h-full w-full items-center justify-center">
+              <div class="flex flex-col items-center gap-2 text-gray-300">
+                <Images class="h-10 w-10" :stroke-width="1.2" />
+                <span class="font-mono text-[11px] text-gray-400">no image</span>
+              </div>
+            </div>
           </div>
 
           <!-- dots -->
@@ -387,7 +424,7 @@ function onKeydown(e: KeyboardEvent): void {
 .float-enter-from,
 .float-leave-to {
   opacity: 0;
-  transform: translateY(-50%) translateX(8px) scale(0.96);
+  transform: translateX(8px) scale(0.96);
 }
 /* once entered, keep a slow float up/down */
 .float-enter-active {
@@ -396,15 +433,15 @@ function onKeydown(e: KeyboardEvent): void {
 .float-enter-to,
 .float-leave-from {
   opacity: 1;
-  transform: translateY(-50%) translateX(0) scale(1);
+  transform: translateX(0) scale(1);
 }
 @keyframes tooltip-float {
   0%,
   100% {
-    transform: translateY(-50%);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(calc(-50% - 6px));
+    transform: translateY(-6px);
   }
 }
 </style>
