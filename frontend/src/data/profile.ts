@@ -29,6 +29,8 @@ export const profile: Profile = {
 /** Experience timeline — rendered on Home + Experience views. */
 export interface ExperienceEntry {
   period: string
+  /** Short year label for compact rows (e.g. "2025" or "2025 — 2026"). */
+  year: string
   tag: 'Professional' | 'Internship'
   title: string
   company: string
@@ -39,6 +41,7 @@ export interface ExperienceEntry {
 export const experiences: ExperienceEntry[] = [
   {
     period: 'Nov 2025 — Jun 2026',
+    year: '2025 — 2026',
     tag: 'Professional',
     title: 'Junior Front-End Developer',
     company: 'PRAXXYS SOLUTIONS',
@@ -54,6 +57,7 @@ export const experiences: ExperienceEntry[] = [
   },
   {
     period: 'Jan — Apr 2025',
+    year: '2025',
     tag: 'Internship',
     title: 'Quality Assurance Analyst & Business Application Developer',
     company: 'NOAH BUSINESS APPLICATION',

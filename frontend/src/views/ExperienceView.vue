@@ -1,98 +1,114 @@
 <script setup lang="ts">
 /**
- * Experience — work history + education timeline, static profile data.
+ * Experience — bryllim-style timeline: company rail (initials avatar +
+ * vertical line) + company header + role cards with period/description.
  */
-import { Building2, GraduationCap } from 'lucide-vue-next'
+import { GraduationCap } from 'lucide-vue-next'
 
-import Reveal from '@/components/ui/Reveal.vue'
-import SectionHeading from '@/components/ui/SectionHeading.vue'
 import { education, experiences } from '@/data/profile'
 
-const tagStyles: Record<string, string> = {
-  Professional: 'bg-gray-100 text-gray-700',
-  Internship: 'bg-gray-50 text-gray-500',
-  Graduated: 'bg-gray-100 text-gray-700',
+/** Initials for the company avatar. */
+function initials(name: string): string {
+  return name
+    .replace(/[^A-Za-z ]/g, '')
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ cat ./resume.md</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Resume ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Experience, education &amp; achievements</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-2xl px-6 py-14 sm:py-20">
+    <!-- header -->
+    <header class="mb-12">
+      <p class="terminal-comment mb-3 text-[13px]">$ cat ./resume.md</p>
+      <h1 class="font-pixel text-2xl leading-none">experience</h1>
+    </header>
 
-    <!-- ── Work experience ──────────────────────────────────── -->
-    <section aria-label="Work experience" class="mt-12">
-      <SectionHeading comment="// work-experience" title="[ Work Experience ]" blurb="Where I've applied my craft" />
+    <p class="reveal mb-14 max-w-xl text-[15px] leading-relaxed text-gray-600">
+      Hands-on experience across web and mobile development, QA, and AI research —
+      from Agile teams at a solutions studio to a QA internship at a business application firm.
+    </p>
 
-      <div class="mt-6 space-y-5">
-        <Reveal
-          v-for="(job, i) in experiences"
-          :key="job.title"
-          :delay="i % 3"
-          class="rounded-xl border border-gray-200 bg-white p-6"
-        >
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="font-mono text-[12px] text-gray-500">{{ job.period }}</span>
-            <span
-              class="rounded-full px-2.5 py-0.5 font-mono text-[11px]"
-              :class="tagStyles[job.tag] ?? 'bg-gray-100 text-gray-700'"
-            >
-              {{ job.tag }}
-            </span>
+    <!-- timeline -->
+    <div class="space-y-0">
+      <div
+        v-for="(job, i) in experiences"
+        :key="job.company"
+        class="reveal relative flex gap-4 sm:gap-5"
+      >
+        <!-- logo rail -->
+        <div class="flex flex-col items-center">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white font-pixel text-[12px] text-ink"
+          >
+            {{ initials(job.company) }}
           </div>
-          <h3 class="mt-3 flex items-start gap-2 text-[17px] font-semibold tracking-tight text-ink">
-            <Building2 class="mt-0.5 h-4 w-4 shrink-0 text-gray-500" :stroke-width="1.6" />
-            {{ job.title }}
-          </h3>
-          <p class="mt-0.5 font-mono text-[13px] text-gray-500">@{{ job.company }}</p>
-          <p class="mt-3 text-[14px] leading-relaxed text-gray-600">{{ job.description }}</p>
-          <ul class="mt-4 space-y-2 border-t border-gray-100 pt-4">
-            <li
-              v-for="highlight in job.highlights"
-              :key="highlight"
-              class="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-gray-600"
-            >
-              <span class="mt-0.5 font-mono text-gray-500" aria-hidden="true">&gt;</span>
-              {{ highlight }}
-            </li>
-          </ul>
-        </Reveal>
-      </div>
-    </section>
+          <div v-if="i < experiences.length - 1" class="mt-2 w-px flex-1 bg-gray-200"></div>
+        </div>
 
-    <!-- ── Education ────────────────────────────────────────── -->
-    <section aria-label="Education" class="mt-14">
-      <SectionHeading comment="// education" title="[ Education ]" blurb="Academic background" />
+        <!-- content -->
+        <div class="flex-1 pb-12">
+          <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ job.company }}</h2>
+          <p class="mt-1 font-mono text-[12px] text-gray-500">{{ job.tag }}</p>
 
-      <div class="mt-6 space-y-5">
-        <Reveal
-          v-for="(edu, i) in education"
-          :key="edu.title"
-          :delay="i % 3"
-          class="rounded-xl border border-gray-200 bg-white p-6"
-        >
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="font-mono text-[12px] text-gray-500">{{ edu.period }}</span>
-            <span
-              class="rounded-full px-2.5 py-0.5 font-mono text-[11px]"
-              :class="tagStyles[edu.tag] ?? 'bg-gray-100 text-gray-700'"
-            >
-              {{ edu.tag }}
-            </span>
+          <div class="mt-5">
+            <h3 class="text-[15px] font-medium text-ink">{{ job.title }}</h3>
+            <p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-gray-400">
+              {{ job.period }}
+            </p>
+
+            <div class="mt-3 space-y-3 text-[14px] leading-relaxed text-gray-600">
+              <p>{{ job.description }}</p>
+            </div>
+
+            <div v-if="job.highlights.length" class="mt-4 space-y-2">
+              <p
+                v-for="highlight in job.highlights"
+                :key="highlight"
+                class="flex items-start gap-2 text-[13.5px] leading-relaxed text-gray-600"
+              >
+                <span class="mt-0.5 font-mono text-gray-400" aria-hidden="true">&gt;</span>
+                {{ highlight }}
+              </p>
+            </div>
           </div>
-          <h3 class="mt-3 flex items-start gap-2 text-[17px] font-semibold tracking-tight text-ink">
-            <GraduationCap class="mt-0.5 h-4 w-4 shrink-0 text-gray-500" :stroke-width="1.6" />
-            {{ edu.title }}
-          </h3>
-          <p class="mt-0.5 font-mono text-[13px] text-gray-500">@{{ edu.school }}</p>
-          <p class="mt-3 text-[14px] leading-relaxed text-gray-600">{{ edu.detail }}</p>
-        </Reveal>
+        </div>
       </div>
-    </section>
+    </div>
+
+    <!-- education -->
+    <div class="mt-10">
+      <div
+        v-for="edu in education"
+        :key="edu.school"
+        class="reveal relative flex gap-4 sm:gap-5"
+      >
+        <div class="flex flex-col items-center">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white"
+          >
+            <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.school }}</h2>
+          <p class="mt-1 font-mono text-[12px] text-gray-500">{{ edu.tag }}</p>
+
+          <div class="mt-5">
+            <h3 class="text-[15px] font-medium text-ink">{{ edu.title }}</h3>
+            <p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-gray-400">
+              {{ edu.period }}
+            </p>
+            <div class="mt-3 space-y-3 text-[14px] leading-relaxed text-gray-600">
+              <p>{{ edu.detail }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

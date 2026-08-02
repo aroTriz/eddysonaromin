@@ -91,13 +91,13 @@ function activate(index: number): void {
 
       <div class="mt-4 flex items-center gap-3.5">
         <div
-          v-if="projects[idx].image_url"
-          class="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 shadow-sm"
+          v-if="projects[idx].favicon_url"
+          class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
           <img
-            :src="projects[idx].image_url"
-            :alt="projects[idx].title"
-            class="h-full w-full object-cover"
+            :src="projects[idx].favicon_url"
+            :alt="`${projects[idx].title} icon`"
+            class="h-7 w-7 object-contain"
             loading="lazy"
           />
         </div>

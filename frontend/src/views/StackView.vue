@@ -4,20 +4,19 @@
  */
 import { Wrench } from 'lucide-vue-next'
 
+import PageHeader from '@/components/ui/PageHeader.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
 import { competencies, stackGroups } from '@/data/profile'
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ ls ./stack/</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Stack ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Technologies and tools I work with</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+    <PageHeader
+      comment="$ ls ./stack/"
+      title="stack"
+      description="Technologies and tools I work with — from frontend frameworks to backend, mobile, and data."
+    />
 
     <!-- ── Grouped stack ────────────────────────────────────── -->
     <div class="mt-10 grid gap-5 sm:grid-cols-2">

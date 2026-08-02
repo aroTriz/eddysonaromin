@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\GithubController;
 use App\Http\Controllers\Api\ProjectController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +25,6 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/blog/posts/{slug}', [BlogPostController::class, 'show']);
 
     Route::post('/contact', [ContactController::class, 'store']);
+
+    Route::get('/github/{username}/contributions', [GithubController::class, 'contributions']);
 });

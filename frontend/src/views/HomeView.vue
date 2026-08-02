@@ -12,6 +12,7 @@ import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
+import { useTypewriter } from '@/composables/useTypewriter'
 import {
   allTechnologies,
   certifications,
@@ -22,6 +23,15 @@ import {
 } from '@/data/profile'
 
 const emailModalRef = ref<InstanceType<typeof EmailModal> | null>(null)
+
+/** Typewriter roles shown under the profile video. */
+const { displayed: displayedRole, caretOn } = useTypewriter([
+  'Frontend Developer',
+  'Full-Stack Developer',
+  'AI Engineer',
+  'Quality Assurance Analyst',
+  'Information Technologist',
+])
 
 const marqueeList = [...allTechnologies, ...allTechnologies]
 const year = new Date().getFullYear()
@@ -34,7 +44,6 @@ const intro = [
 const socials = [
   { label: 'github', href: profile.github },
   { label: 'linkedin', href: profile.linkedin },
-  { label: 'portfolio', href: `https://${profile.portfolio}` },
 ]
 </script>
 
@@ -48,10 +57,21 @@ const socials = [
           <div class="aspect-[3/4] w-full">
             <ProfileVideo />
           </div>
+
+          <!-- typewriter role line below the video -->
+          <div class="mt-4 flex items-center justify-center font-mono text-[12px] text-gray-500">
+            <span class="whitespace-nowrap">
+              const role = '{{ displayedRole }}'
+              <span
+                class="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-[2px] bg-gray-500"
+                :style="{ opacity: caretOn ? 1 : 0 }"
+              ></span>'
+            </span>
+          </div>
         </div>
 
-        <!-- Text column (right) -->
-        <div>
+        <!-- Text column (right) — centered content -->
+        <div class="flex flex-col items-center text-center">
           <h1 class="reveal d2 font-pixel text-[1.9rem] leading-none sm:text-[2.4rem]">
             {{ profile.name }}
           </h1>
@@ -67,7 +87,7 @@ const socials = [
 
           <!-- links below the intro -->
           <div
-            class="reveal d4 mt-7 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-gray-500"
+            class="reveal d4 mt-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-gray-500"
           >
             <a
               v-for="social in socials"
@@ -89,7 +109,7 @@ const socials = [
             </button>
           </div>
 
-          <div class="reveal d5 mt-8 flex flex-wrap items-center gap-4">
+          <div class="reveal d5 mt-8 flex flex-wrap items-center justify-center gap-4">
             <RouterLink
               to="/projects"
               class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
@@ -192,7 +212,7 @@ const socials = [
           :key="job.title"
           class="group grid grid-cols-12 items-baseline gap-3 py-2.5 hover:bg-gray-50/80"
         >
-          <div class="col-span-2 font-mono text-[11px] text-gray-400">{{ job.period }}</div>
+          <div class="col-span-2 font-mono text-[11px] text-gray-400">{{ job.year }}</div>
           <div class="col-span-10 text-[14px] font-medium text-ink sm:col-span-6">{{ job.title }}</div>
           <div class="col-span-12 text-[13px] text-gray-500 sm:col-span-4 sm:text-right">
             {{ job.company }}

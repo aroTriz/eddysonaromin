@@ -4,20 +4,19 @@
  */
 import { Award, BadgeCheck, UserRound } from 'lucide-vue-next'
 
+import PageHeader from '@/components/ui/PageHeader.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
 import { affiliations, certifications, references } from '@/data/profile'
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ cat ./certifications.md</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Certifications ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Credentials, affiliations &amp; references</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+    <PageHeader
+      comment="$ cat ./certifications.md"
+      title="certifications"
+      description="Credentials, affiliations & references."
+    />
 
     <!-- ── Certifications ───────────────────────────────────── -->
     <section aria-label="Certifications" class="mt-10">

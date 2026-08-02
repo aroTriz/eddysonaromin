@@ -34,6 +34,12 @@ const router = createRouter({
       meta: { title: 'Experience — Eddyson Aromin' },
     },
     {
+      path: '/services',
+      name: 'services',
+      component: () => import('@/views/ServicesView.vue'),
+      meta: { title: 'Services — Eddyson Aromin' },
+    },
+    {
       path: '/stack',
       name: 'stack',
       component: () => import('@/views/StackView.vue'),

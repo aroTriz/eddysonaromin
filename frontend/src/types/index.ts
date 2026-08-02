@@ -25,6 +25,7 @@ export interface Project {
   url: string | null
   source_url: string | null
   image_url: string | null
+  favicon_url: string | null
   sort_order: number
   created_at: string | null
   updated_at: string | null

@@ -2,8 +2,9 @@
 /**
  * About — bio (terminal style), info.json card, tech stack grid, interests.
  */
-import SectionHeading from '@/components/ui/SectionHeading.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import Reveal from '@/components/ui/Reveal.vue'
+import SectionHeading from '@/components/ui/SectionHeading.vue'
 import {
   allTechnologies,
   interests,
@@ -22,15 +23,12 @@ const info = [
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <!-- ── Header ───────────────────────────────────────────── -->
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ cd ./about</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ About Me ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Get to know the developer behind the code</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+    <PageHeader
+      comment="$ cd ./about"
+      title="about"
+      description="Get to know the developer behind the code."
+    />
 
     <!-- ── Bio + info ───────────────────────────────────────── -->
     <div class="mt-10 grid gap-6 md:grid-cols-2">

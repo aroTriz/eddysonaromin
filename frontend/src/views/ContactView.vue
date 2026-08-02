@@ -7,6 +7,7 @@ import { CheckCircle2, LoaderCircle, Mail, MapPin, Phone, Send } from 'lucide-vu
 import { ref } from 'vue'
 
 import Reveal from '@/components/ui/Reveal.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import { profile } from '@/data/profile'
 import { submitContact } from '@/services/api'
 import type { ContactPayload } from '@/types'
@@ -49,14 +50,12 @@ const fieldClass =
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ npx send-email --to {{ profile.email }}</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Contact ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Let's build something together</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+    <PageHeader
+      :comment="`$ npx send-email --to ${profile.email}`"
+      title="contact"
+      description="Let's build something together — drop me a line."
+    />
 
     <div class="mt-10 grid gap-6 md:grid-cols-5">
       <!-- ── Form ───────────────────────────────────────────── -->

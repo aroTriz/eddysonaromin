@@ -3,9 +3,10 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Github, Globe, Linkedin, Mail, Menu, Rss, User, X } from 'lucide-vue-next'
+import { Github, Linkedin, Mail, Menu, Rss, User, Wrench, X } from 'lucide-vue-next'
 import { ref } from 'vue'
 
+import AskOverlay from '@/components/ui/AskOverlay.vue'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
@@ -13,6 +14,10 @@ defineProps<{
   /** Route name of the active page — drives the arrow indicator. */
   active: string
 }>()
+
+const askRef = ref<InstanceType<typeof AskOverlay> | null>(null)
+const isMac =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const mobileOpen = ref(false)
 
@@ -26,9 +31,23 @@ function closeMobileMenu(): void {
   document.documentElement.style.overflow = ''
 }
 
+/**
+ * Nav groups mirror bryllim.com's sidebar: three divisions separated by
+ * hairline dividers (no visible group labels).
+ *  - Group 1: services, blog        (what I do / write)
+ *  - Group 2: projects, experience, stack, certifications, recommendations
+ *  - Group 3: about, contact
+ */
 const navGroups = [
   {
-    label: 'work',
+    label: 'g1',
+    links: [
+      { label: 'Services', to: '/services', name: 'services', icon: Wrench },
+      { label: 'Blog', to: '/blog', name: 'blog', icon: Rss },
+    ],
+  },
+  {
+    label: 'g2',
     links: [
       { label: 'Projects', to: '/projects', name: 'projects', icon: undefined },
       { label: 'Experience', to: '/experience', name: 'experience', icon: undefined },
@@ -38,16 +57,12 @@ const navGroups = [
     ],
   },
   {
-    label: 'writing',
+    label: 'g3',
     links: [
-      { label: 'Blog', to: '/blog', name: 'blog', icon: Rss },
+      { label: 'About', to: '/about', name: 'about', icon: User },
+      { label: 'Contact', to: '/contact', name: 'contact', icon: Mail },
     ],
   },
-]
-
-const contactLinks = [
-  { label: 'About', to: '/about', name: 'about', icon: User },
-  { label: 'Contact', to: '/contact', name: 'contact', icon: Mail },
 ]
 </script>
 
@@ -62,7 +77,7 @@ const contactLinks = [
     </RouterLink>
 
     <div class="mt-9 flex flex-1 flex-col gap-4 overflow-y-auto font-mono text-[13px]">
-      <template v-for="group in navGroups" :key="group.label">
+      <template v-for="(group, gi) in navGroups" :key="group.label">
         <div class="flex flex-col gap-2.5">
           <RouterLink
             v-for="link in group.links"
@@ -94,37 +109,24 @@ const contactLinks = [
             {{ link.label }}
           </RouterLink>
         </div>
-        <div class="h-px bg-gray-200" />
+        <div v-if="gi < navGroups.length - 1" class="h-px bg-gray-200" />
       </template>
-
-      <div class="flex flex-col gap-2.5">
-        <RouterLink
-          v-for="link in contactLinks"
-          :key="link.name"
-          :to="link.to"
-          class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink"
-          :class="{ 'pl-5 text-ink': active === link.name }"
-        >
-          <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" />
-          <svg
-            v-if="active === link.name"
-            class="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M5 12h14M13 6l6 6-6 6"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-          {{ link.label }}
-        </RouterLink>
-      </div>
     </div>
+
+    <button
+      type="button"
+      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
+      @click="askRef?.openAsk()"
+    >
+      <span>Ask anything</span>
+      <span class="inline-flex items-center gap-1">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
+          {{ isMac ? '⌘' : 'Alt' }}
+        </kbd>
+        <span class="font-mono text-[10px] text-gray-400">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">K</kbd>
+      </span>
+    </button>
 
     <div class="mt-4 border-y border-gray-200 py-3.5">
       <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500">
@@ -156,16 +158,6 @@ const contactLinks = [
           title="LinkedIn"
         >
           <Linkedin class="h-3.5 w-3.5" :stroke-width="1.7" />
-        </a>
-        <a
-          :href="`https://${profile.portfolio}`"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
-          aria-label="Portfolio site"
-          title="Portfolio"
-        >
-          <Globe class="h-3.5 w-3.5" :stroke-width="1.7" />
         </a>
       </div>
       <p class="text-[12px] leading-relaxed text-gray-500">
@@ -258,21 +250,22 @@ const contactLinks = [
           </RouterLink>
         </div>
         <div class="my-5 h-px bg-gray-200" />
-        <div class="mnav-group flex flex-col gap-4" style="transition-delay: 0.23s">
-          <RouterLink
-            v-for="link in contactLinks"
-            :key="link.name"
-            :to="link.to"
-            class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink"
-            @click="closeMobileMenu"
-          >
-            <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" />
-            {{ link.label }}
-          </RouterLink>
-        </div>
-        <div class="my-5 h-px bg-gray-200" />
         <div class="mnav-group flex flex-col gap-5" style="transition-delay: 0.29s">
           <div>
+            <button
+              type="button"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              @click="closeMobileMenu(); askRef?.openAsk()"
+            >
+              <span>ask anything</span>
+              <span class="inline-flex items-center gap-1">
+                <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
+                  {{ isMac ? '⌘' : 'Alt' }}
+                </kbd>
+                <span class="text-[10px] text-gray-400">+</span>
+                <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">K</kbd>
+              </span>
+            </button>
             <div class="mb-4">
               <ThemeSwitch />
             </div>
@@ -297,16 +290,6 @@ const contactLinks = [
               >
                 <Linkedin class="h-4 w-4" :stroke-width="1.7" />
               </a>
-              <a
-                :href="`https://${profile.portfolio}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
-                aria-label="Portfolio site"
-                title="Portfolio"
-              >
-                <Globe class="h-4 w-4" :stroke-width="1.7" />
-              </a>
             </div>
             <p class="text-[12px] leading-relaxed text-gray-500">
               For work, collabs &amp; everything else, reach me at
@@ -323,4 +306,7 @@ const contactLinks = [
       </div>
     </div>
   </Teleport>
+
+  <!-- Ask anything overlay (⌘K / Alt+K) -->
+  <AskOverlay ref="askRef" />
 </template>

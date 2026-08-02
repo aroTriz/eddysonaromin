@@ -6,7 +6,7 @@ import { ref, onMounted } from 'vue'
 
 import BlogCard from '@/components/blog/BlogCard.vue'
 import AsyncState from '@/components/ui/AsyncState.vue'
-import Reveal from '@/components/ui/Reveal.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import { fetchBlogPosts } from '@/services/api'
 import type { BlogPost } from '@/types'
 
@@ -30,14 +30,12 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
-    <Reveal>
-      <p class="terminal-comment text-[13px]">$ ls ./blog/</p>
-      <h1 class="mt-2 text-[2.1rem] font-semibold leading-tight tracking-tightest md:text-[3rem]">
-        [ Blog ]
-      </h1>
-      <p class="mt-1 font-mono text-[13px] text-gray-500">// Notes on building, learning &amp; shipping</p>
-    </Reveal>
+  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+    <PageHeader
+      comment="$ ls ./blog/"
+      title="blog"
+      description="Notes on building, learning & shipping."
+    />
 
     <AsyncState
       :loading="loading"
