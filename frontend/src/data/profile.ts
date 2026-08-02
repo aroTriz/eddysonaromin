@@ -5,7 +5,7 @@ import type { Profile } from '@/types'
  * Kept here as the single source of truth for personal details.
  */
 export const profile: Profile = {
-  name: 'Eddyson Aromin',
+  name: 'Eddyson Tristan Aromin',
   fullName: 'Eddyson Tristan Aromin',
   tagline: 'BS Information Technology graduate from Saint Louis University Baguio. Skilled in Software Development, Web Development, Database Management, System Administration, Data Analytics, and Quality Assurance. Eager to launch my professional career, continuously learn, and contribute to impactful projects.',
   role: 'Junior Front-End Developer',
