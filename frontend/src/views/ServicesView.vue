@@ -94,40 +94,55 @@ function distance(slot: number): number {
 }
 
 let snapTimer: ReturnType<typeof setTimeout> | undefined
+let snapPending = false
 
 /**
- * Snap `current` back into the middle copy by exactly one full ring (N slots).
- * Because the deck repeats every N, the pixels on screen are identical before
- * and after — so with the transition disabled this is completely invisible.
- * Must run only when no transition is in flight, hence the 520ms wait
- * (transition is 500ms) and a transitionend listener as backup.
+ * True infinite ring: the deck repeats every N slots, so shifting the track by
+ * exactly one full ring (N * STEP) lands on identical pixels. The shift must
+ * happen with the transition OFF, only after the previous slide fully
+ * finished (transitionend), and be followed by a forced reflow + double rAF
+ * so the browser paints the new position before the transition is re-enabled.
  */
-function scheduleSnap(): void {
-  const snap = (): void => {
-    animating.value = false
-    current.value += current.value >= 2 * N ? -N : N
+function doSnap(): void {
+  if (!snapPending) return
+  snapPending = false
+  animating.value = false
+  current.value += current.value >= 2 * N ? -N : N
+  // Force a reflow so the transform applies without any transition, then
+  // re-enable the transition on the next painted frame.
+  if (track.value) void track.value.offsetWidth
+  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       animating.value = true
     })
-  }
+  })
+}
+
+function scheduleSnap(): void {
+  if (snapPending) return
+  snapPending = true
   clearTimeout(snapTimer)
-  snapTimer = setTimeout(snap, 520)
+  // Fallback in case transitionend never fires (reduced motion etc.)
+  snapTimer = setTimeout(doSnap, 600)
 }
 
 function slide(dir: 1 | -1): void {
   current.value += dir
-  // Once we cross into the 3rd (or 1st) copy, wait for the slide to finish,
-  // then teleport back by one ring — the ring keeps rotating 1,2,3,1,2,3…
+  // Crossed into the 3rd (or 1st) copy → wait for the slide's transitionend,
+  // then shift back one ring. The ring rotates 1,2,3,1,2,3… with no jump.
   if (current.value >= 2 * N || current.value < N) {
     scheduleSnap()
   }
 }
 
-/** Back-up: if the transitionend listener misses, still snap after 520ms. */
+/** Snap only once the slide's transform transition actually completed. */
 function onTrackTransitionEnd(e: TransitionEvent): void {
   if (e.propertyName !== 'transform') return
   if (current.value >= 2 * N || current.value < N) {
     scheduleSnap()
+    // Defer the actual shift to the next frame so the transition end state
+    // is fully committed before we strip the transition class.
+    requestAnimationFrame(() => requestAnimationFrame(doSnap))
   }
 }
 
