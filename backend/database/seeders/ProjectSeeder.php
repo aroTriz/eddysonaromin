@@ -191,8 +191,8 @@ class ProjectSeeder extends Seeder
                 'sort_order' => 10,
             ],
             [
-                'title' => 'Chatting System (LAN)',
-                'slug' => 'chatting-system-lan',
+                'title' => 'Chat System',
+                'slug' => 'chat-system',
                 'category' => 'academic',
                 'type' => 'networking',
                 'summary' => 'A client-server application enabling real-time communication over a Local Area Network for seamless message exchange within the network.',
