@@ -246,28 +246,43 @@ export const competencies: Competency[] = [
   },
 ]
 
-/** Certifications & affiliations. */
+/** Certifications & credentials. */
 export interface Certification {
+  slug: string
   title: string
   issuer: string
   year: string
+  category: 'degree' | 'certification'
+  summary: string
 }
 
 export const certifications: Certification[] = [
   {
+    slug: 'bachelor-of-science-in-information-technology',
     title: 'Bachelor of Science in Information Technology',
     issuer: 'Saint Louis University (SAMCIS)',
     year: '2025',
+    category: 'degree',
+    summary:
+      'Four-year undergraduate degree in Information Technology at Saint Louis University — covering software development, web technologies, databases, networking, and information systems, capped by a full-stack capstone project (ISakay).',
   },
   {
+    slug: 'agile-fast-phased-development',
     title: 'Agile & Fast-Phased Development',
     issuer: 'PRAXXYS Solutions Inc.',
     year: '2026',
+    category: 'certification',
+    summary:
+      'Company credential from PRAXXYS Solutions Inc. on agile methodology and fast-phased delivery — the working practices used on real client web and mobile work in an agile development team.',
   },
   {
+    slug: 'quality-assurance-testing',
     title: 'Quality Assurance & Testing',
     issuer: 'NOAH Business Application',
     year: '2025',
+    category: 'certification',
+    summary:
+      'QA credential from NOAH Business Application covering the full quality assurance discipline — test case authoring, bug and regression tracking, and documentation review for release readiness.',
   },
 ]
 
@@ -297,24 +312,41 @@ export const affiliations: Affiliation[] = [
 
 /** References. */
 export interface Reference {
+  slug: string
   initials: string
   name: string
   title: string
   email: string | null
+  summary: string
 }
 
 export const references: Reference[] = [
   {
+    slug: 'britannyy-baldovino',
     initials: 'BB',
     name: 'Britannyy Baldovino',
     title: 'University Instructor — Saint Louis University',
     email: 'bmbaldovino@slu.edu.ph',
+    summary:
+      'University instructor at Saint Louis University who supervised and mentored academic work — can speak to technical skill, attention to detail, and consistent delivery.',
   },
   {
+    slug: 'lambert-famorca',
     initials: 'LF',
     name: 'Lambert Famorca',
     title: 'University Instructor — Saint Louis University',
     email: 'support@myvirtuallearning.org',
+    summary:
+      'University instructor at Saint Louis University and founder of MyVirtual Learning — connected through the ISakay capstone mentorship community.',
+  },
+  {
+    slug: 'praxxys-solutions',
+    initials: 'PS',
+    name: 'PRAXXYS Solutions Inc.',
+    title: 'Junior Front-End Developer — Agile Development Team',
+    email: null,
+    summary:
+      'PRAXXYS Solutions Inc. — agile web & mobile engineering team where I served as Junior Front-End Developer. Can speak to clean API integration, consistent quality under fast-paced deadlines, and proactive ownership of shipped features.',
   },
 ]
 

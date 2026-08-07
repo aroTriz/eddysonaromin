@@ -73,3 +73,25 @@ export async function submitContact(payload: ContactPayload): Promise<void> {
     throw new Error(toError(data))
   }
 }
+
+/** Fetch a user's real GitHub contribution grid (7×53 intensity levels). */
+export async function fetchGitHubContributions(
+  username: string,
+): Promise<number[][]> {
+  const response = await fetch(
+    `${API_BASE}/github/${encodeURIComponent(username)}/contributions`,
+  )
+  const payload = (await response.json().catch(() => ({}))) as
+    | { data: { grid: number[][] } }
+    | ApiError
+
+  if (!response.ok) {
+    throw new Error(toError(payload as ApiError))
+  }
+
+  const grid = (payload as { data: { grid: number[][] } }).data.grid
+  if (!Array.isArray(grid) || grid.length !== 7) {
+    throw new Error('GitHub contribution data is unavailable.')
+  }
+  return grid
+}

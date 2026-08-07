@@ -187,8 +187,21 @@ onBeforeUnmount(() => {
     </header>
 
     <!-- services ring: 3 full cards visible (sides blurred, center clear) -->
-    <div ref="container" class="relative mx-auto w-full max-w-[1060px] overflow-hidden">
-      <!-- track -->
+    <!-- Arrows sit adjacent to the window (flex siblings) — never covering the slides. -->
+    <div class="relative mx-auto flex w-full max-w-[1060px] items-center gap-3 sm:gap-4">
+      <!-- prev arrow -->
+      <button
+        type="button"
+        aria-label="Previous service"
+        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink"
+        @click="slide(-1)"
+      >
+        <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
+      </button>
+
+      <!-- carousel window -->
+      <div ref="container" class="relative min-w-0 flex-1 overflow-hidden">
+        <!-- track -->
       <div
         ref="track"
         class="flex"
@@ -198,7 +211,7 @@ onBeforeUnmount(() => {
         <div
           v-for="(service, i) in deck"
           :key="`${service.title}-${i}`"
-          class="group relative flex shrink-0 flex-col overflow-hidden border border-gray-200 bg-white p-6 transition-all duration-500"
+          class="group relative flex shrink-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-6 transition-all duration-500"
           :class="distance(i) === 0
             ? 'z-10 opacity-100 blur-0'
             : 'opacity-50 blur-[3px]'"
@@ -258,24 +271,17 @@ onBeforeUnmount(() => {
             </ul>
           </div>
         </div>
+        </div>
       </div>
 
-      <!-- arrows (infinite ring — always enabled) -->
-      <button
-        type="button"
-        aria-label="Previous service"
-        class="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-ink"
-        @click="slide(-1)"
-      >
-        <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
-      </button>
+      <!-- next arrow -->
       <button
         type="button"
         aria-label="Next service"
-        class="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-ink"
+        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink"
         @click="slide(1)"
       >
-        <ArrowRight class="h-4 w-4" :stroke-width="1.8" />
+        <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
       </button>
     </div>
   </div>

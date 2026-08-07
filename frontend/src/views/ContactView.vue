@@ -206,8 +206,8 @@ const fieldClass =
     <!-- ── Map (Google Maps embed — current location) ─────────── -->
     <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
       <iframe
-        title="Victoria Sports Tower 2 on Google Maps"
-        src="https://www.google.com/maps?q=Victoria+Sports+Tower+2,+Quezon+City&ll=14.6359509,121.0424823&z=16&output=embed"
+        title="Victoria Sports Tower, Quezon City"
+        src="https://www.google.com/maps?q=14.6359509,121.0424823&z=17&output=embed"
         class="block h-[320px] w-full border-0"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"

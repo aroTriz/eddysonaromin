@@ -12,6 +12,9 @@ import { profile } from '@/data/profile'
 const open = ref(false)
 const copied = ref(false)
 
+/** Opens Gmail's compose window directly, addressed to the profile email. */
+const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}`
+
 let copyTimer: ReturnType<typeof setTimeout> | undefined
 
 function openModal(): void {
@@ -108,7 +111,9 @@ defineExpose({ openModal })
         </div>
 
         <a
-          :href="`mailto:${profile.email}`"
+          :href="gmailComposeUrl"
+          target="_blank"
+          rel="noopener noreferrer"
           class="mt-3 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-ink hover:border-ink"
         >
           Open mail app

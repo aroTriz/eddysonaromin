@@ -1,66 +1,103 @@
 <script setup lang="ts">
 /**
- * GitHubContributions — EXACT replica of bryllim.com's halftone
- * GitHub contribution graph. Same 7×53 grid, same circle radii,
- * same opacity mapping — only the theme color (ink) is dynamic.
+ * GitHubContributions — REAL GitHub contribution graph for the account
+ * linked in the profile (github.com/EddysonA15), served by the Laravel
+ * API (`GET /api/v1/github/{username}/contributions`, cached server-side).
  *
- * Grid spacing is 13px; the viewBox is 689×91 like the reference.
+ * Renders the same halftone dot language as the rest of the site:
+ * 7×53 grid, tiny faint dots for empty weeks, ink dots that grow with
+ * the contribution level (1→4). Loading / error / empty states use the
+ * shared AsyncState component so every data view on the site matches.
  */
-const GRID: number[][] = [
-  [2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 3.8, 0, 1.1, 0, 2.7, 0, 2.7, 0, 2.7, 0, 3.8, 0, 1.1, 0, 3.8, 0, 1.1, 0, 1.1, 0, 2.7, 0, 3.8, 0, 2.7, 0, 1.1],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1.1, 0, 2.7, 0, 2.7, 0, 3.8, 0, 2.7, 0, 2.7, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 4.8, 0, 4.8, 0, 2.7, 0, 2.7, 0, 2.7, 0, 2.7, 0, 4.8, 0, 2.7, 0, 2.7],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [3.8, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 1.1, 0, 2.7, 0, 1.1, 0, 1.1, 0, 2.7, 0, 3.8, 0, 1.1, 0, 3.8, 0, 2.7, 0, 3.8, 0, 5.7, 0, 2.7, 0, 3.8, 0, 1.1, 0, 2.7, 0, 1.1, 0, 4.8, 0, 2.7, 0, 4.8],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [3.8, 0, 1.1, 0, 3.8, 0, 2.7, 0, 4.8, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 1.1, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 4.8, 0, 3.8, 0, 3.8, 0, 5.7, 0, 2.7, 0, 3.8, 0, 2.7, 0, 2.7, 0, 1.1, 0, 2.7, 0, 2.7],
-]
+import { computed, onMounted, ref } from 'vue'
+
+import AsyncState from '@/components/ui/AsyncState.vue'
+import { profile } from '@/data/profile'
+import { fetchGitHubContributions } from '@/services/api'
+
+/** GitHub login derived from the profile URL (https://github.com/EddysonA15). */
+const username = profile.github.replace(/^https?:\/\/github\.com\//, '').replace(/\/.*$/, '')
 
 const SPACING = 13
 const OFFSET = 6.5
 
-/** Exact opacity mapping from the reference:
- *  - empty cell (0) → tiny faint dot (0.05)
- *  - real r=1.1 dot → faint (0.12)
- *  - activity dots → bold (0.92) */
-function radiusOpacity(cell: number): number {
-  if (cell === 0) return 0.05
-  if (cell <= 1.1) return 0.12
-  return 0.92
+/** Level → (radius, opacity) so activity reads like GitHub's intensity. */
+function levelStyle(level: number): { r: number; op: number } {
+  if (level <= 0) return { r: 1.1, op: 0.05 }
+  if (level === 1) return { r: 1.1, op: 0.2 }
+  if (level === 2) return { r: 2, op: 0.45 }
+  if (level === 3) return { r: 2.7, op: 0.72 }
+  return { r: 3.8, op: 0.92 }
 }
 
-/** Flat list of (x, y, radius, opacity) for every cell — all 371 dots,
- *  matching the reference: empty cells render as tiny faint dots (r=1.1),
- *  activity cells render with their pattern radius. */
-const dots: { x: number; y: number; r: number; op: number }[] = []
-GRID.forEach((row, y) => {
-  row.forEach((cell, x) => {
-    dots.push({
-      x: OFFSET + x * SPACING,
-      y: OFFSET + y * SPACING,
-      r: cell > 0 ? cell : 1.1,
-      op: radiusOpacity(cell),
+const loading = ref(true)
+const error = ref<string | null>(null)
+const grid = ref<number[][]>([])
+
+async function load(): Promise<void> {
+  loading.value = true
+  error.value = null
+  try {
+    grid.value = await fetchGitHubContributions(username)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load contributions.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
+
+/** Flat list of dots for the SVG — x, y, radius, opacity. */
+const dots = computed(() => {
+  const list: { x: number; y: number; r: number; op: number; key: string }[] = []
+  grid.value.forEach((row, y) => {
+    row.forEach((level, x) => {
+      const s = levelStyle(level)
+      list.push({
+        x: OFFSET + x * SPACING,
+        y: OFFSET + y * SPACING,
+        r: s.r,
+        op: s.op,
+        key: `${x}-${y}`,
+      })
     })
   })
+  return list
 })
+
+/** Total commits across the year — shown under the graph. */
+const totalContributions = computed(() =>
+  grid.value.reduce(
+    (sum, row) => sum + row.reduce((rowSum, level) => rowSum + level, 0),
+    0,
+  ),
+)
 </script>
 
 <template>
-  <svg
-    viewBox="0 0 689 91"
-    class="h-auto w-full text-ink"
-    preserveAspectRatio="xMidYMid meet"
-    aria-label="GitHub contribution graph, halftone style"
-    role="img"
-  >
-    <circle
-      v-for="dot in dots"
-      :key="`${dot.x}-${dot.y}`"
-      :cx="dot.x"
-      :cy="dot.y"
-      :r="dot.r"
-      fill="currentColor"
-      :opacity="dot.op"
-    />
-  </svg>
+  <AsyncState :loading="loading" :error="error" :on-retry="load">
+    <div v-if="grid.length > 0" class="flex flex-col gap-3">
+      <svg
+        viewBox="0 0 689 91"
+        class="h-auto w-full text-ink transition-opacity duration-300"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        :aria-label="`GitHub contribution graph for ${username}`"
+      >
+        <circle
+          v-for="dot in dots"
+          :key="dot.key"
+          :cx="dot.x"
+          :cy="dot.y"
+          :r="dot.r"
+          fill="currentColor"
+          :opacity="dot.op"
+        />
+      </svg>
+      <p class="font-mono text-[11px] text-gray-500">
+        {{ totalContributions }} contributions in the last year
+      </p>
+    </div>
+  </AsyncState>
 </template>

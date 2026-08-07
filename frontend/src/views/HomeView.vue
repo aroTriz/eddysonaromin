@@ -69,6 +69,14 @@ const socials = [
               >'</span
             >
           </div>
+
+          <!-- availability status line below the role -->
+          <div class="mt-1.5 flex items-center justify-center gap-1.5 font-mono text-[12px] text-gray-500">
+            <span>const available = '</span>
+            <span class="pulse-dot h-1.5 w-1.5 rounded-full bg-[#28c840]" aria-hidden="true"></span>
+            <span class="text-ink">for hire</span>
+            <span>'</span>
+          </div>
         </div>
 
         <!-- Text column (right) — centered content -->
@@ -245,8 +253,8 @@ const socials = [
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <RouterLink
           v-for="cert in certifications"
-          :key="cert.title"
-          to="/certifications"
+          :key="cert.slug"
+          :to="`/certifications/${cert.slug}`"
           class="group relative flex flex-col items-center rounded-xl bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)]"
         >
           <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-lg border border-gray-200/70"></span>
