@@ -1,0 +1,11 @@
+# Cloudflare Pages configuration for the Eddyson Aromin portfolio.
+# Bindings here are injected into the Pages Functions at deploy time.
+name = "aromin-resume"
+pages_build_output_dir = "frontend/dist"
+compatibility_date = "2025-01-15"
+
+# D1 — projects, blog posts, contact messages (mirrors the Laravel SQLite DB).
+[[d1_databases]]
+binding = "blog_db"
+database_name = "blog-db"
+database_id = "02e5d1d4-c392-4ba4-bbf0-d3e71de230c6"

@@ -15,15 +15,28 @@ function toError(payload: ApiError | string): string {
 }
 
 async function parse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => ({}))) as
-    | { data: T }
-    | ApiError
-
-  if (!response.ok) {
-    throw new Error(toError(payload as ApiError))
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    // Non-JSON body (e.g. an HTML fallback page) — never pass it through.
+    throw new Error('The API returned an invalid response.')
   }
 
-  return (payload as { data: T }).data
+  const body = payload as { data?: T; message?: string } | ApiError
+
+  if (!response.ok) {
+    throw new Error(toError(body as ApiError))
+  }
+
+  // Guard against a 200 with a missing `data` payload (SPA fallback pages,
+  // misconfigured proxies, etc.) so callers never crash on `.map` / `.data`.
+  const data = (body as { data?: T } | null)?.data
+  if (body === null || typeof body !== 'object' || data === undefined) {
+    throw new Error('The API returned an unexpected response.')
+  }
+
+  return data
 }
 
 /** Fetch projects — optionally filtered by category / type / featured. */
@@ -81,17 +94,21 @@ export async function fetchGitHubContributions(
   const response = await fetch(
     `${API_BASE}/github/${encodeURIComponent(username)}/contributions`,
   )
-  const payload = (await response.json().catch(() => ({}))) as
-    | { data: { grid: number[][] } }
-    | ApiError
+
+  let payload: { data?: { grid?: unknown } } | ApiError | null = null
+  try {
+    payload = (await response.json()) as { data?: { grid?: unknown } } | ApiError
+  } catch {
+    throw new Error('GitHub contribution data is unavailable.')
+  }
 
   if (!response.ok) {
     throw new Error(toError(payload as ApiError))
   }
 
-  const grid = (payload as { data: { grid: number[][] } }).data.grid
+  const grid = (payload as { data?: { grid?: unknown } } | null)?.data?.grid
   if (!Array.isArray(grid) || grid.length !== 7) {
     throw new Error('GitHub contribution data is unavailable.')
   }
-  return grid
+  return grid as number[][]
 }

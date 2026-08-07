@@ -45,3 +45,7 @@ backend/database/database.sqlite
 !backend/storage/framework/sessions/.gitignore
 !backend/storage/framework/views/.gitignore
 !backend/public/storage/.gitignore
+
+# Wrangler local cache
+.wrangler/
+
