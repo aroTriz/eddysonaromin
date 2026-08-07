@@ -23,7 +23,8 @@
             class="theme-video"
             muted
             playsinline
-            preload="auto"
+            preload="metadata"
+            :poster="posterSrc"
             @ended="onVideoEnded"
           ></video>
         </div>
@@ -129,6 +130,13 @@ function onPointerUp(): void {
 
 /* ── Theme-triggered video ──────────────────────────────── */
 const videoRef = ref<HTMLVideoElement | null>(null)
+
+/** Tiny poster stills — shown instantly instead of downloading the video. */
+const posterForLight = '/videos/profile-forward-poster.webp'
+const posterForDark = '/videos/profile-reverse-poster.webp'
+
+const posterSrc = ref(posterForLight)
+
 let activeVideoLoad: (() => void) | null = null
 let themeListener: ((e: Event) => void) | null = null
 
@@ -160,6 +168,8 @@ function playVideo(src: string): void {
     v.removeEventListener('canplay', onReady)
     activeVideoLoad = null
     if (cancelled) return
+    // A real frame is available — drop the poster and reveal the video.
+    posterSrc.value = ''
     v.style.opacity = '1'
     v.play().catch(() => {})
   }
@@ -189,28 +199,10 @@ onMounted(() => {
   if (!v) return
   const dark = currentThemeIsDark()
 
-  // Show the correct static frame instantly, then play the transition
-  // when the theme changes.
-  function seekEnd(): void {
-    if (!v) return
-    const onSeeked = (): void => {
-      v.removeEventListener('seeked', onSeeked)
-      v.style.opacity = '1'
-    }
-    v.addEventListener('seeked', onSeeked, { once: true })
-    v.currentTime = v.duration || 999
-  }
-
-  v.preload = 'auto'
-  v.src = dark ? '/videos/profile-reverse.mp4' : '/videos/profile-forward.mp4'
-  v.load()
-
-  if (v.readyState >= 2) {
-    seekEnd()
-  } else {
-    v.addEventListener('loadeddata', seekEnd, { once: true })
-    v.addEventListener('canplay', seekEnd, { once: true })
-  }
+  // Show the correct theme's poster instantly — the video itself only
+  // downloads when the theme flips (rare), so the page stays fast.
+  posterSrc.value = dark ? posterForDark : posterForLight
+  v.style.opacity = '1'
 
   const onThemeChange = (e: Event): void => {
     const dark = (e as CustomEvent).detail?.dark

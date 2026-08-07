@@ -93,6 +93,11 @@ const router = createRouter({
       component: () => import('@/views/ContactView.vue'),
       meta: { title: 'Contact — Eddyson Aromin' },
     },
+    // Legacy alias — the old site used /home for the landing page.
+    {
+      path: '/home',
+      redirect: '/',
+    },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
