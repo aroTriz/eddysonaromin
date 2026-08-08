@@ -1,4 +1,4 @@
-import { json, mapPost } from '../../../../_lib'
+import { json, mapPost } from '../../../../../_lib'
 
 /**
  * Blog CMS for the /aromin admin area (authenticated).

@@ -1,4 +1,4 @@
-import { json } from '../../../../_lib'
+import { json } from '../../../../../_lib'
 
 /**
  * Tech-stack CMS for the /aromin admin area (authenticated).
