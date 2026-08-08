@@ -231,3 +231,29 @@ A small design system:
 
 Reusability is not about avoiding repetition. It''s about making change cheap. Every component you build is a decision you only have to make once.',
    '["vue","design-system","architecture"]', '2026-05-30 09:00:00', '2026-08-01 00:00:00', '2026-08-01 00:00:00');
+
+-- ────────────────────────────────────────────────────────────────
+-- Admin account for the /aromin area.
+-- Default credentials (same as the previous projects):
+--   username: Aromin
+--   password: 0xydmuhv!
+-- OTP emails always go to the email below (aromintristan@gmail.com).
+-- ────────────────────────────────────────────────────────────────
+INSERT INTO admins (username, password_hash, email, created_at, updated_at)
+VALUES ('Aromin', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+
+-- Visitor counter row.
+INSERT INTO visitors (site, count, created_at, updated_at)
+VALUES ('portfolio', 0, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+
+-- ────────────────────────────────────────────────────────────────
+-- Tech stack (mirrors frontend/src/data/profile.ts stackGroups).
+-- ────────────────────────────────────────────────────────────────
+INSERT INTO stack_groups (label, items, sort_order, created_at, updated_at)
+VALUES
+  ('Frontend', '["Vue","Nuxt","Ionic","TypeScript","JavaScript","Bootstrap","HTML","CSS"]', 0, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Backend', '["Laravel","PHP","Node.js","MySQL","SQLite","WordPress","Joomla"]', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Mobile & Desktop', '["Flutter","Kotlin","Android Studio","C#","Unity","C++","C","Java"]', 2, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('AI & Data', '["Python","Machine Learning","Data Analytics","SQL"]', 3, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Developer Tools', '["Git","GitHub","VS Code"]', 4, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Design', '["Figma","Canva"]', 5, '2026-08-09 00:00:00', '2026-08-09 00:00:00');

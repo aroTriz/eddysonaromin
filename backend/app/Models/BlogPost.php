@@ -20,6 +20,7 @@ class BlogPost extends Model
         'slug',
         'excerpt',
         'content',
+        'images',
         'tags',
         'published_at',
     ];
@@ -30,6 +31,7 @@ class BlogPost extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'images' => 'array',
         'tags' => 'array',
         'published_at' => 'datetime',
     ];

@@ -27,27 +27,57 @@ export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
   }
 
   try {
-    const response = await fetch('https://edd-gpt.pages.dev/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: question,
-        history: [{ role: 'system', content: SYSTEM_PROMPT }],
-      }),
-    })
-    if (!response.ok) {
-      return json({ error: `The AI provider returned an error: ${response.status}` }, 502)
+    // Retry up to 2 times on upstream failures (DeepSeek V4 Flash / EddGPT
+    // occasionally return 5xx or timeout under load).
+    const maxRetries = 2
+    let lastError = ''
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 25_000)
+
+        const response = await fetch('https://edd-gpt.pages.dev/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: question,
+            history: [{ role: 'system', content: SYSTEM_PROMPT }],
+          }),
+          signal: controller.signal,
+        })
+        clearTimeout(timeout)
+
+        if (!response.ok) {
+          lastError = `The AI provider returned an error: ${response.status}`
+          // Retry on 5xx (server-side) but not on 4xx (client-side).
+          if (response.status < 500) {
+            return json({ error: lastError }, 502)
+          }
+        } else {
+          const data = (await response.json()) as {
+            response?: string
+            choices?: Array<{ message?: { content?: string } }>
+          }
+          const answer = data.response ?? data.choices?.[0]?.message?.content ?? null
+          if (answer && answer.trim() !== '') {
+            return json({ answer: answer.trim() })
+          }
+          lastError = 'No answer returned from the AI provider.'
+        }
+      } catch (err: unknown) {
+        lastError = err instanceof Error && err.name === 'AbortError'
+          ? 'The AI provider timed out.'
+          : 'The AI provider returned an error.'
+      }
+
+      // Exponential back-off: 1s, 2s between retries.
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1000))
+      }
     }
 
-    const data = (await response.json()) as {
-      response?: string
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const answer = data.response ?? data.choices?.[0]?.message?.content ?? null
-    if (!answer || answer.trim() === '') {
-      return json({ error: 'No answer returned from the AI provider.' }, 502)
-    }
-    return json({ answer: answer.trim() })
+    return json({ error: lastError || 'The AI provider returned an error.' }, 502)
   } catch {
     return json({ error: 'The AI provider returned an error.' }, 502)
   }

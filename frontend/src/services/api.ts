@@ -3,6 +3,7 @@ import type {
   BlogPost,
   ContactPayload,
   Project,
+  StackGroup,
 } from '@/types'
 
 const API_BASE = '/api/v1'
@@ -65,6 +66,12 @@ export async function fetchProject(slug: string): Promise<Project> {
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
   const response = await fetch(`${API_BASE}/blog/posts`)
   return parse<BlogPost[]>(response)
+}
+
+/** Fetch the tech stack categories (public). */
+export async function fetchStackGroups(): Promise<StackGroup[]> {
+  const response = await fetch(`${API_BASE}/stack`)
+  return parse<StackGroup[]>(response)
 }
 
 /** Fetch a single blog post by slug. */

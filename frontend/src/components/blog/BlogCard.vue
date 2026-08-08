@@ -6,6 +6,8 @@
  */
 import { computed } from 'vue'
 
+import { useNow } from '@/composables/useNow'
+import { editedLabel, readingTime, timeAgo } from '@/utils/format'
 import type { BlogPost } from '@/types'
 
 const props = withDefaults(
@@ -16,19 +18,11 @@ const props = withDefaults(
   { layout: 'list' },
 )
 
-function formatDate(iso: string | null): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
+const { now } = useNow()
 
-const readingTime = computed(() => {
-  const words = props.post.content.split(/\s+/).length
-  return `${Math.max(1, Math.round(words / 200))} min`
-})
+const posted = computed(() => timeAgo(props.post.published_at, now()))
+const edited = computed(() => editedLabel(props.post.published_at, props.post.updated_at, now()))
+const readTime = computed(() => readingTime(props.post.content))
 </script>
 
 <template>
@@ -39,21 +33,28 @@ const readingTime = computed(() => {
       ? 'flex flex-col'
       : 'flex items-start gap-5 border-t border-gray-200 py-6'"
   >
-    <!-- thumbnail (gradient placeholder with monogram) -->
+    <!-- thumbnail (first post image, or gradient placeholder with monogram) -->
     <div
       class="post-thumb relative shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
       :class="layout === 'grid'
         ? 'mb-[0.9rem] aspect-[16/10] w-full'
         : 'h-[92px] w-[136px] flex-none'"
     >
-      <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
+      <img
+        v-if="post.images && post.images.length > 0"
+        :src="post.images[0]"
+        :alt="post.title"
+        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+      <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
         <span class="font-pixel text-2xl text-gray-300 transition-colors group-hover:text-gray-400">EA</span>
       </div>
     </div>
 
     <!-- body -->
     <div class="post-body min-w-0 flex-1 py-1">
-      <time class="font-mono text-[11.5px] text-gray-400">{{ formatDate(post.published_at) }}</time>
+      <time class="font-mono text-[11.5px] text-gray-400">{{ posted }}</time>
+      <span v-if="edited" class="ml-1.5 font-mono text-[10.5px] text-gray-400">· {{ edited }}</span>
       <h2
         class="post-title mt-1 line-clamp-2 h-[2.75em] font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500"
       >
@@ -71,7 +72,7 @@ const readingTime = computed(() => {
       <div class="mt-2.5 flex items-center gap-2 font-mono text-[11px] text-gray-400">
         <span class="group-hover:text-ink">Read</span>
         <span class="text-gray-300" aria-hidden="true">·</span>
-        <span>{{ readingTime }}</span>
+        <span>{{ readTime }}</span>
       </div>
     </div>
   </RouterLink>

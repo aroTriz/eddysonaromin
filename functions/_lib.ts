@@ -24,6 +24,7 @@ export function mapProject(row: Record<string, unknown>): Record<string, unknown
 export function mapPost(row: Record<string, unknown>): Record<string, unknown> {
   return {
     ...row,
+    images: row.images ? JSON.parse(String(row.images)) : null,
     tags: row.tags ? JSON.parse(String(row.tags)) : null,
   }
 }

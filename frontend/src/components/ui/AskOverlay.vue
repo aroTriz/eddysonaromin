@@ -245,9 +245,9 @@ defineExpose({ openAsk })
       aria-label="Ask"
       @keydown="onKeydown"
     >
-      <!-- blurred backdrop -->
+      <!-- blurred backdrop — pure blur, no dark overlay -->
       <div
-        class="absolute inset-0 bg-gray-50/80 backdrop-blur-xl transition-opacity duration-300"
+        class="absolute inset-0 bg-transparent backdrop-blur-xl transition-opacity duration-300"
         :class="isOpen ? 'opacity-100' : 'opacity-0'"
         @click="close"
       ></div>

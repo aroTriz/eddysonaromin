@@ -31,43 +31,57 @@ class AskController extends Controller
 
         $system = $this->systemPrompt();
 
-        // EddGPT accepts { message, history } and returns { response }.
-        if ($key === '') {
-            $response = Http::timeout(30)->post("{$base}/api/chat", [
-                'message' => $validated['question'],
-                'history' => [
-                    ['role' => 'system', 'content' => $system],
-                ],
-            ]);
-        } else {
-            // Direct OpenAI-compatible call (when a key is configured).
-            $response = Http::withToken($key)
-                ->timeout(30)
-                ->post("{$base}/chat/completions", [
-                    'model' => (string) env('ASK_API_MODEL', 'gpt-4o-mini'),
-                    'messages' => [
-                        ['role' => 'system', 'content' => $system],
-                        ['role' => 'user', 'content' => $validated['question']],
-                    ],
-                    'max_tokens' => 500,
-                    'temperature' => 0.7,
-                ]);
+        // Retry up to 2 times on upstream failures (DeepSeek V4 Flash / EddGPT
+        // occasionally return 5xx or timeout under load).
+        $maxRetries = 2;
+        $lastError = null;
+
+        for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+            try {
+                if ($key === '') {
+                    // EddGPT proxy path (free, no key needed).
+                    $response = Http::timeout(30)->post("{$base}/api/chat", [
+                        'message' => $validated['question'],
+                        'history' => [
+                            ['role' => 'system', 'content' => $system],
+                        ],
+                    ]);
+                } else {
+                    // Direct OpenAI-compatible call (when a key is configured).
+                    $response = Http::withToken($key)
+                        ->timeout(30)
+                        ->post("{$base}/chat/completions", [
+                            'model' => (string) env('ASK_API_MODEL', 'deepseek-chat'),
+                            'messages' => [
+                                ['role' => 'system', 'content' => $system],
+                                ['role' => 'user', 'content' => $validated['question']],
+                            ],
+                            'max_tokens' => 500,
+                            'temperature' => 0.7,
+                        ]);
+                }
+
+                if ($response->ok()) {
+                    $data = $response->json();
+                    $answer = $data['response'] ?? ($data['choices'][0]['message']['content'] ?? null);
+
+                    if ($answer !== null && trim($answer) !== '') {
+                        return response()->json(['answer' => trim($answer)]);
+                    }
+                }
+
+                $lastError = 'The AI provider returned an error: '.$response->status();
+            } catch (\Exception $e) {
+                $lastError = 'The AI provider returned an error: '.$e->getMessage();
+            }
+
+            // Exponential back-off: 1s, 2s between retries.
+            if ($attempt < $maxRetries) {
+                usleep((int) (pow(2, $attempt) * 1_000_000));
+            }
         }
 
-        if (! $response->ok()) {
-            return response()->json([
-                'error' => 'The AI provider returned an error: '.$response->status(),
-            ], 502);
-        }
-
-        $data = $response->json();
-        $answer = $data['response'] ?? ($data['choices'][0]['message']['content'] ?? null);
-
-        if ($answer === null || trim($answer) === '') {
-            return response()->json(['error' => 'No answer returned from the AI provider.'], 502);
-        }
-
-        return response()->json(['answer' => trim($answer)]);
+        return response()->json(['error' => $lastError ?? 'No answer returned from the AI provider.'], 502);
     }
 
     /**

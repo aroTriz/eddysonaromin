@@ -2,9 +2,38 @@
 /**
  * Stack — bryllim-exact: banner + description + flat category sections.
  * Each section: uppercase mono h2 + flex-wrap row of `tag` pills.
+ * Categories come from the API (stack_groups) with the static profile
+ * data as fallback while loading or when the API is unavailable.
  */
+import { onMounted, ref } from 'vue'
+
 import Reveal from '@/components/ui/Reveal.vue'
-import { stackGroups } from '@/data/profile'
+import { stackGroups as staticGroups } from '@/data/profile'
+import { fetchStackGroups } from '@/services/api'
+import type { StackGroup } from '@/types'
+
+const groups = ref<StackGroup[]>([])
+
+onMounted(async () => {
+  try {
+    const data = await fetchStackGroups()
+    if (data && data.length > 0) {
+      groups.value = data
+    }
+  } catch {
+    // fall back to static data below
+  }
+})
+
+/** Static fallback shaped like API rows (used before/if the fetch fails). */
+const fallbackGroups: StackGroup[] = staticGroups.map((g, i) => ({
+  id: i + 1,
+  label: g.label,
+  items: g.items,
+  sort_order: i,
+  created_at: null,
+  updated_at: null,
+}))
 </script>
 
 <template>
@@ -20,7 +49,7 @@ import { stackGroups } from '@/data/profile'
 
     <!-- grouped stack: bryllim-exact flat sections -->
     <div class="space-y-12">
-      <Reveal v-for="group in stackGroups" :key="group.label">
+      <Reveal v-for="group in groups.length > 0 ? groups : fallbackGroups" :key="group.label">
         <h2 class="mb-4 font-mono text-[11px] uppercase tracking-wider text-gray-400">
           {{ group.label }}
         </h2>

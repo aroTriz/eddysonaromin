@@ -23,7 +23,7 @@
       ;(function () {
         try {
           var stored = localStorage.getItem('theme')
-          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system'
+          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'dark'
           var hour = new Date().getHours()
           var dark =
             pref === 'dark' || (pref === 'system' && !(hour >= 7 && hour < 18))

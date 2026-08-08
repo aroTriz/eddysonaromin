@@ -70,11 +70,9 @@ defineExpose({ openModal })
       aria-label="Get in touch"
       @keydown="onKeydown"
     >
-      <!-- blurred, dimmed backdrop — fixed dark overlay looks right in
-           both light & dark themes (--ink flips to light in dark mode,
-           so a theme-aware dark overlay is the consistent choice). -->
+      <!-- blurred backdrop — pure blur, no dark overlay -->
       <div
-        class="absolute inset-0 bg-black/40 backdrop-blur-md"
+        class="absolute inset-0 bg-transparent backdrop-blur-md"
         @click="closeModal"
       ></div>
 

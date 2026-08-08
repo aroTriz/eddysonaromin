@@ -14,8 +14,32 @@ import {
   MonitorSmartphone,
   Palette,
   Search,
+  X,
 } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
+/** Service detail modal — opens on card click with a blurred backdrop. */
+const activeService = ref<(typeof services)[number] | null>(null)
+const modalOpen = ref(false)
+
+function openService(service: (typeof services)[number]): void {
+  activeService.value = service
+  modalOpen.value = true
+  document.documentElement.style.overflow = 'hidden'
+}
+
+function closeService(): void {
+  modalOpen.value = false
+  document.documentElement.style.overflow = ''
+  // Clear after the closing transition so content doesn't swap mid-fade.
+  setTimeout(() => {
+    activeService.value = null
+  }, 250)
+}
+
+function onModalKeydown(e: KeyboardEvent): void {
+  if (e.key === 'Escape') closeService()
+}
 
 const CARD_WIDTH = 340
 const GAP = 20
@@ -27,6 +51,8 @@ const services = [
     price: 'Custom',
     desc: 'Responsive, modern websites and web apps built with Vue, Ionic, Laravel, and Tailwind.',
     points: ['Pixel-perfect UIs', 'Mobile-first', 'Fast & accessible'],
+    details:
+      'From marketing sites to full web applications, I build responsive, modern experiences that load fast and work everywhere. Using Vue, Ionic, Laravel, and Tailwind, I deliver clean, maintainable code that matches your design exactly — and scales when your product grows.',
   },
   {
     icon: Code2,
@@ -34,6 +60,8 @@ const services = [
     price: 'Custom',
     desc: 'Pixel-perfect interfaces that match designs exactly — from design tokens to components.',
     points: ['Design systems', 'Component architecture', 'Performance tuning'],
+    details:
+      'I turn Figma designs into production interfaces with pixel-perfect fidelity. This means building design tokens, reusable component systems, and tuning performance so every page feels instant. The result: a UI that looks exactly like the mockup and stays consistent as it grows.',
   },
   {
     icon: Database,
@@ -41,6 +69,8 @@ const services = [
     price: 'Custom',
     desc: 'Clean REST APIs with Laravel and solid database design with MySQL / SQLite.',
     points: ['REST API design', 'Database modeling', 'Auth & validation'],
+    details:
+      'A strong product needs a strong foundation. I design and build clean REST APIs with Laravel, model databases with MySQL or SQLite, and wire up authentication and validation so your data is secure and your endpoints are predictable for any frontend to consume.',
   },
   {
     icon: Search,
@@ -48,6 +78,8 @@ const services = [
     price: 'Custom',
     desc: 'Test cases, bug tracking, regression testing, and documentation review.',
     points: ['Test case authoring', 'Bug & regression tracking', 'Release readiness'],
+    details:
+      'Having worked as a QA Analyst intern, I know quality is a discipline, not an afterthought. I author thorough test cases, track bugs and regressions, and review documentation so your release is safe. Catching issues early saves hours — and protects user trust.',
   },
   {
     icon: Palette,
@@ -55,6 +87,8 @@ const services = [
     price: 'Custom',
     desc: 'Figma wireframes, prototyping, and design systems that scale with your product.',
     points: ['Wireframes & mockups', 'Prototyping', 'Design tokens'],
+    details:
+      'Before a single line of code, good products start with good design. I create Figma wireframes, clickable prototypes, and design systems — spacing, type, color tokens — that keep the product cohesive and make implementation straightforward for any developer.',
   },
   {
     icon: Bot,
@@ -62,6 +96,8 @@ const services = [
     price: 'Custom',
     desc: 'AI research and automation to ship smarter products and cut manual work.',
     points: ['AI workflows', 'Automation', 'Integration'],
+    details:
+      'I research and integrate AI into real products — from assistant features and automation pipelines to workflows that cut repetitive manual work. If you have a process that feels like it should run itself, it probably can. Let me build the bridge.',
   },
 ]
 
@@ -171,6 +207,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
   clearTimeout(snapTimer)
   track.value?.removeEventListener('transitionend', onTrackTransitionEnd)
+  // Ensure the scroll lock is released if the view unmounts while open.
+  document.documentElement.style.overflow = ''
 })
 </script>
 
@@ -211,11 +249,16 @@ onBeforeUnmount(() => {
         <div
           v-for="(service, i) in deck"
           :key="`${service.title}-${i}`"
-          class="group relative flex shrink-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-6 transition-all duration-500"
+          class="group relative flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-6 text-left transition-all duration-500"
           :class="distance(i) === 0
             ? 'z-10 opacity-100 blur-0'
             : 'opacity-50 blur-[3px]'"
           :style="{ width: `${CARD_WIDTH}px`, marginRight: `${GAP}px` }"
+          role="button"
+          tabindex="0"
+          :aria-label="`Open details for ${at(i).title}`"
+          @click="openService(at(i))"
+          @keydown.enter.prevent="openService(at(i))"
         >
           <!-- dithered corner accent (top-right) -->
           <div
@@ -284,5 +327,95 @@ onBeforeUnmount(() => {
         <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
       </button>
     </div>
+
+    <!-- service detail modal -->
+    <Teleport to="body">
+      <div
+        v-if="modalOpen"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-6"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="activeService ? `Details — ${activeService.title}` : 'Service details'"
+        @keydown="onModalKeydown"
+      >
+        <!-- blurred backdrop — pure blur, no dark overlay -->
+        <div
+          class="absolute inset-0 bg-transparent backdrop-blur-xl transition-opacity duration-300"
+          @click="closeService"
+        ></div>
+
+        <!-- modal card -->
+        <div
+          v-if="activeService"
+          class="relative z-10 w-full max-w-[520px] rounded-xl border border-gray-200 bg-white p-7 shadow-2xl sm:p-9"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-ink">
+                <component :is="activeService.icon" class="h-5 w-5" :stroke-width="1.7" />
+              </div>
+              <div>
+                <h2 class="text-[18px] font-semibold tracking-tight text-ink">
+                  {{ activeService.title }}
+                </h2>
+                <span class="mt-0.5 inline-block rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 font-mono text-[11px] text-ink">
+                  {{ activeService.price }}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="-mr-1 -mt-1 rounded p-1.5 text-gray-400 transition-colors hover:text-ink"
+              :aria-label="`Close ${activeService.title} details`"
+              @click="closeService"
+            >
+              <X class="h-5 w-5" :stroke-width="1.7" />
+            </button>
+          </div>
+
+          <p class="mt-5 text-[14.5px] leading-relaxed text-gray-600">
+            {{ activeService.details }}
+          </p>
+
+          <div class="mt-6 h-px w-full bg-gray-100"></div>
+          <p class="mt-5 font-mono text-[10.5px] uppercase tracking-wider text-gray-400">
+            // what's included
+          </p>
+          <ul class="mt-3 grid gap-2.5">
+            <li
+              v-for="point in activeService.points"
+              :key="point"
+              class="flex items-center gap-2.5 text-[13px] text-gray-600"
+            >
+              <svg
+                class="h-4 w-4 shrink-0 text-ink"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12.5l4.5 4.5L19 7"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              {{ point }}
+            </li>
+          </ul>
+
+          <div class="mt-7 flex justify-end">
+            <button
+              type="button"
+              class="rounded-md bg-ink px-4 py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80"
+              @click="closeService"
+            >
+              got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

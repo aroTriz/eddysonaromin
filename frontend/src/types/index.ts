@@ -38,6 +38,7 @@ export interface BlogPost {
   slug: string
   excerpt: string
   content: string
+  images: string[] | null
   tags: string[] | null
   published_at: string | null
   created_at: string | null
@@ -54,6 +55,16 @@ export interface ContactPayload {
 export interface ApiError {
   message: string
   errors?: Record<string, string[]>
+}
+
+/** Tech-stack category (mirrors the Laravel StackGroup model). */
+export interface StackGroup {
+  id: number
+  label: string
+  items: string[]
+  sort_order: number
+  created_at: string | null
+  updated_at: string | null
 }
 
 /** Profile — personal details shown across the site (static by design). */

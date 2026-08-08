@@ -333,8 +333,8 @@ function onKeydown(e: KeyboardEvent): void {
         :aria-label="modal.title"
         @keydown="onKeydown"
       >
-        <!-- blurred backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
+        <!-- blurred backdrop — pure blur, no dark overlay -->
+        <div class="absolute inset-0 bg-transparent backdrop-blur-md" @click="closeModal"></div>
 
         <!-- panel (landscape, default size) -->
         <div

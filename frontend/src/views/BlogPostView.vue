@@ -9,6 +9,8 @@ import { useRoute } from 'vue-router'
 
 import AsyncState from '@/components/ui/AsyncState.vue'
 import { profile } from '@/data/profile'
+import { useNow } from '@/composables/useNow'
+import { editedLabel, readingTime, timeAgo } from '@/utils/format'
 import { fetchBlogPost } from '@/services/api'
 import type { BlogPost } from '@/types'
 
@@ -17,12 +19,14 @@ const post = ref<BlogPost | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-/** Estimate reading time — ~200 words per minute. */
-const readingTime = computed(() => {
-  if (!post.value) return '1 min'
-  const words = post.value.content.split(/\s+/).length
-  return `${Math.max(1, Math.round(words / 200))} min read`
-})
+const { now } = useNow()
+
+/** Estimate reading time from word count (~200 wpm). */
+const readTime = computed(() => (post.value ? readingTime(post.value.content) : '1 min'))
+const posted = computed(() => timeAgo(post.value?.published_at ?? null, now()))
+const edited = computed(() =>
+  editedLabel(post.value?.published_at ?? null, post.value?.updated_at ?? null, now()),
+)
 
 async function load(): Promise<void> {
   loading.value = true
@@ -166,18 +170,33 @@ function formatDate(iso: string | null): string {
     <AsyncState :loading="loading" :error="error" :on-retry="load">
       <template v-if="post">
         <article class="mt-6">
-          <!-- Landscape hero image (matches BlogCard's gradient + monogram style) -->
+          <!-- Hero image (first post image) or monogram placeholder -->
           <div class="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-            <div class="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white">
+            <img
+              v-if="post.images && post.images.length > 0"
+              :src="post.images[0]"
+              :alt="post.title"
+              class="aspect-[16/9] w-full object-cover"
+            />
+            <div
+              v-else
+              class="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-gray-100 to-white"
+            >
               <span class="font-pixel text-4xl text-gray-300 sm:text-5xl">EA</span>
             </div>
           </div>
 
           <header class="mt-8">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-wider text-gray-400">
-              <time>{{ formatDate(post.published_at) }}</time>
+              <time :datetime="post.published_at ?? undefined">{{ formatDate(post.published_at) }}</time>
               <span class="text-gray-300" aria-hidden="true">·</span>
-              <span>{{ readingTime }} min read</span>
+              <span>{{ posted }}</span>
+              <template v-if="edited">
+                <span class="text-gray-300" aria-hidden="true">·</span>
+                <span>{{ edited }}</span>
+              </template>
+              <span class="text-gray-300" aria-hidden="true">·</span>
+              <span>{{ readTime }} read</span>
             </div>
 
             <h1 class="mt-3 font-serif text-[28px] font-semibold leading-tight tracking-tight text-ink sm:text-[34px]">
@@ -198,6 +217,25 @@ function formatDate(iso: string | null): string {
             class="prose-local mt-10 text-[15px] text-gray-700"
             v-html="bodyHtml"
           />
+
+          <!-- Remaining images (all except the hero) as a gallery -->
+          <div
+            v-if="post.images && post.images.length > 1"
+            class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3"
+          >
+            <figure
+              v-for="(img, i) in post.images.slice(1)"
+              :key="i"
+              class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+            >
+              <img
+                :src="img"
+                :alt="`${post.title} — image ${i + 2}`"
+                loading="lazy"
+                class="aspect-[4/3] w-full object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </figure>
+          </div>
         </article>
       </template>
     </AsyncState>

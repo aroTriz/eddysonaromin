@@ -93,6 +93,31 @@ const router = createRouter({
       component: () => import('@/views/ContactView.vue'),
       meta: { title: 'Contact — Eddyson Aromin' },
     },
+    // ── Admin area (/aromin) ───────────────────────────────────
+    {
+      path: '/aromin',
+      name: 'aromin-login',
+      component: () => import('@/views/aromin/ArominLoginView.vue'),
+      meta: { title: 'Admin Login — Eddyson Aromin' },
+    },
+    {
+      path: '/aromin/dashboard',
+      name: 'aromin-dashboard',
+      component: () => import('@/views/aromin/ArominDashboardView.vue'),
+      meta: { title: 'Dashboard — Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/blog',
+      name: 'aromin-blog',
+      component: () => import('@/views/aromin/ArominBlogCmsView.vue'),
+      meta: { title: 'Blog — Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/stack',
+      name: 'aromin-stack',
+      component: () => import('@/views/aromin/ArominStackView.vue'),
+      meta: { title: 'Tech Stack — Aromin Admin', requiresAuth: true },
+    },
     // Legacy alias — the old site used /home for the landing page.
     {
       path: '/home',
@@ -115,6 +140,15 @@ const router = createRouter({
 router.afterEach((to) => {
   const title = typeof to.meta.title === 'string' ? to.meta.title : null
   document.title = title ?? 'Eddyson Aromin — IT Portfolio'
+})
+
+// Auth guard — protects the /aromin admin routes.
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth) return true
+  const { checkSession } = await import('@/composables/useAuth')
+  const ok = await checkSession()
+  if (!ok) return { name: 'aromin-login' }
+  return true
 })
 
 export default router
