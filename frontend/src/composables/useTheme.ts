@@ -49,8 +49,7 @@ function applyClass(pref: ThemePreference): void {
   root.style.backgroundColor = ''
 }
 
-/** Soft crossfade — the whole page's colors blend in place (bryllim-style
- * fallback). Live elements like the tech marquee keep moving. */
+/** Soft crossfade fallback (browsers without View Transitions / reduced motion). */
 let animTimer: ReturnType<typeof setTimeout> | undefined
 
 function crossfade(pref: ThemePreference): void {
@@ -60,6 +59,54 @@ function crossfade(pref: ThemePreference): void {
   clearTimeout(animTimer)
   animTimer = setTimeout(() => root.classList.remove('theme-anim'), 520)
 }
+
+/** Circular wipe reveal from the pointer — bryllim's exact transition. */
+function reveal(pref: ThemePreference, x: number, y: number): void {
+  const root = document.documentElement
+  const radius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  )
+
+  const startViewTransition = (
+    document as Document & {
+      startViewTransition?: (cb: () => void) => void
+    }
+  ).startViewTransition
+
+  if (!startViewTransition) {
+    crossfade(pref)
+    return
+  }
+
+  startViewTransition.call(document, () => applyClass(pref))
+  // Chromium runs the transition callback synchronously, so by the time
+  // startViewTransition returns, ::view-transition-new(root) already exists.
+  // Animate it in this same task — deferring to rAF or vt.ready can miss the
+  // window before the transition tears down (the pseudo freezes at 0ms).
+  try {
+    root.animate(
+      {
+        clipPath: [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${radius}px at ${x}px ${y}px)`,
+        ],
+      },
+      {
+        duration: 540,
+        easing: 'cubic-bezier(.32,.08,.24,1)',
+        pseudoElement: '::view-transition-new(root)',
+      },
+    )
+  } catch {
+    // Pseudo not ready yet — fall back to the coordinated crossfade.
+    crossfade(pref)
+  }
+}
+
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Event name broadcast when the theme changes — components listen for it. */
 export const THEME_CHANGE_EVENT = 'theme-change'
@@ -86,8 +133,13 @@ export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
   const flipped = isDark(pref) !== document.documentElement.classList.contains('dark')
   if (!flipped) return
 
-  void event
-  crossfade(pref)
+  if (prefersReducedMotion) {
+    crossfade(pref)
+  } else {
+    const x = event?.clientX ?? window.innerWidth
+    const y = event?.clientY ?? window.innerHeight
+    reveal(pref, x, y)
+  }
 
   // Notify components (e.g. the theme video) that dark state changed.
   window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
