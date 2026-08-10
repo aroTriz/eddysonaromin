@@ -1,14 +1,14 @@
-import { json } from '../../../../../_lib'
+﻿import { json } from '../../../../_lib'
 
 /**
  * Recommendations CMS for the /aromin admin area (authenticated).
  *
- *   GET    /api/v1/admin/recommendations       → all testimonials
- *   POST   /api/v1/admin/recommendations       → create a testimonial
- *   GET    /api/v1/admin/recommendations/{id}  → single testimonial
- *   PUT    /api/v1/admin/recommendations/{id}  → update a testimonial
- *   DELETE /api/v1/admin/recommendations/{id}  → delete a testimonial
- *   DELETE /api/v1/admin/recommendations/bulk  → bulk delete (ids array)
+ *   GET    /api/v1/admin/recommendations       â†’ all testimonials
+ *   POST   /api/v1/admin/recommendations       â†’ create a testimonial
+ *   GET    /api/v1/admin/recommendations/{id}  â†’ single testimonial
+ *   PUT    /api/v1/admin/recommendations/{id}  â†’ update a testimonial
+ *   DELETE /api/v1/admin/recommendations/{id}  â†’ delete a testimonial
+ *   DELETE /api/v1/admin/recommendations/bulk  â†’ bulk delete (ids array)
  */
 
 interface Env {
