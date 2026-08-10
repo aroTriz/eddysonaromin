@@ -143,8 +143,8 @@ export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
   if (prefersReducedMotion) {
     crossfade(pref)
   } else {
-    const x = event?.clientX ?? window.innerWidth
-    const y = event?.clientY ?? window.innerHeight
+    const x = event?.clientX || window.innerWidth
+    const y = event?.clientY || window.innerHeight
     reveal(pref, x, y)
   }
 
