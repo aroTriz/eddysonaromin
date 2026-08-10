@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
- * Stack — bryllim-exact: banner + description + flat category sections.
- * Each section: uppercase mono h2 + flex-wrap row of `tag` pills.
- * Categories come from the API (stack_groups) with the static profile
- * data as fallback while loading or when the API is unavailable.
+ * Stack — greyfolio-style tech stack: banner + description + category
+ * sections, each a dashed-border pill row of technologies WITH their brand
+ * logos (Simple Icons) + name. Categories come from the API (stack_groups)
+ * with the static profile data as fallback while loading or offline.
  */
 import { onMounted, ref } from 'vue'
 
 import Reveal from '@/components/ui/Reveal.vue'
+import TechLogo from '@/components/ui/TechLogo.vue'
 import { stackGroups as staticGroups } from '@/data/profile'
 import { fetchStackGroups } from '@/services/api'
 import type { StackGroup } from '@/types'
@@ -31,6 +32,7 @@ const fallbackGroups: StackGroup[] = staticGroups.map((g, i) => ({
   label: g.label,
   items: g.items,
   sort_order: i,
+  archived_at: null,
   created_at: null,
   updated_at: null,
 }))
@@ -47,21 +49,24 @@ const fallbackGroups: StackGroup[] = staticGroups.map((g, i) => ({
       </p>
     </header>
 
-    <!-- grouped stack: bryllim-exact flat sections -->
+    <!-- grouped stack: greyfolio-style categories with brand logos -->
     <div class="space-y-12">
       <Reveal v-for="group in groups.length > 0 ? groups : fallbackGroups" :key="group.label">
-        <h2 class="mb-4 font-mono text-[11px] uppercase tracking-wider text-gray-400">
-          {{ group.label }}
-        </h2>
-        <div class="flex flex-wrap gap-2">
-          <span
-            v-for="tech in group.items"
-            :key="tech"
-            class="tag rounded-md border border-gray-200 bg-white px-3 py-1.5 font-mono text-[13px] text-gray-700 transition-colors hover:border-gray-400 hover:text-ink"
-          >
-            {{ tech }}
-          </span>
-        </div>
+        <section class="border-b border-dashed border-gray-200 pb-10 dark:border-gray-800">
+          <h2 class="mb-4 font-mono text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            {{ group.label }}
+          </h2>
+          <div class="flex flex-wrap gap-2.5">
+            <span
+              v-for="tech in group.items"
+              :key="tech"
+              class="inline-flex items-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-1.5 font-mono text-[13px] text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:bg-gray-50 hover:text-ink dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500 dark:hover:bg-gray-200 dark:hover:text-gray-950"
+            >
+              <TechLogo :name="tech" :size="18" />
+              {{ tech }}
+            </span>
+          </div>
+        </section>
       </Reveal>
     </div>
   </div>

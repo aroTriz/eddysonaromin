@@ -3,10 +3,11 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Github, Linkedin, Mail, Menu, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { Github, Linkedin, Mail, Menu, MessageCircle, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import AskOverlay from '@/components/ui/AskOverlay.vue'
+import ChatOverlay from '@/components/ui/ChatOverlay.vue'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
@@ -16,8 +17,8 @@ defineProps<{
 }>()
 
 const askRef = ref<InstanceType<typeof AskOverlay> | null>(null)
-const isMac =
-  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const chatRef = ref<InstanceType<typeof ChatOverlay> | null>(null)
+const isMac =  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const mobileOpen = ref(false)
 
@@ -81,10 +82,10 @@ const navGroups = [
 <template>
   <!-- ── Fixed left sidebar (lg+) ─────────────────────────── -->
   <nav
-    class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 lg:flex"
+    class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 transition-colors duration-500 lg:flex dark:border-gray-300 dark:bg-gray-50"
     aria-label="Primary"
   >
-    <RouterLink to="/" class="shrink-0 font-pixel text-[15px] leading-none hover:opacity-60">
+    <RouterLink to="/" class="shrink-0 font-pixel text-[15px] leading-none text-ink hover:opacity-60 dark:text-gray-950">
       &lt; Aromin /&gt;
     </RouterLink>
 
@@ -95,8 +96,8 @@ const navGroups = [
             v-for="link in group.links"
             :key="link.name"
             :to="link.to"
-            class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink"
-            :class="{ 'pl-5 text-ink': active === link.name }"
+            class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+            :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
           >
             <component
               :is="link.icon"
@@ -121,29 +122,37 @@ const navGroups = [
             {{ link.label }}
           </RouterLink>
         </div>
-        <div v-if="gi < navGroups.length - 1" class="h-px bg-gray-200" />
+        <div v-if="gi < navGroups.length - 1" class="h-px bg-gray-200 dark:bg-gray-300" />
       </template>
     </div>
 
     <button
       type="button"
-      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
+      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
       @click="askRef?.openAsk()"
     >
       <span>ask anything</span>
       <span class="inline-flex items-center gap-1">
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
-        <span class="font-mono text-[10px] text-gray-400">+</span>
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">K</kbd>
+        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">K</kbd>
       </span>
     </button>
 
-    <div class="mt-4 border-y border-gray-200 py-3.5">
-      <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500">
-        <b class="presence-num font-bold text-ink">1</b> person viewing now
+    <div class="mt-4 border-y border-gray-200 py-3.5 dark:border-gray-300">
+      <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500 dark:text-gray-400">
+        <b class="presence-num font-bold text-ink dark:text-gray-950">1</b> person viewing now
       </p>
+      <button
+        type="button"
+        class="mt-3 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+        @click="chatRef?.openChat()"
+      >
+        <MessageCircle class="h-4 w-4" :stroke-width="1.6" />
+        community chat
+      </button>
     </div>
 
     <div class="mt-6 shrink-0">
@@ -155,7 +164,7 @@ const navGroups = [
           :href="profile.github"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink dark:border-gray-500 dark:text-gray-400 dark:hover:text-gray-950"
           :aria-label="`GitHub — ${profile.github.replace('https://', '')}`"
           :title="`GitHub — ${profile.github.replace('https://', '')}`"
         >
@@ -165,19 +174,19 @@ const navGroups = [
           :href="profile.linkedin"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink dark:border-gray-500 dark:text-gray-400 dark:hover:text-gray-950"
           aria-label="LinkedIn profile"
           title="LinkedIn"
         >
           <Linkedin class="h-3.5 w-3.5" :stroke-width="1.7" />
         </a>
       </div>
-      <p class="text-[12px] leading-relaxed text-gray-500">
+      <p class="text-[12px] leading-relaxed text-gray-500 dark:text-gray-400">
         For work, collabs &amp; everything else, reach me at
       </p>
       <a
         :href="`mailto:${profile.email}`"
-        class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 font-mono text-[10.5px] text-ink hover:text-gray-500"
+        class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 font-mono text-[10.5px] text-ink hover:text-gray-500 dark:text-gray-950 dark:hover:text-gray-400"
       >
         <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
         <span class="whitespace-nowrap">{{ profile.email }}</span>
@@ -186,7 +195,7 @@ const navGroups = [
   </nav>
 
   <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
-  <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
+  <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md transition-colors duration-500 lg:hidden dark:border-gray-300/70 dark:bg-gray-100/90">
     <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
       <RouterLink to="/" class="font-pixel text-[14px]">
         &lt; Aromin /&gt;
@@ -207,7 +216,7 @@ const navGroups = [
     <div
       v-if="mobileOpen"
       id="mobileNav"
-      class="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden"
+      class="fixed inset-0 z-[60] flex flex-col bg-white transition-colors duration-500 lg:hidden dark:bg-gray-100"
     >
       <div class="flex items-center justify-between border-b border-gray-200 px-6 py-3">
         <RouterLink to="/" class="font-pixel text-[14px]" @click="closeMobileMenu">
@@ -278,6 +287,14 @@ const navGroups = [
                 <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">K</kbd>
               </span>
             </button>
+            <button
+              type="button"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
+              @click="closeMobileMenu(); chatRef?.openChat()"
+            >
+              <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              community chat
+            </button>
             <div class="mb-4">
               <ThemeSwitch />
             </div>
@@ -321,4 +338,7 @@ const navGroups = [
 
   <!-- Ask anything overlay (bryllim-style, ⌘K / Alt+K) -->
   <AskOverlay ref="askRef" />
+
+  <!-- Community chat (bryllim-style) -->
+  <ChatOverlay ref="chatRef" />
 </template>

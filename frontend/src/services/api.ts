@@ -3,10 +3,31 @@ import type {
   BlogPost,
   ContactPayload,
   Project,
+  Recommendation,
   StackGroup,
 } from '@/types'
+import { profile } from '@/data/profile'
 
 const API_BASE = '/api/v1'
+
+/**
+ * Promise cache — the same in-flight request is shared by every caller, so
+ * the loading screen can prefetch the home page's data and the components
+ * resolve instantly from the same promise (everything appears at once).
+ */
+const requestCache = new Map<string, Promise<unknown>>()
+
+function cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  let promise = requestCache.get(key) as Promise<T> | undefined
+  if (!promise) {
+    promise = fetcher().catch((err: unknown) => {
+      requestCache.delete(key)
+      throw err
+    })
+    requestCache.set(key, promise)
+  }
+  return promise
+}
 
 /** Normalize Laravel validation errors into a readable message. */
 function toError(payload: ApiError | string): string {
@@ -41,7 +62,7 @@ async function parse<T>(response: Response): Promise<T> {
 }
 
 /** Fetch projects — optionally filtered by category / type / featured. */
-export async function fetchProjects(params: {
+export function fetchProjects(params: {
   category?: string
   type?: string
   featured?: boolean
@@ -52,8 +73,11 @@ export async function fetchProjects(params: {
   if (params.featured) search.set('featured', '1')
 
   const query = search.toString()
-  const response = await fetch(`${API_BASE}/projects${query ? `?${query}` : ''}`)
-  return parse<Project[]>(response)
+  const key = `projects:${query}`
+  return cached(key, async () => {
+    const response = await fetch(`${API_BASE}/projects${query ? `?${query}` : ''}`)
+    return parse<Project[]>(response)
+  })
 }
 
 /** Fetch a single project by slug. */
@@ -63,15 +87,27 @@ export async function fetchProject(slug: string): Promise<Project> {
 }
 
 /** Fetch published blog posts. */
-export async function fetchBlogPosts(): Promise<BlogPost[]> {
-  const response = await fetch(`${API_BASE}/blog/posts`)
-  return parse<BlogPost[]>(response)
+export function fetchBlogPosts(): Promise<BlogPost[]> {
+  return cached('blog-posts:', async () => {
+    const response = await fetch(`${API_BASE}/blog/posts`)
+    return parse<BlogPost[]>(response)
+  })
 }
 
 /** Fetch the tech stack categories (public). */
-export async function fetchStackGroups(): Promise<StackGroup[]> {
-  const response = await fetch(`${API_BASE}/stack`)
-  return parse<StackGroup[]>(response)
+export function fetchStackGroups(): Promise<StackGroup[]> {
+  return cached('stack:', async () => {
+    const response = await fetch(`${API_BASE}/stack`)
+    return parse<StackGroup[]>(response)
+  })
+}
+
+/** Fetch testimonials (public). */
+export function fetchRecommendations(): Promise<Recommendation[]> {
+  return cached('recommendations:', async () => {
+    const response = await fetch(`${API_BASE}/recommendations`)
+    return parse<Recommendation[]>(response)
+  })
 }
 
 /** Fetch a single blog post by slug. */
@@ -95,19 +131,19 @@ export async function submitContact(payload: ContactPayload): Promise<void> {
 }
 
 /** Fetch a user's real GitHub contribution grid (7×53 intensity levels). */
-export async function fetchGitHubContributions(
-  username: string,
-): Promise<number[][]> {
-  const response = await fetch(
-    `${API_BASE}/github/${encodeURIComponent(username)}/contributions`,
-  )
+export function fetchGitHubContributions(username: string): Promise<number[][]> {
+  const key = `github:${username}`
+  return cached(key, async () => {
+    const response = await fetch(
+      `${API_BASE}/github/${encodeURIComponent(username)}/contributions`,
+    )
 
-  let payload: { data?: { grid?: unknown } } | ApiError | null = null
-  try {
-    payload = (await response.json()) as { data?: { grid?: unknown } } | ApiError
-  } catch {
-    throw new Error('GitHub contribution data is unavailable.')
-  }
+    let payload: { data?: { grid?: unknown } } | ApiError | null = null
+    try {
+      payload = (await response.json()) as { data?: { grid?: unknown } } | ApiError
+    } catch {
+      throw new Error('GitHub contribution data is unavailable.')
+    }
 
   if (!response.ok) {
     throw new Error(toError(payload as ApiError))
@@ -118,4 +154,21 @@ export async function fetchGitHubContributions(
     throw new Error('GitHub contribution data is unavailable.')
   }
   return grid as number[][]
+  })
+}
+
+/**
+ * Prefetch everything the home page renders, so the loading screen can wait
+ * for it all before fading — the page then appears complete in one go
+ * instead of sections popping in at different times.
+ */
+export function prefetchHomeData(): Promise<PromiseSettledResult<unknown>[]> {
+  const username = profile.github.replace(/^https?:\/\/github\.com\//, '').replace(/\/.*$/, '')
+  return Promise.allSettled([
+    fetchProjects(),
+    fetchStackGroups(),
+    fetchRecommendations(),
+    fetchBlogPosts(),
+    fetchGitHubContributions(username),
+  ])
 }

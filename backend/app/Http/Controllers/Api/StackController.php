@@ -15,6 +15,7 @@ class StackController extends Controller
     public function index(): JsonResponse
     {
         $groups = StackGroup::query()
+            ->whereNull('archived_at')
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get(['id', 'label', 'items', 'sort_order']);

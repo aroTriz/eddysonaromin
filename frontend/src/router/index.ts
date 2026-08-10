@@ -113,21 +113,32 @@ const router = createRouter({
       meta: { title: 'Blog — Aromin Admin', requiresAuth: true },
     },
     {
-      path: '/aromin/stack',
-      name: 'aromin-stack',
-      component: () => import('@/views/aromin/ArominStackView.vue'),
-      meta: { title: 'Tech Stack — Aromin Admin', requiresAuth: true },
+      path: '/aromin/recommendations',
+      name: 'aromin-recommendations',
+      component: () => import('@/views/aromin/ArominRecommendationsView.vue'),
+      meta: { title: 'Recommendations — Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/preferences',
+      name: 'aromin-preferences',
+      component: () => import('@/views/aromin/ArominPreferencesView.vue'),
+      meta: { title: 'Preferences — Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/chat',
+      name: 'aromin-chat',
+      component: () => import('@/views/aromin/ArominChatView.vue'),
+      meta: { title: 'Chat — Aromin Admin', requiresAuth: true },
     },
     // Legacy alias — the old site used /home for the landing page.
     {
       path: '/home',
       redirect: '/',
     },
+    // Unknown routes — redirect straight to the homepage (no 404 page).
     {
       path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('@/views/NotFoundView.vue'),
-      meta: { title: 'Not Found — Eddyson Aromin' },
+      redirect: '/',
     },
   ],
   scrollBehavior(to, _from, savedPosition) {

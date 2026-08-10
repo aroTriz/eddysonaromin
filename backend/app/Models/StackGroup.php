@@ -15,6 +15,7 @@ class StackGroup extends Model
         'label',
         'items',
         'sort_order',
+        'archived_at',
     ];
 
     /**
@@ -24,5 +25,6 @@ class StackGroup extends Model
      */
     protected $casts = [
         'items' => 'array',
+        'archived_at' => 'datetime',
     ];
 }

@@ -11,7 +11,7 @@ interface Env {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   const { results } = await env.blog_db
-    .prepare('SELECT id, label, items, sort_order FROM stack_groups ORDER BY sort_order ASC, id ASC')
+    .prepare('SELECT id, label, items, sort_order FROM stack_groups WHERE archived_at IS NULL ORDER BY sort_order ASC, id ASC')
     .all<Record<string, unknown>>()
 
   const data = results.map((row) => ({

@@ -16,6 +16,8 @@ interface ModalState {
   title: string
   items: string[]
   index: number
+  /** Institution / company logo — shown in the modal header (same as the rail). */
+  logo?: string | null
 }
 
 const modal = ref<ModalState | null>(null)
@@ -27,8 +29,8 @@ function hide(): void {
   hovered.value = null
 }
 
-function openModal(title: string, items: string[] | undefined): void {
-  modal.value = { title, items: items ?? [], index: 0 }
+function openModal(title: string, items: string[] | undefined, logo?: string | null): void {
+  modal.value = { title, items: items ?? [], index: 0, logo: logo ?? null }
   document.documentElement.style.overflow = 'hidden'
 }
 
@@ -163,7 +165,7 @@ function onKeydown(e: KeyboardEvent): void {
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} photos`"
                 :aria-label="`Open ${job.company} album`"
-                @click="openModal(`${job.company} — photos`, job.albums)"
+                @click="openModal(`${job.company} — photos`, job.albums, job.logo)"
               >
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -173,7 +175,7 @@ function onKeydown(e: KeyboardEvent): void {
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} certificates`"
                 :aria-label="`Open ${job.company} certificates`"
-                @click="openModal(`${job.company} — certificates`, job.certificates)"
+                @click="openModal(`${job.company} — certificates`, job.certificates, job.logo)"
               >
                 <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -342,7 +344,19 @@ function onKeydown(e: KeyboardEvent): void {
         >
           <!-- header -->
           <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
-            <p class="font-mono text-[12px] text-gray-500">{{ modal.title }}</p>
+            <div class="flex items-center gap-2.5">
+              <span
+                v-if="modal.logo"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-gray-100 bg-[#ffffff] p-1"
+              >
+                <img
+                  :src="modal.logo"
+                  :alt="`${modal.title} logo`"
+                  class="h-full w-full object-contain"
+                />
+              </span>
+              <p class="font-mono text-[12px] text-gray-500">{{ modal.title }}</p>
+            </div>
             <button
               type="button"
               class="text-gray-400 transition hover:text-ink"
@@ -383,9 +397,15 @@ function onKeydown(e: KeyboardEvent): void {
               </button>
             </template>
 
-            <!-- no image placeholder -->
-            <div v-else class="flex h-full w-full items-center justify-center">
-              <div class="flex flex-col items-center gap-2 text-gray-300">
+            <!-- no album images → show the institution/company logo instead -->
+            <div v-else class="flex h-full w-full items-center justify-center bg-gray-50 p-10">
+              <img
+                v-if="modal.logo"
+                :src="modal.logo"
+                :alt="`${modal.title} logo`"
+                class="max-h-32 max-w-[60%] object-contain"
+              />
+              <div v-else class="flex flex-col items-center gap-2 text-gray-300">
                 <Images class="h-10 w-10" :stroke-width="1.2" />
                 <span class="font-mono text-[11px] text-gray-400">no image</span>
               </div>

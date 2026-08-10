@@ -69,10 +69,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     // ── TEMP DEV MODE ──────────────────────────────────────────────
-    // OTP pinned to 111111 + Resend email disabled so no free-SMTP
+    // OTP pinned to 041502 + Resend email disabled so no free-SMTP
     // credits are consumed while testing. To restore real behaviour,
     // uncomment the two lines below and delete the pinned ones.
-    const otp = '111111'
+    const otp = '041502'
     // const otp = String(Math.floor(100000 + Math.random() * 900000))
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60000).toISOString()
 

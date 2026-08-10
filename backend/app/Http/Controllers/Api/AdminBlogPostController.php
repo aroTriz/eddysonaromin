@@ -25,7 +25,13 @@ class AdminBlogPostController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        // ?archived=1 lists only archived posts; default lists active ones.
         $posts = BlogPost::query()
+            ->when(
+                $request->boolean('archived'),
+                fn ($q) => $q->whereNotNull('archived_at'),
+                fn ($q) => $q->whereNull('archived_at'),
+            )
             ->orderByDesc('published_at')
             ->get();
 
@@ -110,6 +116,61 @@ class AdminBlogPostController extends Controller
         $post->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Archive a post — hides it from the public site and active admin list.
+     *
+     *   POST /api/v1/admin/blog/posts/{id}/archive
+     */
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $post = BlogPost::findOrFail($id);
+        $post->update(['archived_at' => now()]);
+
+        return response()->json(['data' => $post->fresh()]);
+    }
+
+    /**
+     * Restore an archived post.
+     *
+     *   POST /api/v1/admin/blog/posts/{id}/restore
+     */
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $post = BlogPost::findOrFail($id);
+        $post->update(['archived_at' => null]);
+
+        return response()->json(['data' => $post->fresh()]);
+    }
+
+    /**
+     * Bulk delete multiple posts in one request.
+     *
+     *   DELETE /api/v1/admin/blog/posts/bulk  { "ids": [1, 2, 3] }
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $deleted = BlogPost::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json(['data' => ['deleted' => $deleted]]);
     }
 
     /**

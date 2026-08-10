@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
  * scheme the Cloudflare Pages Functions use, so local and prod agree.
  *
  * Default credentials (same as the previous projects):
- *   username: Aromin
+ *   username: Aromin15
  *   password: 0xydmuhv!
  *
  * OTP emails always go to the email stored here (aromintristan@gmail.com).
@@ -21,7 +21,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         DB::table('admins')->updateOrInsert(
-            ['username' => 'Aromin'],
+            ['username' => 'Aromin15'],
             [
                 'password_hash' => 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9',
                 'email' => 'aromintristan@gmail.com',
@@ -41,11 +41,18 @@ class AdminSeeder extends Seeder
 
         // Seed the tech stack (mirrors frontend/src/data/profile.ts stackGroups).
         $stack = [
-            'Frontend' => ['Vue', 'Nuxt', 'Ionic', 'TypeScript', 'JavaScript', 'Bootstrap', 'HTML', 'CSS'],
-            'Backend' => ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite', 'WordPress', 'Joomla'],
-            'Mobile & Desktop' => ['Flutter', 'Kotlin', 'Android Studio', 'C#', 'Unity', 'C++', 'C', 'Java'],
-            'AI & Data' => ['Python', 'Machine Learning', 'Data Analytics', 'SQL'],
-            'Developer Tools' => ['Git', 'GitHub', 'VS Code'],
+            'Frontend' => ['Vue', 'Nuxt', 'Ionic', 'React', 'TypeScript', 'JavaScript', 'Bootstrap', 'HTML', 'CSS'],
+            'Backend' => ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite'],
+            'CMS' => ['WordPress', 'Joomla'],
+            'Mobile & Desktop' => ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java'],
+            'Machine Learning and Data' => ['Python', 'Machine Learning', 'Data Analytics', 'SQL', 'Anaconda', 'Jupyter'],
+            'AI & Assistant' => ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Mimo', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
+            'Version Control & CI/CD' => ['Git', 'GitHub', 'GitLab'],
+            'Developer Tools' => ['VS Code', 'Docker', 'XAMPP', 'WAMP', 'DBeaver', 'Android Studio', 'IntelliJ IDEA', 'PyCharm'],
+            'Hosting & Deployment' => ['Vercel', 'Cloudflare'],
+            'OS' => ['Windows', 'macOS', 'Ubuntu'],
+            'Networking' => ['Cisco Packet Tracer'],
+            'Package Management' => ['npm', 'Composer'],
             'Design' => ['Figma', 'Canva'],
         ];
 

@@ -48,11 +48,11 @@ class AuthController extends Controller
         }
 
         // ── TEMP DEV MODE ──────────────────────────────────────────────
-        // OTP is pinned to 111111 and the Resend email is disabled so no
+        // OTP is pinned to 041502 and the Resend email is disabled so no
         // free-SMTP credits are consumed while testing locally.
         // To restore real behaviour, uncomment the two lines below and
         // delete the pinned ones.
-        $otp = '111111';
+        $otp = '041502';
         // $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         DB::table('otp_codes')
             ->where('admin_id', $admin->id)

@@ -1,11 +1,28 @@
 <script setup lang="ts">
 /**
  * Recommendations — masonry testimonial wall (CSS columns),
- * mirroring bryllim.com/recommendations exactly.
+ * mirroring bryllim.com/recommendations exactly. Content is served
+ * from the /api/v1/recommendations endpoint (managed in /aromin admin).
  */
 import { ArrowLeft } from 'lucide-vue-next'
+import { onMounted, ref } from 'vue'
 
-import { recommendations } from '@/data/profile'
+import { fetchRecommendations } from '@/services/api'
+import type { Recommendation } from '@/types'
+
+const items = ref<Recommendation[]>([])
+const loading = ref(true)
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    items.value = await fetchRecommendations()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load recommendations'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
@@ -26,11 +43,24 @@ import { recommendations } from '@/data/profile'
       What leaders, teammates, and mentors say about working with me — straight from my network.
     </p>
 
+    <!-- loading skeleton -->
+    <div v-if="loading" class="columns-1 gap-4 sm:columns-2 lg:columns-3">
+      <div
+        v-for="i in 6"
+        :key="i"
+        class="mb-4 h-44 animate-pulse break-inside-avoid rounded-xl border border-gray-200 bg-gray-50"
+      ></div>
+    </div>
+
+    <div v-else-if="error" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
+      <p class="font-mono text-[12px] text-gray-500">// {{ error }}</p>
+    </div>
+
     <!-- testimonial wall (masonry via CSS columns) -->
-    <div class="columns-1 gap-4 sm:columns-2 lg:columns-3">
+    <div v-else-if="items.length > 0" class="columns-1 gap-4 sm:columns-2 lg:columns-3">
       <figure
-        v-for="rec in recommendations"
-        :key="rec.initials"
+        v-for="rec in items"
+        :key="rec.id"
         class="rec-card reveal mb-4 break-inside-avoid rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_22px_-18px_rgba(10,10,10,0.22)]"
       >
         <svg class="h-6 w-6 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -46,11 +76,15 @@ import { recommendations } from '@/data/profile'
             {{ rec.initials }}
           </div>
           <div class="min-w-0">
-            <div class="text-[13px] font-semibold leading-snug text-ink">{{ rec.author }}</div>
-            <div class="mt-0.5 text-[11px] leading-snug text-gray-500">{{ rec.role }}</div>
+            <div class="truncate text-[13px] font-semibold leading-snug text-ink" :title="rec.author">{{ rec.author }}</div>
+            <div class="mt-0.5 truncate text-[11px] leading-snug text-gray-500">{{ rec.role }}</div>
           </div>
         </figcaption>
       </figure>
+    </div>
+
+    <div v-else class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
+      <p class="font-mono text-[12px] text-gray-500">No recommendations yet.</p>
     </div>
   </div>
 </template>

@@ -41,6 +41,7 @@ export interface BlogPost {
   images: string[] | null
   tags: string[] | null
   published_at: string | null
+  archived_at: string | null
   created_at: string | null
   updated_at: string | null
 }
@@ -63,6 +64,21 @@ export interface StackGroup {
   label: string
   items: string[]
   sort_order: number
+  archived_at: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Testimonial card (mirrors the Laravel Recommendation model). */
+export interface Recommendation {
+  id: number
+  initials: string
+  quote: string
+  author: string
+  role: string
+  email: string | null
+  sort_order: number
+  archived_at: string | null
   created_at: string | null
   updated_at: string | null
 }
@@ -75,6 +91,8 @@ export interface Profile {
   role: string
   degree: string
   university: string
+  /** Year professional work began — drives the "Years of Experience" stat. */
+  graduationYear: number
   location: string
   hometown: string
   email: string

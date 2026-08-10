@@ -66,14 +66,38 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
     return json({ data: mapPost(row) })
   }
 
+  const url = new URL(request.url)
+  const archived = url.searchParams.get('archived') === '1'
   const { results } = await env.blog_db
-    .prepare('SELECT * FROM blog_posts ORDER BY published_at DESC')
+    .prepare(
+      `SELECT * FROM blog_posts WHERE archived_at IS ${archived ? 'NOT NULL' : 'NULL'} ORDER BY published_at DESC`,
+    )
     .all()
   return json({ data: results.map(mapPost) })
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, params, env }) => {
   if (!(await isAuthorized(request, env))) return json({ error: 'Unauthorized' }, 401)
+
+  const segments = (params.path as string[] | undefined) ?? []
+
+  // Archive / restore an existing post: POST /admin/blog/posts/{id}/archive|restore
+  if (segments.length === 2) {
+    const id = Number(segments[0])
+    if (!Number.isInteger(id)) return json({ message: 'Post not found.' }, 404)
+    if (segments[1] === 'archive' || segments[1] === 'restore') {
+      const existing = await env.blog_db.prepare('SELECT id FROM blog_posts WHERE id = ?').bind(id).first()
+      if (!existing) return json({ message: 'Post not found.' }, 404)
+      const archivedAt = segments[1] === 'archive' ? new Date().toISOString() : null
+      await env.blog_db
+        .prepare('UPDATE blog_posts SET archived_at = ?, updated_at = ? WHERE id = ?')
+        .bind(archivedAt, new Date().toISOString(), id)
+        .run()
+      const row = await env.blog_db.prepare('SELECT * FROM blog_posts WHERE id = ?').bind(id).first()
+      return json({ data: mapPost(row!) })
+    }
+    return json({ message: 'Not found.' }, 404)
+  }
 
   let body: Record<string, unknown>
   try {

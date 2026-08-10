@@ -67,10 +67,12 @@
     from {
       opacity: 0;
       transform: translateY(12px);
+      filter: blur(7px);
     }
     to {
       opacity: 1;
       transform: none;
+      filter: blur(0);
     }
   }
   @keyframes blink {
@@ -87,8 +89,22 @@
       transform: translateX(0);
     }
     to {
-      transform: translateX(-50%);
+      /* Exact seam distance (one copy width) — set via JS on the strip as
+         --marquee-distance; falls back to -50% before measurement. */
+      transform: translateX(calc(var(--marquee-distance, 50%) * -1));
     }
+  }
+}
+
+/* Reverse marquee keyframes — defined OUTSIDE @theme so Tailwind v4 doesn't
+   tree-shake them (they're referenced from scoped HomeView CSS, not from an
+   --animate-* theme variable). Second home strip scrolls right → left. */
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(calc(var(--marquee-distance, 50%) * -1));
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
@@ -169,7 +185,8 @@ html.theme-anim *::after {
     color 0.5s ease,
     fill 0.5s ease,
     stroke 0.5s ease,
-    box-shadow 0.5s ease !important;
+    box-shadow 0.5s ease,
+    outline-color 0.5s ease !important;
 }
 
 /* View Transitions — circular reveal (driven in JS) */
@@ -186,6 +203,40 @@ html.theme-anim *::after {
   html.theme-anim *::after {
     transition: none !important;
   }
+}
+
+/* ── Page switch — bryllim-style blur fade (keyed wrapper in App.vue) ──
+   Every route change remounts the .page-enter wrapper, replaying this
+   entrance: blurred + faded-up, sharpening in place. */
+.page-enter {
+  animation: page-enter 0.42s cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none !important;
+  }
+}
+
+/* ── Confirm dialog — blur fade (ConfirmModal.vue) ─────────────── */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 
 /* ── Halftone dot textures ─────────────────────────────────────── */

@@ -5,24 +5,120 @@
  * marquee, and serif recommendation card below.
  */
 import { ArrowUpRight, GraduationCap, Mail } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BlogSection from '@/components/home/BlogSection.vue'
 import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
+import TechLogo from '@/components/ui/TechLogo.vue'
 import { useTypewriter } from '@/composables/useTypewriter'
+import { fetchProjects, fetchRecommendations, fetchStackGroups } from '@/services/api'
+import type { Recommendation } from '@/types'
 import {
   allTechnologies,
   certifications,
   experiences,
   profile,
-  recommendations,
   stats,
 } from '@/data/profile'
 
 const emailModalRef = ref<InstanceType<typeof EmailModal> | null>(null)
+
+/** Recommendations — fetched from the CMS (managed in /aromin admin). */
+const recs = ref<Recommendation[]>([])
+const recsLoading = ref(true)
+
+/**
+ * Tech marquee — driven by the CMS stack groups (/aromin admin).
+ * Static profile data is only the instant fallback while loading / on error.
+ *
+ * The loop is animated by translateX(-50%); a JS-measured exact distance
+ * (one copy's width in whole pixels) is used instead of a raw -50% so the
+ * seam never lands on a fractional pixel — eliminating the sub-pixel jump.
+ */
+const marqueeList = ref<string[]>([...allTechnologies, ...allTechnologies])
+
+function measureMarquee(): void {
+  // Apply the exact seam distance to every marquee strip (forward + reverse).
+  const strips = Array.from(document.querySelectorAll('.marquee-strip')) as HTMLElement[]
+  for (const strip of strips) {
+    const pills = Array.from(strip.children) as HTMLElement[]
+    if (pills.length < 2) continue
+    const half = Math.floor(pills.length / 2)
+    const lastOfFirst = pills[half - 1]
+    // End of copy 1: last pill's right edge + its trailing mr-3 (12px).
+    const dist = lastOfFirst.offsetLeft + lastOfFirst.offsetWidth + 12
+    strip.style.setProperty('--marquee-distance', `${dist}px`)
+  }
+}
+
+onMounted(() => {
+  measureMarquee()
+  // Widths settle once fonts load — re-measure for an exact seam.
+  if (document.fonts?.ready) {
+    void document.fonts.ready.then(() => measureMarquee())
+  }
+  window.addEventListener('resize', measureMarquee)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureMarquee)
+})
+
+/** Live counts for the stats row — "Projects Built" & "Technologies" come from
+ * the CMS. Seeded with the static profile values so the stats show instantly
+ * (no "0" flash while the API loads); the live counts override when ready. */
+const projectsCount = ref(Number(stats.find((s) => s.label === 'Projects Built')?.value) || 0)
+const techCount = ref(Number(stats.find((s) => s.label === 'Technologies')?.value) || 0)
+
+/**
+ * "Years of Experience" — derived from the graduation year.
+ * 1 year → "1+", 2 years → "2+", and so on (never below 1+).
+ */
+const experienceYears = computed(() => {
+  const years = new Date().getFullYear() - profile.graduationYear
+  return `${Math.max(1, years)}+`
+})
+
+/** Stats row — CMS-derived / computed values override the static ones. */
+const displayStats = computed(() =>
+  stats.map((s) => {
+    if (s.label === 'Projects Built') return { ...s, value: projectsCount.value.toLocaleString() }
+    if (s.label === 'Technologies') return { ...s, value: techCount.value.toLocaleString() }
+    if (s.label === 'Years of Experience') return { ...s, value: experienceYears.value }
+    return s
+  }),
+)
+
+onMounted(async () => {
+  try {
+    const [projectList, groups] = await Promise.all([
+      fetchProjects(),
+      fetchStackGroups(),
+    ])
+    projectsCount.value = projectList.length
+    const flat = groups.flatMap((g) => g.items).filter(Boolean)
+    techCount.value = new Set(flat).size
+    if (flat.length > 0) {
+      marqueeList.value = [...flat, ...flat]
+      // The strip's width changed — re-measure so the loop seam stays exact.
+      await nextTick()
+      measureMarquee()
+    }
+  } catch {
+    // Keep the static fallbacks when the API is unavailable.
+  }
+
+  try {
+    recs.value = await fetchRecommendations()
+  } catch {
+    // Non-blocking — the section simply renders empty on failure.
+  } finally {
+    recsLoading.value = false
+  }
+})
 
 /** Typewriter roles shown under the profile video. */
 const { displayed: displayedRole, caretOn } = useTypewriter([
@@ -33,7 +129,6 @@ const { displayed: displayedRole, caretOn } = useTypewriter([
   'Information Technologist',
 ])
 
-const marqueeList = [...allTechnologies, ...allTechnologies]
 const year = new Date().getFullYear()
 
 const intro = [
@@ -74,7 +169,7 @@ const socials = [
           <div class="mt-1.5 flex items-center justify-center gap-1.5 font-mono text-[12px] text-gray-500">
             <span>const available = '</span>
             <span class="pulse-dot h-1.5 w-1.5 rounded-full bg-[#28c840]" aria-hidden="true"></span>
-            <span class="text-ink">for hire</span>
+            <span class="text-ink">For Hire</span>
             <span>'</span>
           </div>
         </div>
@@ -146,7 +241,7 @@ const socials = [
       class="grid grid-cols-2 divide-x divide-y divide-gray-200 border-t border-gray-200 sm:grid-cols-5 sm:divide-y-0"
     >
       <div
-        v-for="stat in stats"
+        v-for="stat in displayStats"
         :key="stat.label"
         class="flex flex-col items-center py-6 text-center sm:px-4"
       >
@@ -168,13 +263,26 @@ const socials = [
           all stack <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
       </div>
-      <div class="overflow-hidden">
-        <div class="mask-fade-x flex w-max animate-marquee gap-3">
+      <div class="marquee-clip overflow-hidden py-1.5">
+        <div class="marquee-strip flex w-max animate-marquee">
           <span
             v-for="(tech, i) in marqueeList"
             :key="`${tech}-${i}`"
-            class="rounded-full border border-gray-300 bg-gray-100 px-4 py-1.5 font-mono text-[13px] text-gray-700"
+            class="mr-3 inline-flex items-center gap-2 rounded-full border border-dashed border-gray-300 bg-white px-4 py-1.5 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
           >
+            <TechLogo :name="tech" :size="15" />
+            {{ tech }}
+          </span>
+        </div>
+      </div>
+      <div class="marquee-clip overflow-hidden py-1.5">
+        <div class="marquee-strip marquee-reverse flex w-max">
+          <span
+            v-for="(tech, i) in marqueeList"
+            :key="`rev-${tech}-${i}`"
+            class="mr-3 inline-flex items-center gap-2 rounded-full border border-dashed border-gray-300 bg-white px-4 py-1.5 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
+          >
+            <TechLogo :name="tech" :size="15" />
             {{ tech }}
           </span>
         </div>
@@ -284,10 +392,14 @@ const socials = [
         </RouterLink>
       </div>
 
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div v-if="recsLoading" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div v-for="i in 3" :key="i" class="h-44 animate-pulse rounded-xl bg-gray-100"></div>
+      </div>
+
+      <div v-else-if="recs.length > 0" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <a
-          v-for="rec in recommendations.slice(0, 3)"
-          :key="rec.initials"
+          v-for="rec in recs.slice(0, 3)"
+          :key="rec.id"
           href="/recommendations"
           class="group flex flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
         >
@@ -317,12 +429,12 @@ const socials = [
     <!-- ── GitHub (bryllim-style halftone graph) ──────────────── -->
     <section id="github" aria-label="GitHub" class="py-14">
       <div class="mb-6 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">06 — github</h2>
+        <h2 class="font-pixel text-sm text-gray-500 dark:text-gray-400">06 — github</h2>
         <a
           :href="profile.github"
           target="_blank"
           rel="noopener noreferrer"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="font-mono text-[11px] uppercase tracking-wider text-gray-600 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         >
           {{ profile.github.replace('https://', '') }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </a>
@@ -346,4 +458,38 @@ const socials = [
 </template>
 
 <style scoped>
+/* Promote the marquee strip to its own GPU layer for smooth scrolling.
+   The animation itself is the global `animate-marquee` utility; the seam
+   distance (--marquee-distance) is measured in JS for an exact pixel loop. */
+.marquee-strip {
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout paint style;
+  animation-duration: 90s;
+}
+
+/* Second row scrolls in the opposite direction (right → left). */
+.marquee-strip.marquee-reverse {
+  animation: marquee-reverse 90s linear infinite;
+}
+
+/* Let the pill shadows show (vertical padding) and fade pills in/out
+   gracefully at the visible edges (greyfolio-style) so the pill shapes
+   read as complete instead of hard-cut. */
+.marquee-clip {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent
+  );
+}
 </style>

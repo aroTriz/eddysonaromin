@@ -3,7 +3,7 @@
  * /aromin/dashboard — visitor stats + content counts.
  * Left sidebar layout, dark/light/system theme (inherits from the app).
  */
-import { Eye, FileText, FolderKanban, Mail, RefreshCw } from 'lucide-vue-next'
+import { Eye, FileText, FolderKanban, Mail, Quote, RefreshCw } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
@@ -32,6 +32,7 @@ const cards = [
   { key: 'visitors' as const, label: 'visitors', icon: Eye, hint: 'times the site was opened' },
   { key: 'posts' as const, label: 'blog posts', icon: FileText, hint: 'published + drafts' },
   { key: 'projects' as const, label: 'projects', icon: FolderKanban, hint: 'in the portfolio' },
+  { key: 'recommendations' as const, label: 'recommendations', icon: Quote, hint: 'testimonials on the wall' },
   { key: 'messages' as const, label: 'contact messages', icon: Mail, hint: 'from the contact form' },
 ]
 </script>
@@ -62,7 +63,7 @@ const cards = [
     </p>
 
     <div v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div v-for="i in 4" :key="i" class="h-28 animate-pulse rounded-xl border border-gray-200 bg-gray-50"></div>
+      <div v-for="i in 5" :key="i" class="h-28 animate-pulse rounded-xl border border-gray-200 bg-gray-50"></div>
     </div>
 
     <div v-else-if="stats" class="grid grid-cols-1 gap-4 sm:grid-cols-2">

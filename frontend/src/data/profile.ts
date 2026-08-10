@@ -11,6 +11,7 @@ export const profile: Profile = {
   role: 'Junior Front-End Developer',
   degree: 'BS Information Technology',
   university: 'Saint Louis University',
+  graduationYear: 2025,
   location: 'Quezon City, Metro Manila, Philippines, 1103',
   hometown: 'Loakan Proper, Baguio City, Benguet, Philippines, 2600',
   email: 'aromintristan@gmail.com',
@@ -147,6 +148,7 @@ export const stackGroups: StackGroup[] = [
       'Vue',
       'Nuxt',
       'Ionic',
+      'React',
       'TypeScript',
       'JavaScript',
       'Bootstrap',
@@ -156,19 +158,47 @@ export const stackGroups: StackGroup[] = [
   },
   {
     label: 'Backend',
-    items: ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite', 'WordPress', 'Joomla'],
+    items: ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite'],
+  },
+  {
+    label: 'CMS',
+    items: ['WordPress', 'Joomla'],
   },
   {
     label: 'Mobile & Desktop',
-    items: ['Flutter', 'Kotlin', 'Android Studio', 'C#', 'Unity', 'C++', 'C', 'Java'],
+    items: ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java'],
   },
   {
-    label: 'AI & Data',
-    items: ['Python', 'Machine Learning', 'Data Analytics', 'SQL'],
+    label: 'Machine Learning and Data',
+    items: ['Python', 'Machine Learning', 'Data Analytics', 'SQL', 'Anaconda', 'Jupyter'],
+  },
+  {
+    label: 'AI & Assistant',
+    items: ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Mimo', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
+  },
+  {
+    label: 'Version Control & CI/CD',
+    items: ['Git', 'GitHub', 'GitLab'],
   },
   {
     label: 'Developer Tools',
-    items: ['Git', 'GitHub', 'VS Code'],
+    items: ['VS Code', 'Docker', 'XAMPP', 'WAMP', 'DBeaver', 'Android Studio', 'IntelliJ IDEA', 'PyCharm'],
+  },
+  {
+    label: 'Hosting & Deployment',
+    items: ['Vercel', 'Cloudflare'],
+  },
+  {
+    label: 'OS',
+    items: ['Windows', 'macOS', 'Ubuntu'],
+  },
+  {
+    label: 'Networking',
+    items: ['Cisco Packet Tracer'],
+  },
+  {
+    label: 'Package Management',
+    items: ['npm', 'Composer'],
   },
   {
     label: 'Design',
@@ -205,6 +235,34 @@ export const allTechnologies: string[] = [
   'HTML',
   'CSS',
   'JavaScript',
+  'npm',
+  'Composer',
+  'Anaconda',
+  'Jupyter',
+  'React',
+  'OpenAI',
+  'Claude',
+  'Gemini',
+  'DeepSeek',
+  'Ollama',
+  'Hermes',
+  'OpenClaw',
+  'Grok',
+  'BigPickle',
+  'Mimo',
+  'Higgsfield',
+  'GitLab',
+  'Docker',
+  'XAMPP',
+  'WAMP',
+  'DBeaver',
+  'IntelliJ IDEA',
+  'PyCharm',
+  'Vercel',
+  'Cloudflare',
+  'Windows',
+  'macOS',
+  'Ubuntu',
 ]
 
 /** Core competencies — key areas of expertise. */
@@ -410,10 +468,10 @@ export const recommendation = recommendations[0]
 /** Home stats. */
 export const stats = [
   { value: '2025', label: 'Year Graduated' },
-  { value: '10', label: 'Projects Built' },
+  { value: '11', label: 'Projects Built' },
   { value: '1', label: 'Internship Completed' },
   { value: '1+', label: 'Years of Experience' },
-  { value: '27', label: 'Technologies' },
+  { value: '53', label: 'Technologies' },
 ]
 
 /** Interests — beyond the code. */

@@ -118,3 +118,30 @@ CREATE TABLE stack_groups (
   created_at TEXT,
   updated_at TEXT
 );
+-- ─────────────────────────────────────────────────────────────────
+-- Community chat (mirrors the Laravel chat tables migration).
+-- ─────────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS chat_messages;
+CREATE TABLE chat_messages (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT    NOT NULL,
+  message     TEXT    NOT NULL,
+  client_id   TEXT,
+  location    TEXT,
+  device      TEXT,
+  ip          TEXT,
+  archived_at TEXT,
+  delete_at   TEXT,
+  created_at  TEXT,
+  updated_at  TEXT
+);
+CREATE INDEX idx_chat_messages_client ON chat_messages(client_id);
+
+DROP TABLE IF EXISTS chat_identities;
+CREATE TABLE chat_identities (
+  client_id  TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  created_at TEXT,
+  updated_at TEXT
+);

@@ -15,6 +15,7 @@ class BlogPostController extends Controller
     {
         $posts = BlogPost::query()
             ->published()
+            ->whereNull('archived_at')
             ->orderByDesc('published_at')
             ->get();
 
@@ -28,6 +29,7 @@ class BlogPostController extends Controller
     {
         $post = BlogPost::where('slug', $slug)
             ->published()
+            ->whereNull('archived_at')
             ->firstOrFail();
 
         return response()->json(['data' => $post]);

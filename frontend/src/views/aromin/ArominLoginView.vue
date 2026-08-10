@@ -9,7 +9,7 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft, Eye, EyeOff, Lock, LogIn, User } from 'lucide-vue-next'
 
 import { requestOtp, verifyOtp } from '@/composables/useAuth'
-import StarsThree from '@/components/ui/StarsThree.vue'
+import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
 const router = useRouter()
@@ -116,12 +116,8 @@ function otpRef(el: unknown, i: number): void {
 
 <template>
   <main class="aromin-login">
-    <!-- starfield behind the whole admin login -->
-    <StarsThree />
-
-    <!-- subtle halftone texture -->
-    <div class="halftone halftone-wide mask-tr pointer-events-none absolute right-0 top-0 z-[1] h-[70vh] w-[65vw] opacity-[0.13]"></div>
-    <div class="halftone mask-bl pointer-events-none absolute bottom-0 left-0 z-[1] h-[60vh] w-[55vw] opacity-[0.1]"></div>
+    <!-- theme-aware backdrop: neural link in light mode, star sphere in dark -->
+    <SiteBackdrop />
 
     <div class="relative z-10 flex w-full max-w-[400px] flex-col">
       <div class="mb-6 flex items-center justify-between">
@@ -215,8 +211,8 @@ function otpRef(el: unknown, i: number): void {
         <div
           class="absolute inset-0 bg-transparent backdrop-blur-xl transition-opacity duration-300"
         ></div>
-        <!-- starfield behind the modal card (same as dark-mode site) -->
-        <StarsThree />
+        <!-- theme-aware backdrop behind the modal card (matches the page) -->
+        <SiteBackdrop />
         <div class="relative z-10 w-full max-w-[380px] rounded-xl border border-gray-200 bg-white p-8">
           <div class="mb-5 text-center">
             <p class="font-pixel text-[clamp(1.2rem,3.5vw,1.5rem)] text-ink">&lt; OTP /&gt;</p>
@@ -282,7 +278,7 @@ function otpRef(el: unknown, i: number): void {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  /* transparent — the StarsThree canvas (z 0) provides the background */
+  /* transparent — the SiteBackdrop canvas (z 0) provides the background */
   background: transparent;
 }
 </style>

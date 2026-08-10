@@ -24,7 +24,13 @@ class AdminStackGroupController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        // ?archived=1 lists only archived categories; default lists active ones.
         $groups = StackGroup::query()
+            ->when(
+                $request->boolean('archived'),
+                fn ($q) => $q->whereNotNull('archived_at'),
+                fn ($q) => $q->whereNull('archived_at'),
+            )
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
@@ -92,6 +98,61 @@ class AdminStackGroupController extends Controller
         StackGroup::findOrFail($id)->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Archive a category — hides it from the public site and active admin list.
+     *
+     *   POST /api/v1/admin/stack/groups/{id}/archive
+     */
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $group = StackGroup::findOrFail($id);
+        $group->update(['archived_at' => now()]);
+
+        return response()->json(['data' => $group->fresh()]);
+    }
+
+    /**
+     * Restore an archived category.
+     *
+     *   POST /api/v1/admin/stack/groups/{id}/restore
+     */
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $group = StackGroup::findOrFail($id);
+        $group->update(['archived_at' => null]);
+
+        return response()->json(['data' => $group->fresh()]);
+    }
+
+    /**
+     * Bulk delete multiple categories in one request.
+     *
+     *   DELETE /api/v1/admin/stack/groups/bulk  { "ids": [1, 2, 3] }
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $deleted = StackGroup::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json(['data' => ['deleted' => $deleted]]);
     }
 
     /**

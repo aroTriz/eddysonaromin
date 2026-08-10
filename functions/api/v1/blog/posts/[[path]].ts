@@ -12,12 +12,12 @@ interface Env {
 export const onRequestGet: PagesFunction<Env> = async ({ params, env }) => {
   const segments = (params.path as string[] | undefined) ?? []
 
-  // Single post by slug (published only).
+  // Single post by slug (published, not archived).
   if (segments.length > 0) {
     const slug = decodeURIComponent(segments[0])
     const row = await env.blog_db
       .prepare(
-        "SELECT * FROM blog_posts WHERE slug = ? AND published_at IS NOT NULL",
+        "SELECT * FROM blog_posts WHERE slug = ? AND published_at IS NOT NULL AND archived_at IS NULL",
       )
       .bind(slug)
       .first()
@@ -26,7 +26,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ params, env }) => {
   }
 
   const { results } = await env.blog_db
-    .prepare('SELECT * FROM blog_posts WHERE published_at IS NOT NULL ORDER BY published_at DESC')
+    .prepare('SELECT * FROM blog_posts WHERE published_at IS NOT NULL AND archived_at IS NULL ORDER BY published_at DESC')
     .all()
   return json({ data: results.map(mapPost) })
 }

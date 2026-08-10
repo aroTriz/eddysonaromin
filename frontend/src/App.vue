@@ -10,11 +10,12 @@
  * (URL changed, content stayed on the old page).
  */
 import { IonApp } from '@ionic/vue'
-import { computed, onMounted } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AppShell from '@/components/layout/AppShell.vue'
-import HalftoneBackdrop from '@/components/layout/HalftoneBackdrop.vue'
+import ClickRipple from '@/components/ui/ClickRipple.vue'
+import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
 
@@ -25,6 +26,34 @@ useTheme()
 const { toastVisible } = useSiteBehavior()
 
 const route = useRoute()
+const router = useRouter()
+
+/**
+ * Wait for the initial navigation (including the async auth guard on
+ * /aromin routes) before rendering anything. Without this, a refresh on an
+ * admin page briefly renders the public shell while the session check runs —
+ * the wrong navbar flash.
+ */
+const routerReady = ref(false)
+onMounted(async () => {
+  await router.isReady()
+  // Prefetch the home page's data behind the loading screen so every section
+  // appears complete together. The wait is capped (and has a short minimum)
+  // so the loader never drags even if one endpoint is slow.
+  const { prefetchHomeData } = await import('@/services/api')
+  const minShown = new Promise((res) => setTimeout(res, 350))
+  await Promise.race([
+    Promise.allSettled([prefetchHomeData(), minShown]),
+    new Promise((res) => setTimeout(res, 1000)),
+  ])
+  const loader = document.getElementById('session-loader')
+  if (loader) {
+    loader.classList.add('is-done')
+    await new Promise((res) => setTimeout(res, 350))
+    loader.remove()
+  }
+  routerReady.value = true
+})
 
 /** Route name for nav highlighting — falls back to "home". */
 const activeRoute = computed(() => (typeof route.name === 'string' ? route.name : 'home'))
@@ -47,22 +76,35 @@ onMounted(() => {
 
 <template>
   <IonApp class="bg-bg text-ink">
-    <template v-if="isAdmin">
-      <!-- Admin area — own layout, no site shell/backdrop -->
+    <!-- Render nothing until the initial route (and its auth guard) settles,
+         so a refresh on /aromin never flashes the public navbar. -->
+    <template v-if="routerReady">
+      <template v-if="isAdmin">
+      <!-- Admin area — own layout, no site shell/backdrop.
+           The blur entrance lives inside AdminLayout around the content
+           only, so the sidebar never blurs. -->
       <main class="relative z-10 min-h-dvh">
         <RouterView />
       </main>
     </template>
     <template v-else>
-      <HalftoneBackdrop />
+      <SiteBackdrop />
 
       <AppShell :active="activeRoute" />
 
-      <!-- Routed content — offset by the fixed sidebar width on lg+ -->
+      <!-- Routed content — offset by the fixed sidebar width on lg+.
+           Keyed wrapper replays the blur entrance on route change; the
+           sidebar/header live outside main so they never blur. -->
       <main class="relative z-10 min-h-dvh lg:pl-56">
-        <RouterView />
+        <div :key="route.path" class="page-enter">
+          <RouterView />
+        </div>
       </main>
     </template>
+    </template>
+
+    <!-- Global click ripple (greyfolio-style) — on every route, incl. admin -->
+    <ClickRipple />
 
     <!-- Right-click disabled toast (top-right) -->
     <Teleport to="body">
@@ -80,7 +122,7 @@ onMounted(() => {
           role="status"
         >
           <span class="inline-block h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true"></span>
-          right click disabled
+          Right Click Disabled
         </div>
       </Transition>
     </Teleport>

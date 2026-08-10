@@ -4,7 +4,7 @@
  * data-dependent views. Every list view uses this so the four states
  * (loading, error, empty, success) look consistent site-wide.
  */
-import { AlertTriangle, Inbox, LoaderCircle, RotateCcw } from 'lucide-vue-next'
+import { AlertTriangle, Inbox, RotateCcw } from 'lucide-vue-next'
 
 withDefaults(
   defineProps<{
@@ -22,10 +22,19 @@ withDefaults(
 </script>
 
 <template>
-  <!-- Loading -->
-  <div v-if="loading" class="flex flex-col items-center justify-center gap-3 py-16 text-gray-500">
-    <LoaderCircle class="h-6 w-6 animate-spin" :stroke-width="1.6" />
-    <span class="font-mono text-[13px]">loading...</span>
+  <!-- Loading skeleton — uniform pulse blocks for every data view -->
+  <div
+    v-if="loading"
+    class="flex flex-col gap-3 py-4"
+    aria-busy="true"
+    aria-label="Loading"
+  >
+    <div
+      v-for="i in 4"
+      :key="i"
+      class="h-20 animate-pulse rounded-xl border border-gray-200/70 bg-gray-100"
+      :style="{ animationDelay: `${i * 90}ms` }"
+    ></div>
   </div>
 
   <!-- Error -->

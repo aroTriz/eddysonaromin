@@ -48,7 +48,7 @@ withDefaults(
     <!-- status card -->
     <div class="mt-9 w-full max-w-md rounded-xl border border-dashed border-gray-300 p-5">
       <div class="flex items-center gap-2.5">
-        <span class="pulse-dot h-2 w-2 rounded-full bg-gray-600" aria-hidden="true"></span>
+        <span class="pulse-dot h-2 w-2 rounded-full bg-yellow-400" aria-hidden="true"></span>
         <span class="font-mono text-[11px] uppercase tracking-widest text-gray-500">
           work in progress
         </span>

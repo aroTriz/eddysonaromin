@@ -34,6 +34,70 @@
       })()
     </script>
 
+    <!-- Session loader (greyfolio-style) — theme-aligned via html.dark -->
+    <style>
+      #session-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        color: #0a0a0a;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.45s ease, visibility 0.45s ease;
+      }
+      html.dark #session-loader {
+        background: #0c0c0f;
+        color: #f4f4f5;
+      }
+      #session-loader.is-done {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .session-loader-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.1rem;
+      }
+      .session-loader-wordmark {
+        font-family: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+        font-size: clamp(1.15rem, 3vw, 1.6rem);
+        letter-spacing: 0.02em;
+      }
+      .session-loader-track {
+        width: min(220px, 60vw);
+        height: 2px;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(10, 10, 10, 0.12);
+      }
+      html.dark .session-loader-track {
+        background: rgba(244, 244, 245, 0.14);
+      }
+      .session-loader-track span {
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        background: currentColor;
+        border-radius: 999px;
+        animation: sl-load 1.1s ease-in-out infinite;
+      }
+      @keyframes sl-load {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(350%);
+        }
+      }
+    </style>
+
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Eddyson Aromin" />
@@ -58,6 +122,14 @@
     />
   </head>
   <body>
+    <!-- Session loader — removed by App.vue once the app is ready -->
+    <div id="session-loader" role="status" aria-label="Loading Eddyson Aromin's portfolio" aria-live="polite">
+      <div class="session-loader-content">
+        <span class="session-loader-wordmark">&lt; Aromin /&gt;</span>
+        <span class="session-loader-track" aria-hidden="true"><span></span></span>
+      </div>
+    </div>
+
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

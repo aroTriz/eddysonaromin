@@ -23,11 +23,11 @@ const OFFSET = 6.5
 
 /** Level → (radius, opacity) so activity reads like GitHub's intensity. */
 function levelStyle(level: number): { r: number; op: number } {
-  if (level <= 0) return { r: 1.1, op: 0.05 }
-  if (level === 1) return { r: 1.1, op: 0.2 }
-  if (level === 2) return { r: 2, op: 0.45 }
-  if (level === 3) return { r: 2.7, op: 0.72 }
-  return { r: 3.8, op: 0.92 }
+  if (level <= 0) return { r: 1.1, op: 0.12 }
+  if (level === 1) return { r: 1.1, op: 0.28 }
+  if (level === 2) return { r: 2, op: 0.5 }
+  if (level === 3) return { r: 2.7, op: 0.74 }
+  return { r: 3.8, op: 0.95 }
 }
 
 const loading = ref(true)
@@ -95,7 +95,7 @@ const totalContributions = computed(() =>
           :opacity="dot.op"
         />
       </svg>
-      <p class="font-mono text-[11px] text-gray-500">
+      <p class="font-mono text-[11px] text-gray-600 dark:text-gray-400">
         {{ totalContributions }} contributions in the last year
       </p>
     </div>

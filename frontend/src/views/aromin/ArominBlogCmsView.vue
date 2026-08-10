@@ -1,16 +1,21 @@
 <script setup lang="ts">
 /**
- * /aromin/blog — blog CMS. List, create, edit, delete posts.
- * Markdown content with tag chips; matches the site's mono/terminal styling.
+ * /aromin/blog — blog CMS. List, create, edit, delete, archive & restore
+ * posts. Markdown content with tag chips; matches the site's mono/terminal
+ * styling. Confirms destructive/save actions with a themed blur modal.
  */
-import { FilePlus, ImagePlus, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, FilePlus, ImagePlus, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
+  archiveAdminPost,
   createAdminPost,
   deleteAdminPost,
+  deleteAdminPosts,
   fetchAdminPosts,
+  restoreAdminPost,
   updateAdminPost,
   type BlogPostInput,
 } from '@/services/adminApi'
@@ -20,6 +25,8 @@ const posts = ref<BlogPost[]>([])
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
+const deleting = ref(false)
+const showArchived = ref(false)
 
 // Editor state
 const editing = ref<BlogPost | null>(null)
@@ -28,15 +35,35 @@ const tagInput = ref('')
 const showDrafts = ref(false)
 const editorOpen = ref(false)
 
+// Bulk selection state
+const selectionMode = ref(false)
+const selected = ref<Set<number>>(new Set())
+
+// Confirm dialog state
+const confirm = ref<{
+  title: string
+  message: string
+  confirmLabel: string
+  danger: boolean
+  action: () => void | Promise<void>
+} | null>(null)
+
 const visiblePosts = computed(() =>
   showDrafts.value ? posts.value : posts.value.filter((p) => p.published_at),
+)
+
+const allSelected = computed(
+  () => visiblePosts.value.length > 0 && visiblePosts.value.every((p) => selected.value.has(p.id)),
+)
+const someSelected = computed(
+  () => visiblePosts.value.some((p) => selected.value.has(p.id)) && !allSelected.value,
 )
 
 async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    posts.value = await fetchAdminPosts()
+    posts.value = await fetchAdminPosts(showArchived.value)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load posts'
   } finally {
@@ -44,6 +71,17 @@ async function load(): Promise<void> {
   }
 }
 
+function askConfirm(opts: {
+  title: string
+  message: string
+  confirmLabel: string
+  danger: boolean
+  action: () => void | Promise<void>
+}): void {
+  confirm.value = opts
+}
+
+// ── Editor ───────────────────────────────────────────────────────
 function addTag(): void {
   const t = tagInput.value.trim()
   if (t && !form.value.tags.includes(t)) form.value.tags.push(t)
@@ -103,11 +141,24 @@ function removeImage(index: number): void {
   form.value.images.splice(index, 1)
 }
 
-async function save(): Promise<void> {
+/** Validate the form, then ask for confirmation before saving. */
+function requestSave(): void {
   if (!form.value.title.trim() || !form.value.content.trim()) {
     error.value = 'Title and content are required.'
     return
   }
+  askConfirm({
+    title: 'save changes',
+    message: editing.value
+      ? `Update "${form.value.title.trim()}"?`
+      : `Publish "${form.value.title.trim()}"?`,
+    confirmLabel: 'save',
+    danger: false,
+    action: save,
+  })
+}
+
+async function save(): Promise<void> {
   saving.value = true
   error.value = ''
   try {
@@ -123,22 +174,123 @@ async function save(): Promise<void> {
     } else {
       await createAdminPost(payload)
     }
+    confirm.value = null
     await load()
     cancelEdit()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to save post'
+    confirm.value = null
   } finally {
     saving.value = false
   }
 }
 
+// ── Archive / restore ────────────────────────────────────────────
+async function archiveItem(post: BlogPost): Promise<void> {
+  try {
+    await archiveAdminPost(post.id)
+    await load()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to archive post'
+  }
+}
+
+async function restoreItem(post: BlogPost): Promise<void> {
+  try {
+    await restoreAdminPost(post.id)
+    await load()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to restore post'
+  }
+}
+
+function toggleArchived(): void {
+  showArchived.value = !showArchived.value
+  selectionMode.value = false
+  selected.value = new Set()
+  void load()
+}
+
+// ── Delete (single + bulk) ───────────────────────────────────────
+function askDelete(post: BlogPost): void {
+  askConfirm({
+    title: 'delete post',
+    message: `Delete "${post.title}" permanently?`,
+    confirmLabel: 'delete',
+    danger: true,
+    action: () => remove(post),
+  })
+}
+
 async function remove(post: BlogPost): Promise<void> {
-  if (!window.confirm(`Delete "${post.title}" permanently?`)) return
+  deleting.value = true
   try {
     await deleteAdminPost(post.id)
+    const next = new Set(selected.value)
+    next.delete(post.id)
+    selected.value = next
+    confirm.value = null
     await load()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to delete post'
+    confirm.value = null
+  } finally {
+    deleting.value = false
+  }
+}
+
+function askDeleteSelected(): void {
+  const count = selected.value.size
+  askConfirm({
+    title: 'delete selected',
+    message: `Delete ${count} selected post${count > 1 ? 's' : ''} permanently?`,
+    confirmLabel: 'delete',
+    danger: true,
+    action: removeSelected,
+  })
+}
+
+async function removeSelected(): Promise<void> {
+  deleting.value = true
+  try {
+    await deleteAdminPosts([...selected.value])
+    confirm.value = null
+    exitSelection()
+    await load()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to delete posts'
+    confirm.value = null
+  } finally {
+    deleting.value = false
+  }
+}
+
+// ── Selection helpers ────────────────────────────────────────────
+function enterSelection(): void {
+  selectionMode.value = true
+}
+
+function exitSelection(): void {
+  selectionMode.value = false
+  selected.value = new Set()
+}
+
+function toggleSelect(id: number): void {
+  const next = new Set(selected.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selected.value = next
+}
+
+function toggleSelectAll(): void {
+  if (allSelected.value) {
+    const next = new Set(selected.value)
+    visiblePosts.value.forEach((p) => next.delete(p.id))
+    selected.value = next
+  } else {
+    const next = new Set(selected.value)
+    visiblePosts.value.forEach((p) => next.add(p.id))
+    selected.value = next
   }
 }
 
@@ -171,7 +323,7 @@ onMounted(load)
         @click="startNew"
       >
         <Plus class="h-3.5 w-3.5" :stroke-width="2" />
-        new post
+        New post
       </button>
     </div>
 
@@ -293,10 +445,10 @@ onMounted(load)
             type="button"
             class="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
             :disabled="saving"
-            @click="save"
+            @click="requestSave"
           >
             <Save class="h-4 w-4" :stroke-width="1.7" />
-            {{ saving ? 'saving...' : editing ? 'update post' : 'publish post' }}
+            {{ saving ? 'Saving...' : editing ? 'Update post' : 'Publish post' }}
           </button>
           <button
             v-if="editing"
@@ -304,23 +456,91 @@ onMounted(load)
             class="inline-flex items-center gap-2 rounded-md border border-gray-200 px-4 py-2.5 font-mono text-[13px] text-gray-500 transition-colors hover:text-ink"
             @click="cancelEdit"
           >
-            cancel
+            Cancel
           </button>
         </div>
       </div>
     </div>
 
     <!-- ── Post list ──────────────────────────────────────────── -->
-    <div class="mb-4 flex items-center gap-3">
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <template v-if="selectionMode">
+        <label
+          class="flex cursor-pointer select-none items-center gap-2"
+          :title="allSelected ? 'Deselect all' : 'Select all visible posts'"
+        >
+          <input
+            type="checkbox"
+            class="h-4 w-4 cursor-pointer accent-ink"
+            :checked="allSelected"
+            :indeterminate.prop="someSelected"
+            @change="toggleSelectAll"
+          />
+          <span class="font-mono text-[11px] text-gray-500">Select all</span>
+        </label>
+      </template>
       <p class="font-mono text-[11px] text-gray-500">
-        // posts ({{ posts.length }})
+        // {{ showArchived ? 'archived' : 'posts' }} ({{ posts.length }})
       </p>
       <button
+        v-if="!showArchived"
         type="button"
         class="font-mono text-[11px] text-gray-400 underline-offset-2 hover:text-ink hover:underline"
         @click="showDrafts = !showDrafts"
       >
-        {{ showDrafts ? 'hide drafts' : 'show drafts' }}
+        {{ showDrafts ? 'Hide drafts' : 'Show drafts' }}
+      </button>
+      <div class="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+          @click="toggleArchived"
+        >
+          {{ showArchived ? 'Show active' : 'Show archived' }}
+        </button>
+        <button
+          v-if="!selectionMode"
+          type="button"
+          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
+          aria-label="Select posts to delete"
+          title="Delete posts"
+          @click="enterSelection"
+        >
+          <Trash2 class="h-4 w-4" :stroke-width="1.7" />
+        </button>
+        <button
+          v-else
+          type="button"
+          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
+          aria-label="Cancel selection"
+          @click="exitSelection"
+        >
+          <X class="h-4 w-4" :stroke-width="1.7" />
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Bulk action bar (visible while items are selected) ── -->
+    <div
+      v-if="selectionMode && selected.size > 0"
+      class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5"
+    >
+      <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+        @click="askDeleteSelected"
+      >
+        <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
+        Delete selected
+      </button>
+      <button
+        type="button"
+        class="ml-auto rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
+        aria-label="Cancel selection"
+        @click="exitSelection"
+      >
+        <X class="h-4 w-4" :stroke-width="1.7" />
       </button>
     </div>
 
@@ -329,17 +549,31 @@ onMounted(load)
     </div>
 
     <div v-else-if="visiblePosts.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
-      <p class="font-mono text-[12px] text-gray-500">No posts yet. Write your first one above!</p>
+      <p class="font-mono text-[12px] text-gray-500">
+        {{ showArchived ? 'Nothing archived yet.' : 'No posts yet. Write your first one above!' }}
+      </p>
     </div>
 
     <div v-else class="space-y-2">
       <div
         v-for="post in visiblePosts"
         :key="post.id"
-        class="flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-gray-300"
-        :class="{ 'opacity-45': !post.published_at }"
+        class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-gray-300"
+        :class="{
+          'opacity-45': !post.published_at,
+          'border-gray-300': selected.has(post.id),
+          'opacity-60': showArchived,
+        }"
       >
-        <div class="min-w-0">
+        <input
+          v-if="selectionMode"
+          type="checkbox"
+          class="h-4 w-4 shrink-0 cursor-pointer accent-ink"
+          :checked="selected.has(post.id)"
+          :aria-label="`Select ${post.title}`"
+          @change="toggleSelect(post.id)"
+        />
+        <div class="min-w-0 flex-1">
           <p class="truncate font-mono text-[13px] font-semibold text-ink">
             {{ post.title }}
             <span v-if="!post.published_at" class="ml-2 font-mono text-[10px] text-amber-500">[draft]</span>
@@ -350,21 +584,42 @@ onMounted(load)
         </div>
         <div class="flex shrink-0 items-center gap-1.5">
           <button
+            v-if="showArchived"
             type="button"
-            class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
-            :aria-label="`Edit ${post.title}`"
-            @click="startEdit(post)"
+            class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+            :aria-label="`Restore ${post.title}`"
+            @click="restoreItem(post)"
           >
-            <Pencil class="h-3.5 w-3.5" :stroke-width="1.7" />
+            <ArchiveRestore class="h-3.5 w-3.5" :stroke-width="1.7" />
+            Restore
           </button>
-          <button
-            type="button"
-            class="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-            :aria-label="`Delete ${post.title}`"
-            @click="remove(post)"
-          >
-            <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
-          </button>
+          <template v-else>
+            <button
+              type="button"
+              class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+              :aria-label="`Edit ${post.title}`"
+              @click="startEdit(post)"
+            >
+              <Pencil class="h-3.5 w-3.5" :stroke-width="1.7" />
+            </button>
+            <button
+              type="button"
+              class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+              :aria-label="`Archive ${post.title}`"
+              title="Archive"
+              @click="archiveItem(post)"
+            >
+              <Archive class="h-3.5 w-3.5" :stroke-width="1.7" />
+            </button>
+            <button
+              type="button"
+              class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+              :aria-label="`Delete ${post.title}`"
+              @click="askDelete(post)"
+            >
+              <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -373,5 +628,17 @@ onMounted(load)
       <FilePlus class="h-3.5 w-3.5" :stroke-width="1.7" />
       edits appear instantly on /blog
     </div>
+
+    <!-- ── Themed confirm dialog (delete / save) ───────────────── -->
+    <ConfirmModal
+      :open="confirm !== null"
+      :title="confirm?.title ?? ''"
+      :message="confirm?.message ?? ''"
+      :confirm-label="confirm?.confirmLabel ?? 'confirm'"
+      :danger="confirm?.danger ?? false"
+      :busy="saving || deleting"
+      @confirm="confirm?.action()"
+      @cancel="confirm = null"
+    />
   </AdminLayout>
 </template>

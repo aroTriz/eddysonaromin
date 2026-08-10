@@ -30,6 +30,7 @@ class AdminController extends Controller
         $posts = BlogPost::count();
         $projects = DB::table('projects')->count();
         $messages = DB::table('contact_messages')->count();
+        $recommendations = DB::table('recommendations')->count();
 
         return response()->json([
             'data' => [
@@ -37,6 +38,7 @@ class AdminController extends Controller
                 'posts' => $posts,
                 'projects' => $projects,
                 'messages' => $messages,
+                'recommendations' => $recommendations,
             ],
         ]);
     }

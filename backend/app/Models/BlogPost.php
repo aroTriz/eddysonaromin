@@ -23,6 +23,7 @@ class BlogPost extends Model
         'images',
         'tags',
         'published_at',
+        'archived_at',
     ];
 
     /**
@@ -34,6 +35,7 @@ class BlogPost extends Model
         'images' => 'array',
         'tags' => 'array',
         'published_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     /**
