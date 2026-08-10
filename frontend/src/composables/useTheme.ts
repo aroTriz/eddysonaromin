@@ -80,27 +80,34 @@ function reveal(pref: ThemePreference, x: number, y: number): void {
   }
 
   startViewTransition.call(document, () => applyClass(pref))
-  // Chromium runs the transition callback synchronously, so by the time
-  // startViewTransition returns, ::view-transition-new(root) already exists.
-  // Animate it in this same task — deferring to rAF or vt.ready can miss the
-  // window before the transition tears down (the pseudo freezes at 0ms).
-  try {
-    root.animate(
-      {
-        clipPath: [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${radius}px at ${x}px ${y}px)`,
-        ],
-      },
-      {
-        duration: 540,
-        easing: 'cubic-bezier(.32,.08,.24,1)',
-        pseudoElement: '::view-transition-new(root)',
-      },
-    )
-  } catch {
-    // Pseudo not ready yet — fall back to the coordinated crossfade.
-    crossfade(pref)
+  // Timing varies by Chromium build: in some the ::view-transition-new(root)
+  // pseudo already exists the moment startViewTransition returns, in others it
+  // is only created on the next frame. Try synchronously first, then retry on
+  // the next frame, then fall back to the coordinated crossfade.
+  const clip = (): boolean => {
+    try {
+      root.animate(
+        {
+          clipPath: [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${radius}px at ${x}px ${y}px)`,
+          ],
+        },
+        {
+          duration: 540,
+          easing: 'cubic-bezier(.32,.08,.24,1)',
+          pseudoElement: '::view-transition-new(root)',
+        },
+      )
+      return true
+    } catch {
+      return false
+    }
+  }
+  if (!clip()) {
+    requestAnimationFrame(() => {
+      if (!clip()) crossfade(pref)
+    })
   }
 }
 
