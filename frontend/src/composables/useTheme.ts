@@ -40,7 +40,7 @@ function readPreference(): ThemePreference {
 
 const preference = ref<ThemePreference>(readPreference())
 
-/** Apply the `dark` class to <html> without any transition. */
+/** Apply the `dark` class to <html> — instant switch, no transition. */
 function applyClass(pref: ThemePreference): void {
   const root = document.documentElement
   root.classList.toggle('dark', isDark(pref))
@@ -49,142 +49,50 @@ function applyClass(pref: ThemePreference): void {
   root.style.backgroundColor = ''
 }
 
-/** Soft crossfade fallback (browsers without View Transitions / reduced motion). */
-let animTimer: ReturnType<typeof setTimeout> | undefined
-
-function crossfade(pref: ThemePreference): void {
-  const root = document.documentElement
-  root.classList.add('theme-anim')
-  applyClass(pref)
-  clearTimeout(animTimer)
-  animTimer = setTimeout(() => root.classList.remove('theme-anim'), 520)
-}
-
 /**
- * Circular wipe that works even when the browser skips View Transitions
- * (e.g. the tab is occluded/behind other windows — Chromium aborts VT there,
- * freezing the clip animation at 0ms). We can't snapshot the old page without
- * VT, so we play a "reverse ripple": an overlay of the OLD background color
- * shrinks from the full screen down to the pointer, revealing the already-
- * flipped new theme underneath. Visually the same circular feel as bryllim.
+ * Greyfolio-style theme switch: add `theme-flip` (suppresses the per-element
+ * `transition-colors` burst so cards/borders switch in one atomic paint),
+ * force a reflow so the suppression is committed, THEN flip the `dark` class.
+ * html/body keep their own 220ms background/color fade (the only animation),
+ * everything else snaps instantly. `theme-flip` stays active for the full
+ * transition window (Vue's reactive re-renders happen after the class flip,
+ * so a single-frame suppression would let them fire) and is then removed so
+ * hover/route transitions work normally again.
  */
-function rippleFallback(
-  root: HTMLElement,
-  oldBg: string,
-  x: number,
-  y: number,
-  radius: number,
-): void {
-  if (!oldBg || oldBg === 'transparent' || oldBg === 'rgba(0, 0, 0, 0)') return
-  const overlay = document.createElement('div')
-  overlay.style.cssText =
-    'position:fixed;inset:0;z-index:2147483647;pointer-events:none;background:' +
-    oldBg +
-    ';'
-  root.appendChild(overlay)
-  try {
-    overlay
-      .animate(
-        {
-          clipPath: [
-            `circle(${radius}px at ${x}px ${y}px)`,
-            `circle(0px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: 540,
-          easing: 'cubic-bezier(.32,.08,.24,1)',
-        },
-      )
-      .onfinish = () => overlay.remove()
-    // Safety: never leave a stuck overlay behind.
-    setTimeout(() => overlay.remove(), 700)
-  } catch {
-    overlay.remove()
-  }
-}
+let flipCleanupTimer: ReturnType<typeof setTimeout> | undefined
+/** Releases `theme-flip` on the next pointer move so hover transitions work. */
+let flipReleasePointer: (() => void) | undefined
 
-/** Circular wipe reveal from the pointer — bryllim's exact transition. */
-function reveal(pref: ThemePreference, x: number, y: number): void {
+const THEME_FLIP_MS = 1500
+
+function withThemeFlip(pref: ThemePreference): void {
   const root = document.documentElement
-  const radius = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y),
-  )
-
-  const startViewTransition = (
-    document as Document & {
-      startViewTransition?: (cb: () => void) => { ready: Promise<void> }
+  root.classList.add('theme-flip')
+  // Force a style/layout flush so `transition: none` is committed before the
+  // class flip — otherwise the per-element transitions would still fire.
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void root.offsetHeight
+  applyClass(pref)
+  const cleanup = (): void => {
+    if (flipReleasePointer) {
+      window.removeEventListener('pointermove', flipReleasePointer, { capture: true })
+      flipReleasePointer = undefined
     }
-  ).startViewTransition
-
-  if (!startViewTransition) {
-    crossfade(pref)
-    return
+    root.classList.remove('theme-flip')
   }
-
-  const oldBg = getComputedStyle(root).backgroundColor
-  const vt = startViewTransition.call(document, () => applyClass(pref))
-
-  // Timing varies by Chromium build: in some the ::view-transition-new(root)
-  // pseudo already exists the moment startViewTransition returns, in others it
-  // is only created on the next frame. Try synchronously first, then retry on
-  // the next frame.
-  const clip = (): boolean => {
-    try {
-      root.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${radius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: 540,
-          easing: 'cubic-bezier(.32,.08,.24,1)',
-          pseudoElement: '::view-transition-new(root)',
-        },
-      )
-      return true
-    } catch {
-      return false
-    }
+  // Removing `transition: none` can make Chromium RESTART canceled transitions
+  // on every `transition-colors` element (94 usages across the site) — a
+  // visible 220ms burst. So we hold the suppression until the user's NEXT
+  // pointer move (they always move the mouse after a theme switch), then drop
+  // it cleanly. A timer guarantees release even if no interaction happens.
+  if (flipReleasePointer) {
+    window.removeEventListener('pointermove', flipReleasePointer, { capture: true })
   }
-
-  let fellBack = false
-  const fallback = (): void => {
-    if (fellBack) return
-    fellBack = true
-    if (document.hidden) {
-      // Animations are frozen while the tab is hidden/occluded — wait until it
-      // becomes visible again, then play the ripple so the user still sees it.
-      const onVisible = (): void => {
-        if (document.hidden) return
-        document.removeEventListener('visibilitychange', onVisible)
-        rippleFallback(root, oldBg, x, y, radius)
-      }
-      document.addEventListener('visibilitychange', onVisible)
-    } else {
-      rippleFallback(root, oldBg, x, y, radius)
-    }
-  }
-
-  if (!clip()) {
-    requestAnimationFrame(() => {
-      if (!clip()) fallback()
-    })
-  }
-
-  // If the browser skipped/aborted the transition (hidden/occluded tab), the
-  // VT clip animation never advances — swap in the CSS ripple fallback.
-  if (vt?.ready) {
-    vt.ready.catch(() => fallback())
-  }
+  flipReleasePointer = cleanup
+  window.addEventListener('pointermove', cleanup, { capture: true, once: true })
+  clearTimeout(flipCleanupTimer)
+  flipCleanupTimer = setTimeout(cleanup, THEME_FLIP_MS)
 }
-
-const prefersReducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Event name broadcast when the theme changes — components listen for it. */
 export const THEME_CHANGE_EVENT = 'theme-change'
@@ -195,12 +103,12 @@ export function resolveIsDark(pref: ThemePreference): boolean {
 }
 
 /**
- * Set the theme preference. When the resolved light/dark state changes, the
- * whole page's colors blend smoothly in place (coordinated crossfade — the
- * same approach bryllim falls back to). Live content like the tech marquee
- * keeps moving — nothing is frozen by a snapshot.
+ * Set the theme preference — greyfolio-style instant switch. The `dark` class
+ * flips immediately inside a `theme-flip` suppression window so per-element
+ * `transition-colors` utilities can't fire; html/body/ion-app keep their own
+ * 220ms background/color fade (the only animation).
  */
-export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
+export function setTheme(pref: ThemePreference, _event?: MouseEvent): void {
   preference.value = pref
   try {
     localStorage.setItem(STORAGE_KEY, pref)
@@ -208,16 +116,7 @@ export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
     /* storage unavailable — still apply in-session */
   }
 
-  const flipped = isDark(pref) !== document.documentElement.classList.contains('dark')
-  if (!flipped) return
-
-  if (prefersReducedMotion) {
-    crossfade(pref)
-  } else {
-    const x = event?.clientX || window.innerWidth
-    const y = event?.clientY || window.innerHeight
-    reveal(pref, x, y)
-  }
+  withThemeFlip(pref)
 
   // Notify components (e.g. the theme video) that dark state changed.
   window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
@@ -242,7 +141,7 @@ export function useTheme() {
       const dark = isDark('system')
       const applied = document.documentElement.classList.contains('dark')
       if (dark !== applied) {
-        applyClass('system')
+        withThemeFlip('system')
         window.dispatchEvent(
           new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark } }),
         )

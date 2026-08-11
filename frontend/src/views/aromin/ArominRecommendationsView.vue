@@ -488,7 +488,12 @@ onMounted(load)
         </div>
         <div class="min-w-0 flex-1">
           <p class="truncate font-mono text-[13px] font-semibold text-ink">{{ rec.author }}</p>
-          <p class="mt-0.5 truncate font-mono text-[11px] text-gray-400">{{ rec.role }}</p>
+          <span
+            class="mt-1 inline-flex max-w-full items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-mono text-[10.5px] text-gray-500"
+            :title="rec.role"
+          >
+            <span class="truncate">{{ rec.role }}</span>
+          </span>
         </div>
         <div class="flex shrink-0 items-center gap-1.5">
           <button

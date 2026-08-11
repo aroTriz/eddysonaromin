@@ -130,6 +130,12 @@ const router = createRouter({
       component: () => import('@/views/aromin/ArominChatView.vue'),
       meta: { title: 'Chat — Aromin Admin', requiresAuth: true },
     },
+    {
+      path: '/aromin/private-chat',
+      name: 'aromin-private-chat',
+      component: () => import('@/views/aromin/ArominPrivateChatView.vue'),
+      meta: { title: 'Private Chat — Aromin Admin', requiresAuth: true },
+    },
     // Legacy alias — the old site used /home for the landing page.
     {
       path: '/home',

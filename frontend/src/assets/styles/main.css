@@ -158,7 +158,12 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Themed base — no flash before utilities compile */
+/* Themed base — no flash before utilities compile.
+   `transition` on html/body/ion-app ONLY (background-color + color, 220ms) —
+   exactly greyfolio's approach: the page's own background/text fades subtly
+   while the CSS variables flip instantly, so every other element (cards,
+   borders, fills) switches in one atomic paint. No per-element transitions =
+   no jank. */
 @layer base {
   html,
   body {
@@ -166,6 +171,13 @@ html.dark {
     color: rgb(var(--ink));
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition:
+      background-color 0.22s ease,
+      color 0.22s ease;
+  }
+  ion-app {
+    background-color: rgb(var(--bg));
+    transition: background-color 0.22s ease;
   }
 }
 
@@ -174,40 +186,29 @@ html.dark {
   color: var(--sel-fg);
 }
 
-/* Coordinated color crossfade during a theme switch */
-html.theme-anim,
-html.theme-anim *,
-html.theme-anim *::before,
-html.theme-anim *::after {
-  transition:
-    background-color 0.5s ease,
-    border-color 0.5s ease,
-    color 0.5s ease,
-    fill 0.5s ease,
-    stroke 0.5s ease,
-    box-shadow 0.5s ease,
-    outline-color 0.5s ease !important;
-}
-
-/* View Transitions — circular reveal (driven in JS) */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.theme-anim,
-  html.theme-anim *,
-  html.theme-anim *::before,
-  html.theme-anim *::after {
-    transition: none !important;
-  }
-}
-
 /* ── Page switch — bryllim-style blur fade (keyed wrapper in App.vue) ──
    Every route change remounts the .page-enter wrapper, replaying this
    entrance: blurred + faded-up, sharpening in place. */
+
+/* Theme flip — greyfolio-style. While this class is on <html> (one frame, set
+   by useTheme), every element's color/border transition is suppressed so the
+   light↔dark flip doesn't fire hundreds of independent transitions at once.
+   EXCEPT html/body, which keep their own 220ms background/color fade — that
+   subtle page-level fade is greyfolio's signature; everything else switches
+   in one atomic paint. */
+html.theme-flip,
+html.theme-flip *,
+html.theme-flip *::before,
+html.theme-flip *::after {
+  transition: none !important;
+}
+html.theme-flip,
+html.theme-flip body,
+html.theme-flip ion-app {
+  transition:
+    background-color 0.22s ease,
+    color 0.22s ease !important;
+}
 .page-enter {
   animation: page-enter 0.42s cubic-bezier(0.2, 0, 0, 1) both;
 }

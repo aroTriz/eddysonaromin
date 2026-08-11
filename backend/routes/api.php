@@ -7,10 +7,12 @@ use App\Http\Controllers\Api\AdminStackGroupController;
 use App\Http\Controllers\Api\AskController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminChatController;
+use App\Http\Controllers\Api\AdminPrivateChatController;
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\GithubController;
+use App\Http\Controllers\Api\PrivateChatController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\StackController;
@@ -44,6 +46,19 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/chat/identity', [ChatController::class, 'identityGet']);
     Route::post('/chat/identity', [ChatController::class, 'identityPost']);
 
+    // ── Private chat (visitor ↔ admin DMs) ─────────────────────
+    Route::post('/private/auth/register', [PrivateChatController::class, 'register']);
+    Route::post('/private/auth/login', [PrivateChatController::class, 'login']);
+    Route::post('/private/auth/logout', [PrivateChatController::class, 'logout']);
+    Route::get('/private/auth/session', [PrivateChatController::class, 'session']);
+
+    Route::get('/private/admin', [PrivateChatController::class, 'admin']);
+    Route::post('/private/conversations', [PrivateChatController::class, 'start']);
+    Route::get('/private/conversations/{id}/messages', [PrivateChatController::class, 'messages']);
+    Route::post('/private/conversations/{id}/messages', [PrivateChatController::class, 'send']);
+    Route::post('/private/conversations/{id}/read', [PrivateChatController::class, 'read']);
+    Route::get('/private/conversations/{id}/stream', [PrivateChatController::class, 'stream']);
+
     Route::get('/github/{username}/contributions', [GithubController::class, 'contributions']);
 
     Route::post('/ask', [AskController::class, 'answer']);
@@ -69,6 +84,12 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/chat/messages/{id}/restore', [AdminChatController::class, 'restore']);
     Route::post('/admin/chat/messages/{id}/delete-after', [AdminChatController::class, 'scheduledDelete']);
     Route::delete('/admin/chat/messages/{id}', [AdminChatController::class, 'destroy']);
+
+    Route::get('/admin/private/conversations', [AdminPrivateChatController::class, 'conversations']);
+    Route::get('/admin/private/conversations/{id}/messages', [AdminPrivateChatController::class, 'messages']);
+    Route::post('/admin/private/conversations/{id}/messages', [AdminPrivateChatController::class, 'send']);
+    Route::post('/admin/private/conversations/{id}/read', [AdminPrivateChatController::class, 'read']);
+    Route::get('/admin/private/conversations/{id}/stream', [AdminPrivateChatController::class, 'stream']);
 
     Route::get('/admin/blog/posts', [AdminBlogPostController::class, 'index']);
     Route::post('/admin/blog/posts', [AdminBlogPostController::class, 'store']);

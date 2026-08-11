@@ -11,6 +11,7 @@ import SectionHeading from '@/components/ui/SectionHeading.vue'
 import TechLogo from '@/components/ui/TechLogo.vue'
 import {
   allTechnologies,
+  coreStack,
   interests,
   profile,
 } from '@/data/profile'
@@ -19,22 +20,26 @@ import {
 const RESUME_URL = '/resume/AROMIN-Resume.pdf'
 
 /**
- * Pyramid arrangement — a single pill at the TOP, rows growing 2,3,4,… down
- * to the widest row at the BOTTOM. Each row is centered. Every tech appears
- * exactly once (sequential slicing — no repeats).
+ * Pyramid arrangement — 1 pill at the TOP, rows growing 2,3,4,5,6 down to the
+ * widest row at the BOTTOM. Capped at 6 pills per row so every row fits on a
+ * single line inside the ~720px column — no wrapping, no stray single pill.
  */
-const diamondRows = computed<string[][]>(() => {
-  const items = [...allTechnologies]
+const pyramidRows = computed<string[][]>(() => {
   const rows: string[][] = []
   let cursor = 0
   let count = 1
-  while (cursor < items.length) {
-    rows.push(items.slice(cursor, cursor + count))
+  while (cursor < coreStack.length) {
+    rows.push(coreStack.slice(cursor, cursor + count))
     cursor += count
     count++
   }
   return rows
 })
+
+/** The rest of the stack (not in the pyramid) — supporting cloud below it. */
+const restStack = computed<string[]>(() =>
+  allTechnologies.filter((tech) => !coreStack.includes(tech)),
+)
 
 const info = [
   { label: '// full_name', value: profile.fullName },
@@ -106,10 +111,10 @@ const info = [
         title="tech stack"
         blurb="Technologies I work with — always in motion"
       />
-      <!-- Pyramid rows — each centered so the pills form a ▲ shape -->
-      <Reveal :delay="1" class="mt-6 flex flex-col items-center gap-2.5">
+      <!-- Pyramid (core stack) — md+ only, where 6 pills fit on one line -->
+      <Reveal :delay="1" class="mt-6 hidden flex-col items-center gap-2.5 md:flex">
         <div
-          v-for="(row, ri) in diamondRows"
+          v-for="(row, ri) in pyramidRows"
           :key="ri"
           class="flex flex-wrap items-center justify-center gap-2.5"
         >
@@ -122,6 +127,30 @@ const info = [
             {{ tech }}
           </span>
         </div>
+      </Reveal>
+
+      <!-- Mobile (<md): full stack as a centered pill cloud — no pyramid -->
+      <Reveal :delay="1" class="mt-6 flex flex-wrap justify-center gap-2.5 md:hidden">
+        <span
+          v-for="tech in allTechnologies"
+          :key="tech"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
+        >
+          <TechLogo :name="tech" :size="15" />
+          {{ tech }}
+        </span>
+      </Reveal>
+
+      <!-- Rest of the stack — flows straight after the pyramid (md+) -->
+      <Reveal :delay="1" class="mt-2.5 hidden flex-wrap justify-center gap-2.5 md:flex">
+        <span
+          v-for="tech in restStack"
+          :key="tech"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-md dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500"
+        >
+          <TechLogo :name="tech" :size="15" />
+          {{ tech }}
+        </span>
       </Reveal>
     </section>
 

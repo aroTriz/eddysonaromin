@@ -265,6 +265,36 @@ export const allTechnologies: string[] = [
   'Ubuntu',
 ]
 
+/**
+ * Core stack — the 21 technologies featured in the About pyramid.
+ * Ordered top-to-bottom: the pyramid slices 1, 2, 3, … pills per row, so the
+ * widest (bottom) row holds exactly 6 pills — the most that fits on one line
+ * inside the ~720px column without wrapping.
+ */
+export const coreStack: string[] = [
+  'Vue',
+  'Nuxt',
+  'Laravel',
+  'TypeScript',
+  'JavaScript',
+  'PHP',
+  'HTML',
+  'CSS',
+  'React',
+  'Node.js',
+  'Python',
+  'Flutter',
+  'Ionic',
+  'MySQL',
+  'Git',
+  'SQLite',
+  'Docker',
+  'Bootstrap',
+  'Figma',
+  'npm',
+  'Composer',
+]
+
 /** Core competencies — key areas of expertise. */
 export interface Competency {
   title: string

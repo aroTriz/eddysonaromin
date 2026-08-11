@@ -66,8 +66,10 @@ CREATE TABLE admins (
   username      TEXT    NOT NULL UNIQUE,
   password_hash TEXT    NOT NULL,              -- SHA-256 hex
   email         TEXT    NOT NULL,
+  user_id       INTEGER,                       -- linked users row (private chat)
   created_at    TEXT,
-  updated_at    TEXT
+  updated_at    TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 DROP TABLE IF EXISTS otp_codes;
@@ -145,3 +147,55 @@ CREATE TABLE chat_identities (
   created_at TEXT,
   updated_at TEXT
 );
+
+-- ─────────────────────────────────────────────────────────────────
+-- Private chat (1-on-1 DMs) — mirrors the Laravel private chat migration.
+-- ─────────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT    NOT NULL,
+  email      TEXT    NOT NULL UNIQUE,
+  password   TEXT    NOT NULL,                -- SHA-256 hex (admins pattern)
+  created_at TEXT,
+  updated_at TEXT
+);
+
+DROP TABLE IF EXISTS private_chat_tokens;
+CREATE TABLE private_chat_tokens (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL,
+  token      TEXT    NOT NULL UNIQUE,          -- 64-char hex bearer
+  expires_at TEXT    NOT NULL,
+  created_at TEXT,
+  updated_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_pc_tokens_token ON private_chat_tokens(token);
+
+DROP TABLE IF EXISTS private_chat_sessions;
+CREATE TABLE private_chat_sessions (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_a_id  INTEGER NOT NULL,
+  user_b_id  INTEGER NOT NULL,
+  created_at TEXT,
+  updated_at TEXT,
+  FOREIGN KEY (user_a_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_b_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE (user_a_id, user_b_id)               -- normalized: user_a_id < user_b_id
+);
+
+DROP TABLE IF EXISTS private_chat_messages;
+CREATE TABLE private_chat_messages (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id INTEGER NOT NULL,
+  sender_id  INTEGER NOT NULL,
+  message    TEXT    NOT NULL,
+  read_at    TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  FOREIGN KEY (session_id) REFERENCES private_chat_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_pc_messages_session ON private_chat_messages(session_id, id);

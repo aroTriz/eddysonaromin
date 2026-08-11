@@ -30,6 +30,22 @@ class AdminSeeder extends Seeder
             ]
         );
 
+        // Private-chat account for the admin — visitors DM THIS user. The
+        // password is a throwaway hash (the admin never signs in through the
+        // public login; they reply from the /aromin area instead).
+        $userId = DB::table('users')->where('email', 'aromintristan@gmail.com')->value('id');
+        if (! $userId) {
+            $userId = DB::table('users')->insertGetId([
+                'name' => 'Eddyson Aromin',
+                'email' => 'aromintristan@gmail.com',
+                'password' => hash('sha256', 'not-a-login-account-' . bin2hex(random_bytes(8))),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        DB::table('admins')->where('username', 'Aromin15')->update(['user_id' => $userId]);
+
         DB::table('visitors')->updateOrInsert(
             ['site' => 'portfolio'],
             [

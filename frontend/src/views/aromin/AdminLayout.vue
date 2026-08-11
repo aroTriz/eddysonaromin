@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { LogOut, Menu, MessageCircle, Quote, Rss, Settings2, X } from 'lucide-vue-next'
+import { LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, X } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -26,6 +26,7 @@ const mobileOpen = ref(false)
 const navLinks = [
   { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Rss },
   { label: 'Community Chat', to: '/aromin/chat', name: 'aromin-chat', icon: MessageCircle },
+  { label: 'Private Chat', to: '/aromin/private-chat', name: 'aromin-private-chat', icon: MessagesSquare },
   { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
   { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
 ]
@@ -52,8 +53,12 @@ async function handleLogout(): Promise<void> {
     <SiteBackdrop />
 
     <!-- ── Desktop left sidebar (lg+) ─────────────────────────── -->
+    <!-- `bg-white` is theme-aware (remapped to --bg) so it flips to the exact
+         page background (near-black #0c0c0f) in dark mode — no gray override.
+         No self color-transition: the View Transition snapshot keeps the
+         sidebar perfectly in sync with the background during the flip. -->
     <nav
-      class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 transition-colors duration-500 lg:flex dark:border-gray-300 dark:bg-gray-50"
+      class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 lg:flex"
       aria-label="Admin"
     >
       <RouterLink to="/aromin/dashboard" class="shrink-0 font-pixel text-[15px] leading-none text-ink hover:opacity-60 dark:text-gray-950">
@@ -108,7 +113,7 @@ async function handleLogout(): Promise<void> {
     </nav>
 
     <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
-    <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md transition-colors duration-500 lg:hidden dark:border-gray-300/70 dark:bg-gray-100/90">
+    <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
       <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
         <RouterLink to="/aromin/dashboard" class="font-pixel text-[14px]">&lt; Aromin-Admin /&gt;</RouterLink>
         <div class="flex items-center gap-3">
@@ -129,7 +134,7 @@ async function handleLogout(): Promise<void> {
     <Teleport to="body">
       <div
         v-if="mobileOpen"
-        class="fixed inset-0 z-[60] flex flex-col bg-white transition-colors duration-500 lg:hidden dark:bg-gray-100"
+        class="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden"
       >
         <div class="flex items-center justify-between border-b border-gray-200 px-6 py-3">
           <RouterLink to="/aromin/dashboard" class="font-pixel text-[14px]" @click="closeMobileMenu">

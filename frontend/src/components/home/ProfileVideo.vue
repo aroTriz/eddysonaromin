@@ -144,7 +144,13 @@ function onVideoEnded(): void {
   // Video finished — stays at last frame
 }
 
-function playVideo(src: string): void {
+/**
+ * Swap the theme video INSTANTLY — not part of the theme transition.
+ * The new theme's poster shows immediately (no blank frame, no fade), the new
+ * MP4 loads in the background, and takes over when a frame is ready. The video
+ * area never blinks or waits for the network during a light↔dark switch.
+ */
+function playVideo(src: string, poster: string): void {
   const v = videoRef.value
   if (!v) return
 
@@ -153,9 +159,11 @@ function playVideo(src: string): void {
     activeVideoLoad = null
   }
 
-  v.pause()
-  v.style.opacity = '0'
+  // Show the incoming theme's poster right away — no opacity flicker.
+  posterSrc.value = poster
+  v.style.opacity = '1'
 
+  v.pause()
   v.src = src
   v.load()
 
@@ -168,9 +176,8 @@ function playVideo(src: string): void {
     v.removeEventListener('canplay', onReady)
     activeVideoLoad = null
     if (cancelled) return
-    // A real frame is available — drop the poster and reveal the video.
+    // A real frame is available — drop the poster and play.
     posterSrc.value = ''
-    v.style.opacity = '1'
     v.play().catch(() => {})
   }
 
@@ -178,10 +185,10 @@ function playVideo(src: string): void {
 }
 
 function playForward(): void {
-  playVideo('/videos/profile-forward.mp4')
+  playVideo('/videos/profile-forward.mp4', posterForLight)
 }
 function playReverse(): void {
-  playVideo('/videos/profile-reverse.mp4')
+  playVideo('/videos/profile-reverse.mp4', posterForDark)
 }
 
 function handleThemeChange(dark: boolean): void {

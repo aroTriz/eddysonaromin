@@ -340,3 +340,78 @@ export async function deleteAdminRecommendations(ids: number[]): Promise<{ delet
   })
   return handle<{ deleted: number }>(res)
 }
+
+// ── Private chat (visitor DMs) ──────────────────────────────────────
+// Raw (no cache, no data-unwrap) — the threads must always be fresh.
+
+export interface AdminPrivateMessage {
+  id: number
+  sender_id: number
+  message: string
+  created_at: string
+}
+
+export interface AdminPrivateConversation {
+  id: number
+  visitor: { id: number; name: string; email: string }
+  last_message: {
+    id: number
+    sender_id: number
+    message: string
+    created_at: string
+  } | null
+  unread: number
+  updated_at: string
+}
+
+async function rawAdmin<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${url}`, { ...init, headers: authHeaders() })
+  const payload = (await res.json().catch(() => ({}))) as T & { error?: string; message?: string }
+  if (!res.ok) {
+    throw new Error(
+      (payload as { error?: string })?.error ??
+        (payload as { message?: string })?.message ??
+        'Request failed.',
+    )
+  }
+  return payload
+}
+
+/** All visitor ↔ admin threads, newest first. */
+export function fetchAdminPrivateConversations(): Promise<AdminPrivateConversation[]> {
+  return rawAdmin<{ conversations: AdminPrivateConversation[] }>('/admin/private/conversations').then(
+    (d) => d.conversations,
+  )
+}
+
+export function fetchAdminPrivateMessages(
+  convId: number,
+  after = 0,
+): Promise<AdminPrivateMessage[]> {
+  return rawAdmin<{ messages: AdminPrivateMessage[] }>(
+    `/admin/private/conversations/${convId}/messages${after ? `?after=${after}` : ''}`,
+  ).then((d) => d.messages)
+}
+
+/** Reply as the admin. */
+export function sendAdminPrivateMessage(
+  convId: number,
+  message: string,
+): Promise<AdminPrivateMessage> {
+  return rawAdmin<{ message: AdminPrivateMessage }>(
+    `/admin/private/conversations/${convId}/messages`,
+    { method: 'POST', body: JSON.stringify({ message }) },
+  ).then((d) => d.message)
+}
+
+/** Mark all of the visitor's messages as read. */
+export function markAdminPrivateRead(convId: number): Promise<void> {
+  return rawAdmin<{ success: boolean }>(`/admin/private/conversations/${convId}/read`, {
+    method: 'POST',
+  }).then(() => undefined)
+}
+
+/** Live stream endpoint for a thread (SSE, Bearer-auth via fetch). */
+export function adminPrivateStreamUrl(convId: number, after: number): string {
+  return `${API_BASE}/admin/private/conversations/${convId}/stream?after=${after}`
+}

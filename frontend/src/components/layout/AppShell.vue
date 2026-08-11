@@ -3,11 +3,12 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Github, Linkedin, Mail, Menu, MessageCircle, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { Github, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import AskOverlay from '@/components/ui/AskOverlay.vue'
 import ChatOverlay from '@/components/ui/ChatOverlay.vue'
+import PrivateChatOverlay from '@/components/ui/PrivateChatOverlay.vue'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
@@ -18,6 +19,7 @@ defineProps<{
 
 const askRef = ref<InstanceType<typeof AskOverlay> | null>(null)
 const chatRef = ref<InstanceType<typeof ChatOverlay> | null>(null)
+const privateChatRef = ref<InstanceType<typeof PrivateChatOverlay> | null>(null)
 const isMac =  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const mobileOpen = ref(false)
@@ -81,8 +83,12 @@ const navGroups = [
 
 <template>
   <!-- ── Fixed left sidebar (lg+) ─────────────────────────── -->
+  <!-- `bg-white` is theme-aware (remapped to --bg) so it flips to the exact
+       page background (near-black #0c0c0f) in dark mode — no gray override.
+       No self color-transition either: the View Transition snapshot handles
+       the flip, keeping the sidebar perfectly in sync with the background. -->
   <nav
-    class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 transition-colors duration-500 lg:flex dark:border-gray-300 dark:bg-gray-50"
+    class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 lg:flex"
     aria-label="Primary"
   >
     <RouterLink to="/" class="shrink-0 font-pixel text-[15px] leading-none text-ink hover:opacity-60 dark:text-gray-950">
@@ -153,6 +159,14 @@ const navGroups = [
         <MessageCircle class="h-4 w-4" :stroke-width="1.6" />
         community chat
       </button>
+      <button
+        type="button"
+        class="mt-2 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+        @click="privateChatRef?.openChat()"
+      >
+        <MessagesSquare class="h-4 w-4" :stroke-width="1.6" />
+        private chat
+      </button>
     </div>
 
     <div class="mt-6 shrink-0">
@@ -195,7 +209,7 @@ const navGroups = [
   </nav>
 
   <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
-  <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md transition-colors duration-500 lg:hidden dark:border-gray-300/70 dark:bg-gray-100/90">
+  <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
     <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
       <RouterLink to="/" class="font-pixel text-[14px]">
         &lt; Aromin /&gt;
@@ -216,7 +230,7 @@ const navGroups = [
     <div
       v-if="mobileOpen"
       id="mobileNav"
-      class="fixed inset-0 z-[60] flex flex-col bg-white transition-colors duration-500 lg:hidden dark:bg-gray-100"
+      class="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden"
     >
       <div class="flex items-center justify-between border-b border-gray-200 px-6 py-3">
         <RouterLink to="/" class="font-pixel text-[14px]" @click="closeMobileMenu">
@@ -295,6 +309,14 @@ const navGroups = [
               <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               community chat
             </button>
+            <button
+              type="button"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
+              @click="closeMobileMenu(); privateChatRef?.openChat()"
+            >
+              <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              private chat
+            </button>
             <div class="mb-4">
               <ThemeSwitch />
             </div>
@@ -341,4 +363,7 @@ const navGroups = [
 
   <!-- Community chat (bryllim-style) -->
   <ChatOverlay ref="chatRef" />
+
+  <!-- Private chat (1-on-1 DMs) -->
+  <PrivateChatOverlay ref="privateChatRef" />
 </template>

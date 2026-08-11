@@ -239,8 +239,14 @@ Reusability is not about avoiding repetition. It''s about making change cheap. E
 --   password: 0xydmuhv!
 -- OTP emails always go to the email below (aromintristan@gmail.com).
 -- ────────────────────────────────────────────────────────────────
-INSERT INTO admins (username, password_hash, email, created_at, updated_at)
-VALUES ('Aromin', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+INSERT INTO admins (username, password_hash, email, user_id, created_at, updated_at)
+VALUES ('Aromin', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+
+-- Private-chat account for the admin — visitors DM THIS user. The password
+-- is a throwaway hash (the admin replies from the /aromin area, never logs
+-- in through the public login).
+INSERT INTO users (id, name, email, password, created_at, updated_at)
+VALUES (1, 'Eddyson Aromin', 'aromintristan@gmail.com', 'c4e9a64fa71ec27e15dfaf63d2bf512c9799115c0e4b0dd5a2ab6ab7f5fae8b7', '2026-08-09 00:00:00', '2026-08-09 00:00:00');
 
 -- Visitor counter row.
 INSERT INTO visitors (site, count, created_at, updated_at)
