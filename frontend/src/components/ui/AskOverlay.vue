@@ -290,7 +290,7 @@ defineExpose({ openAsk })
         <input
           ref="textInput"
           v-model="input"
-          class="absolute h-px w-px border-0 p-0 opacity-0"
+          class="absolute h-px w-px border-0 p-0 text-[16px] opacity-0"
           type="text"
           autocomplete="off"
           autocorrect="off"

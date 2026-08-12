@@ -6,6 +6,7 @@
  * send cooldown, and shows live presence via dicebear avatars + device +
  * location. Opened from the sidebar "community chat" button.
  */
+import { LoaderCircle } from 'lucide-vue-next'
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import {
@@ -63,19 +64,6 @@ const MAX_VISIBLE = 60
 const SEND_COOLDOWN = 8000
 const KIND_URL = 'https://en.wikipedia.org/wiki/Netiquette'
 
-const BAD_LOOSE = [
-  'fuck', 'motherfuck', 'shit', 'bullshit', 'bitch', 'asshole', 'cunt',
-  'faggot', 'nigger', 'nigga', 'dickhead', 'jackass', 'dumbass',
-  'cocksuck', 'dipshit', 'putangina', 'putanginamo', 'tangina', 'taena',
-  'tarantado', 'gago', 'gaga', 'ulol', 'kingina', 'kupal', 'pakshet',
-  'pakyu', 'hinayupak', 'hindot', 'hindut', 'buwiset', 'bwisit',
-  'putang ina', 'tang ina', 'walang hiya', 'hayop ka', 'gunggong',
-]
-const BAD_STRICT = [
-  'ass', 'dick', 'cock', 'prick', 'slut', 'whore', 'twat', 'wank',
-  'piss', 'bastard', 'pussy', 'puta', 'tanga', 'bobo', 'tite', 'titi',
-  'puki', 'pekpek', 'jakol', 'leche', 'peste', 'lintik', 'ungas', 'inutil',
-]
 const LINK_TLDS = [
   'com', 'net', 'org', 'io', 'co', 'dev', 'app', 'ai', 'xyz', 'info',
   'biz', 'link', 'site', 'online', 'store', 'shop', 'page', 'live',
@@ -155,19 +143,6 @@ function timeAgo(iso: string): string {
   const mo = Math.floor(d / 30)
   if (mo < 12) return `${mo}mo ago`
   return `${Math.floor(d / 365)}y ago`
-}
-
-function isOffensive(text: string): boolean {
-  const t = (text || '').toLowerCase()
-  for (const w of BAD_LOOSE) if (t.includes(w)) return true
-  for (const w of BAD_STRICT) {
-    try {
-      if (new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'u').test(t)) return true
-    } catch {
-      /* skip */
-    }
-  }
-  return false
 }
 
 function containsLink(text: string): boolean {
@@ -312,6 +287,9 @@ function startStream(): void {
     try {
       const m = JSON.parse(e.data) as ChatMessage
       if (!m || !m.id) return
+      // Already counted (sent by me, or picked up by the 8s poll first) —
+      // skip entirely, otherwise the counter drifts above the real total.
+      if (seenIds.has(m.id)) return
       addMessage(m)
       totalCount.value += 1
       trimMessages()
@@ -401,12 +379,6 @@ async function onSubmit(e: Event): Promise<void> {
     return
   }
 
-  if (isOffensive(val) || isOffensive(chatName)) {
-    input.value = ''
-    setPrompt("let's keep it kind — opening a guide for you")
-    window.open(KIND_URL, '_blank', 'noopener')
-    return
-  }
   if (containsLink(val) || containsLink(chatName)) {
     setPrompt("links aren't allowed in chat")
     return
@@ -465,7 +437,11 @@ function openChat(): void {
   })
   void collectLocation()
   void load(messages.value.length === 0)
-  startStream()
+  // The PHP built-in dev server pins one worker per open SSE stream and
+  // WEDGES (every request hangs, incl. the API) once streams stack up. The
+  // 8s poll below is a complete fallback, so skip the stream locally.
+  // Production (Cloudflare Pages Functions) handles SSE fine — keep it there.
+  if (!import.meta.env.DEV) startStream()
   setPhase(chatName ? 'message' : 'name')
   void nextTick(() => inputEl.value?.focus())
   if (pollTimer) clearInterval(pollTimer)
@@ -603,14 +579,19 @@ function deviceSvg(label: string | null): string {
               autocorrect="off"
               autocapitalize="off"
               spellcheck="false"
-              class="min-w-0 flex-1 border-none bg-transparent p-1 font-mono text-[15px] text-ink outline-none placeholder:text-gray-400"
+              class="min-w-0 flex-1 border-none bg-transparent p-1 font-mono text-[16px] text-ink outline-none placeholder:text-gray-400"
             />
             <button
               type="submit"
               :disabled="sendDisabled"
               class="flex-none p-1 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink disabled:opacity-35"
             >
-              {{ phase === 'name' ? 'next →' : 'send →' }}
+              <LoaderCircle
+                v-if="sendDisabled"
+                class="inline-block h-3.5 w-3.5 animate-spin align-middle"
+                :stroke-width="1.8"
+              />
+              <span v-else>{{ phase === 'name' ? 'next →' : 'send →' }}</span>
             </button>
           </div>
         </form>

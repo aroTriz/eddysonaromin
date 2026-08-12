@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Recommendations — masonry testimonial wall (CSS columns),
  * mirroring bryllim.com/recommendations exactly. Content is served
@@ -48,7 +48,7 @@ onMounted(async () => {
       <div
         v-for="i in 6"
         :key="i"
-        class="mb-4 h-44 animate-pulse break-inside-avoid rounded-xl border border-gray-200 bg-gray-50"
+        class="mb-4 h-44 skeleton break-inside-avoid rounded-xl border border-gray-200 bg-gray-50"
       ></div>
     </div>
 

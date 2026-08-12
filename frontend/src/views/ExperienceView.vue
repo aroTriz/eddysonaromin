@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 /**
  * Experience — timeline with clickable company/school logos (open site in a
- * new tab), a floating hover tooltip to the left of each logo (image on top +
+ * new tab), a floating hover tooltip to the left of each logo (logo on top +
  * short description), and album / certificate buttons that open a centered
  * modal with a swiper of photos or certificates.
  */
@@ -118,25 +118,20 @@ function onKeydown(e: KeyboardEvent): void {
                 @mouseenter="show(job.company)"
                 @mouseleave="hide"
               >
-                <!-- landscape image or "no image" placeholder -->
+                <!-- company logo -->
                 <div
-                  v-if="job.image"
-                  class="aspect-[16/10] w-full overflow-hidden"
+                  class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
                 >
                   <img
-                    :src="job.image"
-                    :alt="`${job.company} photo`"
-                    class="h-full w-full object-cover"
+                    v-if="job.logo"
+                    :src="job.logo"
+                    :alt="`${job.company} logo`"
+                    class="max-h-full max-w-full object-contain"
                     loading="lazy"
                   />
-                </div>
-                <div
-                  v-else
-                  class="flex aspect-[16/10] w-full items-center justify-center bg-gray-50"
-                >
-                  <div class="flex flex-col items-center gap-1.5 text-gray-300">
+                  <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
                     <Images class="h-7 w-7" :stroke-width="1.4" />
-                    <span class="font-mono text-[10px] text-gray-400">no image</span>
+                    <span class="font-mono text-[10px] text-gray-400">no logo</span>
                   </div>
                 </div>
                 <div class="p-3.5">
@@ -162,7 +157,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="true"
                 type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} photos`"
                 :aria-label="`Open ${job.company} album`"
                 @click="openModal(`${job.company} — photos`, job.albums, job.logo)"
@@ -172,7 +167,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="true"
                 type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${job.company} certificates`"
                 :aria-label="`Open ${job.company} certificates`"
                 @click="openModal(`${job.company} — certificates`, job.certificates, job.logo)"
@@ -249,25 +244,20 @@ function onKeydown(e: KeyboardEvent): void {
                 @mouseenter="show(edu.school)"
                 @mouseleave="hide"
               >
-                <!-- landscape image or "no image" placeholder -->
+                <!-- school logo -->
                 <div
-                  v-if="edu.image"
-                  class="aspect-[16/10] w-full overflow-hidden"
+                  class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
                 >
                   <img
-                    :src="edu.image"
-                    :alt="`${edu.school} photo`"
-                    class="h-full w-full object-cover"
+                    v-if="edu.logo"
+                    :src="edu.logo"
+                    :alt="`${edu.school} logo`"
+                    class="max-h-full max-w-full object-contain"
                     loading="lazy"
                   />
-                </div>
-                <div
-                  v-else
-                  class="flex aspect-[16/10] w-full items-center justify-center bg-gray-50"
-                >
-                  <div class="flex flex-col items-center gap-1.5 text-gray-300">
+                  <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
                     <Images class="h-7 w-7" :stroke-width="1.4" />
-                    <span class="font-mono text-[10px] text-gray-400">no image</span>
+                    <span class="font-mono text-[10px] text-gray-400">no logo</span>
                   </div>
                 </div>
                 <div class="p-3.5">
@@ -291,7 +281,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="true"
                 type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${edu.school} photos`"
                 :aria-label="`Open ${edu.school} album`"
                 @click="openModal(`${edu.school} — photos`, edu.albums)"
@@ -301,7 +291,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="true"
                 type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
                 :title="`${edu.school} certificates`"
                 :aria-label="`Open ${edu.school} certificates`"
                 @click="openModal(`${edu.school} — certificates`, edu.certificates)"

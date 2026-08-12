@@ -1,10 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * /aromin/blog — blog CMS. List, create, edit, delete, archive & restore
  * posts. Markdown content with tag chips; matches the site's mono/terminal
  * styling. Confirms destructive/save actions with a themed blur modal.
  */
-import { Archive, ArchiveRestore, FilePlus, ImagePlus, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, FilePlus, ImagePlus, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
@@ -81,7 +81,7 @@ function askConfirm(opts: {
   confirm.value = opts
 }
 
-// ── Editor ───────────────────────────────────────────────────────
+// -- Editor -------------------------------------------------------
 function addTag(): void {
   const t = tagInput.value.trim()
   if (t && !form.value.tags.includes(t)) form.value.tags.push(t)
@@ -185,7 +185,7 @@ async function save(): Promise<void> {
   }
 }
 
-// ── Archive / restore ────────────────────────────────────────────
+// -- Archive / restore --------------------------------------------
 async function archiveItem(post: BlogPost): Promise<void> {
   try {
     await archiveAdminPost(post.id)
@@ -211,7 +211,7 @@ function toggleArchived(): void {
   void load()
 }
 
-// ── Delete (single + bulk) ───────────────────────────────────────
+// -- Delete (single + bulk) ---------------------------------------
 function askDelete(post: BlogPost): void {
   askConfirm({
     title: 'delete post',
@@ -265,7 +265,7 @@ async function removeSelected(): Promise<void> {
   }
 }
 
-// ── Selection helpers ────────────────────────────────────────────
+// -- Selection helpers --------------------------------------------
 function enterSelection(): void {
   selectionMode.value = true
 }
@@ -331,7 +331,7 @@ onMounted(load)
       // {{ error }}
     </p>
 
-    <!-- ── Editor (create / edit) ─────────────────────────────── -->
+    <!-- -- Editor (create / edit) ------------------------------- -->
     <div v-if="editorOpen" class="mb-8 rounded-xl border border-gray-200 bg-white p-6">
       <div class="mb-5 flex items-center justify-between">
         <p class="font-mono text-[11px] text-gray-500">
@@ -354,7 +354,7 @@ onMounted(load)
             id="cms-title"
             v-model="form.title"
             type="text"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="Post title"
           />
         </div>
@@ -365,7 +365,7 @@ onMounted(load)
             id="cms-excerpt"
             v-model="form.excerpt"
             type="text"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="Short description for the card"
           />
         </div>
@@ -376,7 +376,7 @@ onMounted(load)
             id="cms-content"
             v-model="form.content"
             rows="8"
-            class="w-full resize-y rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] leading-relaxed text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full resize-y rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] leading-relaxed text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="Write your post here..."
           ></textarea>
         </div>
@@ -433,7 +433,7 @@ onMounted(load)
               id="cms-tags"
               v-model="tagInput"
               type="text"
-              class="min-w-[120px] flex-1 bg-transparent py-0.5 font-mono text-[12px] text-ink outline-none"
+              class="min-w-[120px] flex-1 bg-transparent py-0.5 font-mono text-[16px] text-ink outline-none"
               placeholder="Type and press Enter"
               @keydown.enter.prevent="addTag"
             />
@@ -447,7 +447,12 @@ onMounted(load)
             :disabled="saving"
             @click="requestSave"
           >
-            <Save class="h-4 w-4" :stroke-width="1.7" />
+            <LoaderCircle
+              v-if="saving"
+              class="h-4 w-4 animate-spin"
+              :stroke-width="1.7"
+            />
+            <Save v-else class="h-4 w-4" :stroke-width="1.7" />
             {{ saving ? 'Saving...' : editing ? 'Update post' : 'Publish post' }}
           </button>
           <button
@@ -462,7 +467,7 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- ── Post list ──────────────────────────────────────────── -->
+    <!-- -- Post list -------------------------------------------- -->
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <template v-if="selectionMode">
         <label
@@ -520,7 +525,7 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- ── Bulk action bar (visible while items are selected) ── -->
+    <!-- -- Bulk action bar (visible while items are selected) -- -->
     <div
       v-if="selectionMode && selected.size > 0"
       class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5"
@@ -545,7 +550,7 @@ onMounted(load)
     </div>
 
     <div v-if="loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="h-14 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
+      <div v-for="i in 4" :key="i" class="h-14 skeleton rounded-lg border border-gray-200 bg-gray-50"></div>
     </div>
 
     <div v-else-if="visiblePosts.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
@@ -629,7 +634,7 @@ onMounted(load)
       edits appear instantly on /blog
     </div>
 
-    <!-- ── Themed confirm dialog (delete / save) ───────────────── -->
+    <!-- -- Themed confirm dialog (delete / save) ----------------- -->
     <ConfirmModal
       :open="confirm !== null"
       :title="confirm?.title ?? ''"

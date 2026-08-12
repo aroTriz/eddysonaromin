@@ -43,8 +43,6 @@ export interface ExperienceEntry {
   url?: string
   /** Short description shown in the hover tooltip. */
   tooltipDesc?: string
-  /** Image shown at the top of the hover tooltip. */
-  image?: string
   /** Photo album shown in the album modal (swiper). */
   albums?: string[]
   /** Certificate images shown in the certificate modal (swiper). */
@@ -110,8 +108,6 @@ export interface EducationEntry {
   url?: string
   /** Short description shown in the hover tooltip. */
   tooltipDesc?: string
-  /** Image shown at the top of the hover tooltip. */
-  image?: string
   /** Photo album shown in the album modal (swiper). */
   albums?: string[]
   /** Certificate images shown in the certificate modal (swiper). */

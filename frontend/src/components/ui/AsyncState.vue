@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * AsyncState — uniform loading / error / empty rendering for all
  * data-dependent views. Every list view uses this so the four states
@@ -32,7 +32,7 @@ withDefaults(
     <div
       v-for="i in 4"
       :key="i"
-      class="h-20 animate-pulse rounded-xl border border-gray-200/70 bg-gray-100"
+      class="h-20 skeleton rounded-xl border border-gray-200/70 bg-gray-100"
       :style="{ animationDelay: `${i * 90}ms` }"
     ></div>
   </div>

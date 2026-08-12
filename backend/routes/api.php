@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminBlogPostController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminRecommendationController;
 use App\Http\Controllers\Api\AdminStackGroupController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AskController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminChatController;
@@ -56,6 +57,8 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/private/conversations', [PrivateChatController::class, 'start']);
     Route::get('/private/conversations/{id}/messages', [PrivateChatController::class, 'messages']);
     Route::post('/private/conversations/{id}/messages', [PrivateChatController::class, 'send']);
+    Route::post('/private/conversations/{id}/typing', [PrivateChatController::class, 'typing']);
+    Route::get('/private/conversations/{id}/typing', [PrivateChatController::class, 'typingStatus']);
     Route::post('/private/conversations/{id}/read', [PrivateChatController::class, 'read']);
     Route::get('/private/conversations/{id}/stream', [PrivateChatController::class, 'stream']);
 
@@ -76,6 +79,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     Route::get('/admin/stats', [AdminController::class, 'stats']);
+    Route::post('/admin/stats/clear', [AdminController::class, 'clear']);
 
     Route::get('/admin/chat/messages', [AdminChatController::class, 'index']);
     Route::delete('/admin/chat/messages/bulk', [AdminChatController::class, 'bulkDestroy']);
@@ -86,8 +90,11 @@ Route::prefix('v1')->group(function (): void {
     Route::delete('/admin/chat/messages/{id}', [AdminChatController::class, 'destroy']);
 
     Route::get('/admin/private/conversations', [AdminPrivateChatController::class, 'conversations']);
+    Route::get('/admin/private/unread', [AdminPrivateChatController::class, 'unread']);
     Route::get('/admin/private/conversations/{id}/messages', [AdminPrivateChatController::class, 'messages']);
     Route::post('/admin/private/conversations/{id}/messages', [AdminPrivateChatController::class, 'send']);
+    Route::post('/admin/private/conversations/{id}/typing', [AdminPrivateChatController::class, 'typing']);
+    Route::get('/admin/private/conversations/{id}/typing', [AdminPrivateChatController::class, 'typingStatus']);
     Route::post('/admin/private/conversations/{id}/read', [AdminPrivateChatController::class, 'read']);
     Route::get('/admin/private/conversations/{id}/stream', [AdminPrivateChatController::class, 'stream']);
 
@@ -117,6 +124,13 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/recommendations/{id}/archive', [AdminRecommendationController::class, 'archive']);
     Route::post('/admin/recommendations/{id}/restore', [AdminRecommendationController::class, 'restore']);
     Route::delete('/admin/recommendations/{id}', [AdminRecommendationController::class, 'destroy']);
+
+    // ── Account management (registered site accounts) ─────────
+    Route::get('/admin/users', [AdminUserController::class, 'index']);
+    Route::post('/admin/users', [AdminUserController::class, 'store']);
+    Route::delete('/admin/users/bulk', [AdminUserController::class, 'bulkDestroy']);
+    Route::put('/admin/users/{id}', [AdminUserController::class, 'update']);
+    Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy']);
 
     // ── Visitor counter ────────────────────────────────────────
     Route::get('/visitors', [VisitorController::class, 'index']);

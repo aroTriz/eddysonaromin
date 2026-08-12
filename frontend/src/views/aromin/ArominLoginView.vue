@@ -6,7 +6,7 @@
  */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Eye, EyeOff, Lock, LogIn, User } from 'lucide-vue-next'
+import { ArrowLeft, Eye, EyeOff, LoaderCircle, Lock, LogIn, User } from 'lucide-vue-next'
 
 import { requestOtp, verifyOtp } from '@/composables/useAuth'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
@@ -151,7 +151,7 @@ function otpRef(el: unknown, i: number): void {
                 v-model="username"
                 type="text"
                 autocomplete="username"
-                class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-9 pr-3 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+                class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-9 pr-3 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
                 placeholder="Enter username"
                 required
               />
@@ -167,13 +167,13 @@ function otpRef(el: unknown, i: number): void {
                 v-model="password"
                 :type="showPass ? 'text' : 'password'"
                 autocomplete="current-password"
-                class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-9 pr-10 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+                class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-9 pr-10 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
                 placeholder="Enter password"
                 required
               />
               <button
                 type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-ink"
+                class="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:text-ink"
                 :aria-label="showPass ? 'Hide password' : 'Show password'"
                 @click="showPass = !showPass"
               >
@@ -190,7 +190,12 @@ function otpRef(el: unknown, i: number): void {
             class="inline-flex items-center justify-center gap-2 rounded-md bg-ink py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
             :disabled="busy"
           >
-            <LogIn class="h-4 w-4" :stroke-width="1.7" />
+            <LoaderCircle
+              v-if="busy"
+              class="h-4 w-4 animate-spin"
+              :stroke-width="1.7"
+            />
+            <LogIn v-else class="h-4 w-4" :stroke-width="1.7" />
             {{ busy ? 'signing in...' : 'sign in' }}
           </button>
         </form>
@@ -261,7 +266,12 @@ function otpRef(el: unknown, i: number): void {
               :disabled="otp.join('').length !== 6 || verifying"
               @click="handleVerifyOtp"
             >
-              {{ verifying ? 'verifying...' : 'verify' }}
+              <LoaderCircle
+              v-if="verifying"
+              class="mr-1.5 inline-block h-4 w-4 animate-spin align-middle"
+              :stroke-width="1.7"
+            />
+            {{ verifying ? 'verifying...' : 'verify' }}
             </button>
           </div>
         </div>

@@ -36,7 +36,11 @@ class GithubController extends Controller
             return response()->json(['error' => 'Unable to fetch GitHub contributions.'], 502);
         }
 
-        return response()->json(['data' => $data]);
+        return response()
+            ->json(['data' => $data])
+            // The upstream fetch is cached server-side for 1h — mirror that
+            // in the response so the browser also reuses the grid.
+            ->header('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
     }
 
     /**

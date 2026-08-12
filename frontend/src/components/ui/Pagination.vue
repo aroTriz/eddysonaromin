@@ -48,23 +48,23 @@ defineExpose({ page, totalPages })
     <button
       v-if="page > 1"
       type="button"
-      class="hover:text-ink"
+      class="-my-2 py-2 hover:text-ink"
       @click="go(page - 1)"
     >
       ← prev
     </button>
-    <span v-else class="text-gray-300">← prev</span>
+    <span v-else class="-my-2 py-2 text-gray-300">← prev</span>
 
-    <span class="text-gray-400">{{ page }} / {{ totalPages }}</span>
+    <span class="-my-2 py-2 text-gray-400">{{ page }} / {{ totalPages }}</span>
 
     <button
       v-if="page < totalPages"
       type="button"
-      class="hover:text-ink"
+      class="-my-2 py-2 hover:text-ink"
       @click="go(page + 1)"
     >
       next →
     </button>
-    <span v-else class="text-gray-300">next →</span>
+    <span v-else class="-my-2 py-2 text-gray-300">next →</span>
   </nav>
 </template>

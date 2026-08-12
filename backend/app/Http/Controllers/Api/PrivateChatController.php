@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\ValidatesChatAttachment;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,20 +19,24 @@ use Illuminate\Support\Facades\DB;
  *   GET  /api/v1/private/auth/session
  *
  * Chat (all authenticated):
- *   GET    /api/v1/private/users?q=                     search other users
  *   GET    /api/v1/private/conversations                my conversations
- *   POST   /api/v1/private/conversations  { user_id }   start / resume a DM
+ *   POST   /api/v1/private/conversations                start / resume the DM with the admin
  *   GET    /api/v1/private/conversations/{id}/messages?after=
- *   POST   /api/v1/private/conversations/{id}/messages  { message }
+ *   POST   /api/v1/private/conversations/{id}/messages  { message, attachment? }
+ *   POST   /api/v1/private/conversations/{id}/typing    { typing: bool }   heartbeat
+ *   GET    /api/v1/private/conversations/{id}/typing    who is typing
  *   POST   /api/v1/private/conversations/{id}/read      mark incoming as read
  *   GET    /api/v1/private/conversations/{id}/stream?after=   SSE live stream
  */
 class PrivateChatController extends Controller
 {
+    use ValidatesChatAttachment;
+
     private const NAME_MAX = 40;
     private const MESSAGE_MAX = 2000;
     private const SESSION_TTL_MINUTES = 60 * 24 * 7; // 7 days
     private const MAX_AFTER = 100;
+    private const TYPING_TTL_SECONDS = 4;
 
     /** Profanity (substring) — same spirit as the community chat filter. */
     private const BAD_LOOSE = [
@@ -56,8 +61,27 @@ class PrivateChatController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:40'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8'],
+        ], [
+            'name.required' => 'pick a name to be known by',
+            'name.max' => 'name must be 40 characters or fewer',
+            'email.required' => 'please enter your email address',
+            'email.email' => "please include an \u2018@\u2019 in the email address",
+            'email.max' => 'email must be 255 characters or fewer',
+            'email.unique' => 'that email is already registered — try logging in',
+            'password.required' => 'please enter your password',
+            'password.min' => 'password needs at least 8 characters',
         ]);
+
+        // Confirmed-password mismatch surfaces under the confirm field (not
+        // the password field) so the UI can render it right where the user
+        // has to fix it.
+        if ($request->input('password') !== (string) $request->input('password_confirmation', '')) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['password_confirmation' => ['passwords don\u2019t match']],
+            ], 422);
+        }
 
         $id = DB::table('users')->insertGetId([
             'name' => trim($validated['name']),
@@ -79,6 +103,10 @@ class PrivateChatController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'please enter your email address',
+            'email.email' => "please include an \u2018@\u2019 in the email address",
+            'password.required' => 'please enter your password',
         ]);
 
         $user = DB::table('users')
@@ -198,13 +226,14 @@ class PrivateChatController extends Controller
             ->when($after > 0, fn ($q) => $q->where('id', '>', $after)->limit(self::MAX_AFTER))
             ->unless($after > 0, fn ($q) => $q->limit(200))
             ->orderBy('id')
-            ->get(['id', 'sender_id', 'message', 'created_at']);
+            ->get(['id', 'sender_id', 'message', 'attachment', 'created_at']);
 
         return response()->json([
             'messages' => $rows->map(fn ($r): array => [
                 'id' => $r->id,
                 'sender_id' => $r->sender_id,
                 'message' => $r->message,
+                'attachment' => $this->parseAttachment($r->attachment),
                 'created_at' => $r->created_at,
             ])->values(),
         ]);
@@ -221,23 +250,33 @@ class PrivateChatController extends Controller
         }
 
         $message = trim((string) $request->input('message', ''));
-        if ($message === '' || mb_strlen($message) > self::MESSAGE_MAX) {
+        if (mb_strlen($message) > self::MESSAGE_MAX) {
             return response()->json(['error' => 'Invalid message.'], 422);
         }
-        if ($this->isOffensive($message)) {
+        if ($message !== '' && $this->isOffensive($message)) {
             return response()->json(['reason' => 'blocked'], 422);
+        }
+
+        $attachment = $this->attachmentJson($request);
+
+        // A message needs either text or an attachment.
+        if ($message === '' && $attachment === null) {
+            return response()->json(['error' => 'Invalid message.'], 422);
         }
 
         $msgId = DB::table('private_chat_messages')->insertGetId([
             'session_id' => $id,
             'sender_id' => $user->id,
             'message' => $message,
+            'attachment' => $attachment,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Bump the session so it floats to the top of the conversation list.
+        // Bump the session so it floats to the top of the conversation list,
+        // and clear the sender's typing row — they just sent.
         DB::table('private_chat_sessions')->where('id', $id)->update(['updated_at' => now()]);
+        DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $user->id)->delete();
 
         $row = DB::table('private_chat_messages')->where('id', $msgId)->first();
 
@@ -246,9 +285,52 @@ class PrivateChatController extends Controller
                 'id' => $row->id,
                 'sender_id' => $row->sender_id,
                 'message' => $row->message,
+                'attachment' => $this->parseAttachment($row->attachment),
                 'created_at' => $row->created_at,
             ],
         ], 201);
+    }
+
+    /**
+     * Typing heartbeat.
+     *   POST /api/v1/private/conversations/{id}/typing  { typing: bool }
+     * The row expires after a few seconds unless refreshed, so a dropped
+     * connection naturally stops the "typing…" indicator.
+     */
+    public function typing(Request $request, int $id): JsonResponse
+    {
+        $user = $this->userFromRequest($request);
+        if (! $user) {
+            return $this->unauthorized();
+        }
+        if (! $this->sessionForUser($id, $user->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($request->boolean('typing', true)) {
+            DB::table('private_chat_typing')->updateOrInsert(
+                ['conversation_id' => $id, 'user_id' => $user->id],
+                ['typing_until' => now()->addSeconds(self::TYPING_TTL_SECONDS), 'created_at' => now(), 'updated_at' => now()]
+            );
+        } else {
+            DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $user->id)->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Who is currently typing in a conversation (participant-only). */
+    public function typingStatus(Request $request, int $id): JsonResponse
+    {
+        $user = $this->userFromRequest($request);
+        if (! $user) {
+            return $this->unauthorized();
+        }
+        if (! $this->sessionForUser($id, $user->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json(['typing' => $this->activeTyping($id)]);
     }
 
     /** Mark every message from the other participant as read. */
@@ -274,7 +356,9 @@ class PrivateChatController extends Controller
     /**
      * Live stream — Server-Sent Events for one conversation.
      *   GET /api/v1/private/conversations/{id}/stream?after={lastId}
-     * Client keeps its 8s poll as a fallback if the stream drops.
+     * Emits `message` events (with attachments) and `typing` events whenever
+     * the set of people typing changes. Client keeps its 8s poll as a
+     * fallback if the stream drops.
      */
     public function stream(Request $request, int $id): \Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -286,7 +370,15 @@ class PrivateChatController extends Controller
         $after = max(0, (int) $request->query('after', 0));
 
         return response()->stream(function () use ($after, $id): void {
+            // SSE runs for as long as the client keeps the connection open —
+            // don't let PHP's max_execution_time kill it after 30s, and force
+            // incremental flushes so live frames aren't held in the buffer.
+            set_time_limit(0);
+            @ini_set('output_buffering', 'off');
+            @ini_set('zlib.output_compression', 'off');
+            @ini_set('implicit_flush', '1');
             $lastId = $after;
+            $lastTypingKey = null;
 
             while (true) {
                 if (connection_aborted()) {
@@ -298,7 +390,7 @@ class PrivateChatController extends Controller
                     ->where('id', '>', $lastId)
                     ->orderBy('id')
                     ->limit(self::MAX_AFTER)
-                    ->get(['id', 'sender_id', 'message', 'created_at']);
+                    ->get(['id', 'sender_id', 'message', 'attachment', 'created_at']);
 
                 foreach ($rows as $m) {
                     echo "event: message\n";
@@ -306,9 +398,19 @@ class PrivateChatController extends Controller
                         'id' => $m->id,
                         'sender_id' => $m->sender_id,
                         'message' => $m->message,
+                        'attachment' => $this->parseAttachment($m->attachment),
                         'created_at' => $m->created_at,
                     ]) . "\n\n";
                     $lastId = $m->id;
+                }
+
+                // Typing state — emit only when the set of typers changes.
+                $typing = $this->activeTyping($id);
+                $typingKey = json_encode($typing);
+                if ($typingKey !== $lastTypingKey) {
+                    $lastTypingKey = $typingKey;
+                    echo "event: typing\n";
+                    echo 'data: ' . json_encode(['users' => $typing]) . "\n\n";
                 }
 
                 echo ": keepalive\n\n";
@@ -376,6 +478,20 @@ class PrivateChatController extends Controller
             ->where('id', $id)
             ->where(fn ($q) => $q->where('user_a_id', $userId)->orWhere('user_b_id', $userId))
             ->first();
+    }
+
+    /** Currently typing participants (non-expired typing rows + names). */
+    private function activeTyping(int $id): array
+    {
+        return DB::table('private_chat_typing as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->where('t.conversation_id', $id)
+            ->where('t.typing_until', '>', now())
+            ->select('t.user_id', 'u.name')
+            ->get()
+            ->map(fn ($r): array => ['id' => (int) $r->user_id, 'name' => (string) $r->name])
+            ->values()
+            ->all();
     }
 
     /** Shape a session as the frontend expects it. Null when the peer is gone. */

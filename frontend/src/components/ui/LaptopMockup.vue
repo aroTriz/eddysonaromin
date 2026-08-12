@@ -3,10 +3,14 @@
  * LaptopMockup — renders a project screenshot inside a CSS laptop frame
  * (screen bezel + browser chrome + base deck), greyfolio-style.
  * Monochrome frame so the screenshot's own colors carry the visual weight.
+ * When no `src` image is available, a computer icon is shown in the screen
+ * instead — so every project gets the same laptop layout.
  */
+import { Monitor } from 'lucide-vue-next'
+
 defineProps<{
-  src: string
-  alt: string
+  src?: string | null
+  alt?: string
   /** Shown in the browser address bar; hidden when absent. */
   url?: string | null
 }>()
@@ -30,13 +34,20 @@ defineProps<{
           >{{ url }}</span>
         </div>
         <!-- Screen -->
-        <div class="aspect-[16/9] w-full bg-gray-100">
+        <div v-if="src" class="aspect-[16/9] w-full bg-gray-100">
           <img
             :src="src"
             :alt="alt"
             class="h-full w-full object-cover"
             loading="lazy"
           />
+        </div>
+        <div
+          v-else
+          class="flex aspect-[16/9] w-full items-center justify-center bg-gray-50"
+          aria-hidden="true"
+        >
+          <Monitor class="h-10 w-10 text-gray-300" :stroke-width="1.2" />
         </div>
       </div>
     </div>

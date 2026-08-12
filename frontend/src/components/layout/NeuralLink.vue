@@ -53,7 +53,8 @@ function buildNodes(width: number, height: number): LinkNode[] {
 function resize(): void {
   const c = canvasRef.value
   if (!c) return
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
+  // DPR capped at 1.5 — visually identical dots, half the pixels to paint.
+  dpr = Math.min(window.devicePixelRatio || 1, 1.5)
   w = window.innerWidth
   h = window.innerHeight
   c.width = Math.round(w * dpr)
@@ -84,22 +85,54 @@ function draw(): void {
     else if (n.y > h + 24) n.y = -24
   }
 
-  // Link lines — alpha fades with distance
+  // Uniform grid — only nodes in the same or adjacent cells (within
+  // LINK_DIST) can ever link, so the O(n²) pass becomes ~O(n) without
+  // changing a single visible pixel.
+  const cell = LINK_DIST
+  const cols = Math.max(1, Math.ceil(w / cell))
+  const rows = Math.max(1, Math.ceil(h / cell))
+  const grid = new Map<number, number[]>()
   for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i]
+    const key = Math.floor(n.y / cell) * cols + Math.floor(n.x / cell)
+    let bucket = grid.get(key)
+    if (!bucket) {
+      bucket = []
+      grid.set(key, bucket)
+    }
+    bucket.push(i)
+  }
+
+  // Link lines — alpha fades with distance (exactly as before)
+  const n = nodes.length
+  for (let i = 0; i < n; i++) {
     const a = nodes[i]
-    for (let j = i + 1; j < nodes.length; j++) {
-      const bNode = nodes[j]
-      const dx = a.x - bNode.x
-      const dy = a.y - bNode.y
-      const d2 = dx * dx + dy * dy
-      if (d2 < LINK_DIST * LINK_DIST) {
-        const t = 1 - Math.sqrt(d2) / LINK_DIST
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t * 0.08})`
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(a.x, a.y)
-        ctx.lineTo(bNode.x, bNode.y)
-        ctx.stroke()
+    const gx = Math.floor(a.x / cell)
+    const gy = Math.floor(a.y / cell)
+    for (let dy = -1; dy <= 1; dy++) {
+      const cy = gy + dy
+      if (cy < 0 || cy >= rows) continue
+      for (let dx = -1; dx <= 1; dx++) {
+        const cx = gx + dx
+        if (cx < 0 || cx >= cols) continue
+        const bucket = grid.get(cy * cols + cx)
+        if (!bucket) continue
+        for (const j of bucket) {
+          if (j <= i) continue
+          const bNode = nodes[j]
+          const dx2 = a.x - bNode.x
+          const dy2 = a.y - bNode.y
+          const d2 = dx2 * dx2 + dy2 * dy2
+          if (d2 < LINK_DIST * LINK_DIST) {
+            const t = 1 - Math.sqrt(d2) / LINK_DIST
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t * 0.08})`
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(a.x, a.y)
+            ctx.lineTo(bNode.x, bNode.y)
+            ctx.stroke()
+          }
+        }
       }
     }
   }

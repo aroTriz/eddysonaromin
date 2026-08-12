@@ -9,7 +9,6 @@
  * prevented lazy-loaded pages from re-rendering on SPA navigation
  * (URL changed, content stayed on the old page).
  */
-import { IonApp } from '@ionic/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
@@ -18,6 +17,7 @@ import ClickRipple from '@/components/ui/ClickRipple.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
+import { trackVisit } from '@/utils/analytics'
 
 // Boot theme handling (applies the persisted preference immediately).
 useTheme()
@@ -61,21 +61,30 @@ const activeRoute = computed(() => (typeof route.name === 'string' ? route.name 
 /** The /aromin admin area has its own layout — hide the site shell there. */
 const isAdmin = computed(() => route.path.startsWith('/aromin'))
 
-/** Count this visit once per browser session (public pages only). */
-onMounted(() => {
-  if (isAdmin.value) return
-  try {
-    if (sessionStorage.getItem('aromin_visit_counted')) return
-    sessionStorage.setItem('aromin_visit_counted', '1')
-    fetch('/api/v1/visitors', { method: 'POST' }).catch(() => {})
-  } catch {
-    /* ignore */
+/**
+ * Analytics — count every public page view (admin pages excluded).
+ * The server dedupes visitors by IP (same IP refreshing any number of
+ * times = ONE visitor) and stores each view for the dashboard charts.
+ * The initial navigation is tracked explicitly (afterEach registered after
+ * router.isReady() does not fire for it); later ones via the hook.
+ */
+onMounted(async () => {
+  await router.isReady()
+  if (!route.path.startsWith('/aromin')) {
+    void trackVisit(route.path, document.referrer)
   }
+  router.afterEach((to) => {
+    if (to.path.startsWith('/aromin')) return
+    void trackVisit(to.path, document.referrer)
+  })
 })
 </script>
 
 <template>
-  <IonApp class="bg-bg text-ink">
+  <!-- Root shell. Formerly <IonApp> (Ionic) — now a plain div; the app never
+       relied on Ionic's runtime behaviour beyond the host element, so the
+       wrapper swaps 1:1 and drops the Ionic framework from the bundle. -->
+  <div class="bg-bg text-ink">
     <!-- Render nothing until the initial route (and its auth guard) settles,
          so a refresh on /aromin never flashes the public navbar. -->
     <template v-if="routerReady">
@@ -126,5 +135,5 @@ onMounted(() => {
         </div>
       </Transition>
     </Teleport>
-  </IonApp>
+  </div>
 </template>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Home — mirrors bryllim.com's hero: profile video left, pixel-font
  * name + intro paragraphs + social links right; stats grid, tech
@@ -145,7 +145,7 @@ const socials = [
 
 <template>
   <div class="mx-auto w-full max-w-2xl px-6">
-    <!-- ── Hero ─────────────────────────────────────────────── -->
+    <!-- -- Hero ----------------------------------------------- -->
     <section class="relative py-16 sm:py-24">
       <div class="grid gap-9 sm:grid-cols-[16rem_1fr] sm:items-start sm:gap-10">
         <!-- Video column (left) — fixed aspect so the phone doesn't collapse -->
@@ -191,7 +191,7 @@ const socials = [
 
           <!-- links below the intro -->
           <div
-            class="reveal d4 mt-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-gray-500"
+            class="reveal d4 mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[12px] text-gray-500"
           >
             <a
               v-for="social in socials"
@@ -199,13 +199,13 @@ const socials = [
               :href="social.href"
               target="_blank"
               rel="noopener noreferrer"
-              class="hover:text-ink"
+              class="-my-1.5 inline-flex items-center gap-1 py-1.5 hover:text-ink"
             >
               {{ social.label }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
             </a>
             <button
               type="button"
-              class="hover:text-ink"
+              class="-my-1.5 inline-flex items-center gap-1 py-1.5 hover:text-ink"
               aria-haspopup="dialog"
               @click="emailModalRef?.openModal()"
             >
@@ -235,7 +235,7 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Stats (bryllim-style) ────────────────────────────── -->
+    <!-- -- Stats (bryllim-style) ------------------------------ -->
     <section
       aria-label="Highlights"
       class="grid grid-cols-2 divide-x divide-y divide-gray-200 border-t border-gray-200 sm:grid-cols-5 sm:divide-y-0"
@@ -252,13 +252,13 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Tech marquee ─────────────────────────────────────── -->
+    <!-- -- Tech marquee --------------------------------------- -->
     <section aria-label="Tech stack" class="mt-16">
       <div class="mb-4 flex items-baseline justify-between">
         <p class="terminal-comment text-[13px]">// tech stack</p>
         <RouterLink
           to="/stack"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all stack <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -289,13 +289,13 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Blog (bryllim-style list) ─────────────────────────── -->
+    <!-- -- Blog (bryllim-style list) --------------------------- -->
     <section id="blog" aria-label="Blog" class="relative py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">01 — blog</h2>
         <RouterLink
           to="/blog"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all posts <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -304,13 +304,13 @@ const socials = [
       <BlogSection />
     </section>
 
-    <!-- ── Projects spotlight deck (bryllim-style, personal only) ── -->
+    <!-- -- Projects spotlight deck (bryllim-style, personal only) -- -->
     <section id="projects" aria-label="Projects" class="py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">02 — projects</h2>
         <RouterLink
           to="/projects"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all projects <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -319,13 +319,13 @@ const socials = [
       <ProjectDeck />
     </section>
 
-    <!-- ── Experience (bryllim-style rows) ───────────────────── -->
+    <!-- -- Experience (bryllim-style rows) --------------------- -->
     <section id="experience" aria-label="Experience" class="py-14">
       <div class="mb-6 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">03 — experience</h2>
         <RouterLink
           to="/experience"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           full history <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -346,13 +346,13 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Certifications (bryllim-style grid) ───────────────── -->
+    <!-- -- Certifications (bryllim-style grid) ----------------- -->
     <section id="certifications" aria-label="Certifications" class="py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">04 — certifications</h2>
         <RouterLink
           to="/certifications"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all certifications <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -380,20 +380,20 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── Recommendations (bryllim 3-card grid) ──────────────── -->
+    <!-- -- Recommendations (bryllim 3-card grid) ---------------- -->
     <section id="recommendations" aria-label="Recommendations" class="py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
         <RouterLink
           to="/recommendations"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all recommendations <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
       </div>
 
       <div v-if="recsLoading" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div v-for="i in 3" :key="i" class="h-44 animate-pulse rounded-xl bg-gray-100"></div>
+        <div v-for="i in 3" :key="i" class="h-44 skeleton rounded-xl bg-gray-100"></div>
       </div>
 
       <div v-else-if="recs.length > 0" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -426,7 +426,7 @@ const socials = [
       </div>
     </section>
 
-    <!-- ── GitHub (bryllim-style halftone graph) ──────────────── -->
+    <!-- -- GitHub (bryllim-style halftone graph) ---------------- -->
     <section id="github" aria-label="GitHub" class="py-14">
       <div class="mb-6 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-500 dark:text-gray-400">06 — github</h2>
@@ -434,7 +434,7 @@ const socials = [
           :href="profile.github"
           target="_blank"
           rel="noopener noreferrer"
-          class="font-mono text-[11px] uppercase tracking-wider text-gray-600 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-600 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         >
           {{ profile.github.replace('https://', '') }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </a>
@@ -445,7 +445,7 @@ const socials = [
       </a>
     </section>
 
-    <!-- ── Footer ───────────────────────────────────────────── -->
+    <!-- -- Footer --------------------------------------------- -->
     <footer class="mt-16 border-t border-gray-200 py-8">
       <p class="text-center font-mono text-[12px] text-gray-500">
         © {{ year }} {{ profile.fullName }}. All rights reserved.

@@ -1,8 +1,9 @@
 /**
  * Private chat — admin live stream (production, D1-backed).
  *   GET /api/v1/admin/private/conversations/{id}/stream?after={lastId}
- * Server-Sent Events with admin Bearer auth; polls D1 every second.
- * The client keeps its 8s poll as a fallback.
+ * Server-Sent Events with admin Bearer auth; polls D1 every second, pushes
+ * new messages (with attachments) plus `typing` events whenever the set of
+ * people typing changes. The client keeps its 8s poll as a fallback.
  * Mirrors the Laravel AdminPrivateChatController stream.
  */
 
@@ -32,6 +33,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const stream = new ReadableStream({
     async start(controller) {
       let lastId = after
+      let lastTypingKey = ''
       let live = true
 
       const send = (chunk: string): void => {
@@ -46,7 +48,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         while (live) {
           const { results } = await env.blog_db
             .prepare(
-              'SELECT id, sender_id, message, created_at FROM private_chat_messages WHERE session_id = ? AND id > ? ORDER BY id LIMIT ?',
+              'SELECT id, sender_id, message, attachment, read_at, created_at FROM private_chat_messages WHERE session_id = ? AND id > ? ORDER BY id LIMIT ?',
             )
             .bind(id, lastId, MAX_AFTER)
             .all<Record<string, unknown>>()
@@ -55,6 +57,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             const data = JSON.stringify(rowToPrivateMessage(row))
             send(`event: message\ndata: ${data}\n\n`)
             lastId = Number(row.id)
+          }
+
+          // Typing state — emit only when the set of typers changes.
+          const typing = await activeTyping(env, id)
+          const typingKey = JSON.stringify(typing)
+          if (typingKey !== lastTypingKey) {
+            lastTypingKey = typingKey
+            send(`event: typing\ndata: ${JSON.stringify({ users: typing })}\n\n`)
           }
 
           send(': keepalive\n\n')
@@ -80,4 +90,19 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       'X-Accel-Buffering': 'no',
     },
   })
+}
+
+/** Currently typing participants (non-expired typing rows + names). */
+async function activeTyping(env: Env, conversationId: number): Promise<{ id: number; name: string }[]> {
+  const now = new Date().toISOString()
+  const { results } = await env.blog_db
+    .prepare(
+      `SELECT t.user_id AS id, u.name FROM private_chat_typing t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.conversation_id = ? AND t.typing_until > ?
+       ORDER BY t.user_id`,
+    )
+    .bind(conversationId, now)
+    .all<{ id: number; name: string }>()
+  return results.map((r) => ({ id: Number(r.id), name: String(r.name) }))
 }

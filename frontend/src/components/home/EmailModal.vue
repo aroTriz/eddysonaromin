@@ -82,7 +82,7 @@ defineExpose({ openModal })
       >
         <button
           type="button"
-          class="absolute right-4 top-4 text-gray-400 hover:text-ink"
+          class="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded text-gray-400 hover:text-ink"
           aria-label="Close"
           @click="closeModal"
         >
@@ -99,7 +99,7 @@ defineExpose({ openModal })
           <span class="flex-1 truncate px-2 font-mono text-[13px] text-ink">{{ profile.email }}</span>
           <button
             type="button"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-[12px] font-medium text-white hover:bg-gray-800"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-[12px] font-medium text-white hover:bg-gray-800"
             @click="copyEmail"
           >
             <Check v-if="copied" class="h-3.5 w-3.5" :stroke-width="2" />

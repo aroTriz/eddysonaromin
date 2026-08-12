@@ -4,11 +4,12 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, X } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { logout } from '@/composables/useAuth'
+import { getToken, logout } from '@/composables/useAuth'
+import { fetchAdminPrivateUnread } from '@/services/adminApi'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
@@ -23,12 +24,68 @@ const router = useRouter()
 const route = useRoute()
 const mobileOpen = ref(false)
 
-const navLinks = [
-  { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Rss },
-  { label: 'Community Chat', to: '/aromin/chat', name: 'aromin-chat', icon: MessageCircle },
-  { label: 'Private Chat', to: '/aromin/private-chat', name: 'aromin-private-chat', icon: MessagesSquare },
-  { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
-  { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
+/** Total unread visitor DMs — drives the red dot on "Private Chat". */
+const unreadPrivate = ref(0)
+let unreadTimer: ReturnType<typeof setInterval> | null = null
+
+async function refreshUnread(): Promise<void> {
+  if (!getToken()) return
+  unreadPrivate.value = await fetchAdminPrivateUnread()
+}
+
+onMounted(() => {
+  void refreshUnread()
+  unreadTimer = setInterval(() => void refreshUnread(), 15_000)
+})
+
+onBeforeUnmount(() => {
+  if (unreadTimer) clearInterval(unreadTimer)
+})
+
+// Refresh the badge right after opening the private chat (read → dot gone).
+watch(
+  () => route.path,
+  (p) => {
+    if (p === '/aromin/private-chat') void refreshUnread()
+  },
+)
+
+/**
+ * Nav groups mirror the main site's sidebar (AppShell.vue): divisions
+ * separated by hairline dividers.
+ *  - Group 1: Dashboard          (overview)
+ *  - Group 2: Blog, Recommendations   (content)
+ *  - Group 3: Community Chat, Private Chat  (messaging)
+ *  - Group 4: Users, Preferences (accounts & settings)
+ */
+const navGroups = [
+  {
+    label: 'g1',
+    links: [
+      { label: 'Dashboard', to: '/aromin/dashboard', name: 'aromin-dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'g2',
+    links: [
+      { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Rss },
+      { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
+    ],
+  },
+  {
+    label: 'g3',
+    links: [
+      { label: 'Community Chat', to: '/aromin/chat', name: 'aromin-chat', icon: MessageCircle },
+      { label: 'Private Chat', to: '/aromin/private-chat', name: 'aromin-private-chat', icon: MessagesSquare },
+    ],
+  },
+  {
+    label: 'g4',
+    links: [
+      { label: 'Users', to: '/aromin/users', name: 'aromin-users', icon: Users },
+      { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
+    ],
+  },
 ]
 
 function openMobileMenu(): void {
@@ -66,33 +123,43 @@ async function handleLogout(): Promise<void> {
       </RouterLink>
 
       <div class="mt-9 flex flex-1 flex-col gap-4 overflow-y-auto font-mono text-[13px]">
-        <div class="flex flex-col gap-2.5">
-          <RouterLink
-            v-for="link in navLinks"
-            :key="link.name"
-            :to="link.to"
-            class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
-            :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
-          >
-            <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" :stroke-width="1.7" />
-            <svg
-              v-if="active === link.name"
-              class="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
+        <template v-for="(group, gi) in navGroups" :key="group.label">
+          <div class="flex flex-col gap-2.5">
+            <RouterLink
+              v-for="link in group.links"
+              :key="link.name"
+              :to="link.to"
+              class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+              :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
             >
-              <path
-                d="M5 12h14M13 6l6 6-6 6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            {{ link.label }}
-          </RouterLink>
-        </div>
+              <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" :stroke-width="1.7" />
+              {{ link.label }}
+              <span
+                v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
+                class="ml-1 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-bold leading-none text-white"
+                :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
+              >
+                {{ unreadPrivate > 99 ? '99+' : unreadPrivate }}
+              </span>
+              <svg
+                v-if="active === link.name"
+                class="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12h14M13 6l6 6-6 6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </RouterLink>
+          </div>
+          <div v-if="gi < navGroups.length - 1" class="h-px bg-gray-200 dark:bg-gray-300" />
+        </template>
       </div>
 
       <div class="mt-6 shrink-0">
@@ -114,14 +181,14 @@ async function handleLogout(): Promise<void> {
 
     <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
     <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
-      <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
-        <RouterLink to="/aromin/dashboard" class="font-pixel text-[14px]">&lt; Aromin-Admin /&gt;</RouterLink>
+      <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-2.5">
+        <RouterLink to="/aromin/dashboard" class="-my-2 py-2 font-pixel text-[14px]">&lt; Aromin-Admin /&gt;</RouterLink>
         <div class="flex items-center gap-3">
           <ThemeSwitch />
           <button
             type="button"
             aria-label="Open admin menu"
-            class="-mr-1 p-1 text-gray-700 hover:text-ink"
+            class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
             @click="openMobileMenu"
           >
             <Menu class="h-5 w-5" />
@@ -143,7 +210,7 @@ async function handleLogout(): Promise<void> {
           <button
             type="button"
             aria-label="Close admin menu"
-            class="-mr-1 p-1 text-gray-700 hover:text-ink"
+            class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
             @click="closeMobileMenu"
           >
             <X class="h-5 w-5" />
@@ -151,34 +218,44 @@ async function handleLogout(): Promise<void> {
         </div>
 
         <div class="flex flex-1 flex-col overflow-y-auto px-7 py-8 font-mono text-[16px]">
-          <div class="flex flex-col gap-4">
-            <RouterLink
-              v-for="link in navLinks"
-              :key="link.name"
-              :to="link.to"
-              class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink"
-              :class="{ 'pl-6 text-ink': active === link.name }"
-              @click="closeMobileMenu"
-            >
-              <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" :stroke-width="1.7" />
-              <svg
-                v-if="active === link.name"
-                class="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
+          <template v-for="(group, gi) in navGroups" :key="group.label">
+            <div class="flex flex-col gap-4">
+              <RouterLink
+                v-for="link in group.links"
+                :key="link.name"
+                :to="link.to"
+                class="relative inline-flex w-fit items-center gap-3 py-2 text-gray-700 hover:text-ink"
+                :class="{ 'pl-6 text-ink': active === link.name }"
+                @click="closeMobileMenu"
               >
-                <path
-                  d="M5 12h14M13 6l6 6-6 6"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
+              <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" :stroke-width="1.7" />
               {{ link.label }}
-            </RouterLink>
-          </div>
+              <span
+                v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
+                class="ml-1 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-bold leading-none text-white"
+                :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
+              >
+                {{ unreadPrivate > 99 ? '99+' : unreadPrivate }}
+              </span>
+                <svg
+                  v-if="active === link.name"
+                  class="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </RouterLink>
+            </div>
+            <div v-if="gi < navGroups.length - 1" class="my-5 h-px bg-gray-200" />
+          </template>
           <div class="my-5 h-px bg-gray-200" />
           <div class="flex flex-col gap-5">
             <button

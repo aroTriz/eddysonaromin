@@ -4,13 +4,19 @@
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
 import { Github, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 
-import AskOverlay from '@/components/ui/AskOverlay.vue'
-import ChatOverlay from '@/components/ui/ChatOverlay.vue'
-import PrivateChatOverlay from '@/components/ui/PrivateChatOverlay.vue'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
+
+/**
+ * The chat/ask/email overlays are lazy-loaded: they only render when the
+ * user actually opens them, so their SSE/stream code stays out of the main
+ * bundle until needed.
+ */
+const AskOverlay = defineAsyncComponent(() => import('@/components/ui/AskOverlay.vue'))
+const ChatOverlay = defineAsyncComponent(() => import('@/components/ui/ChatOverlay.vue'))
+const EmailModal = defineAsyncComponent(() => import('@/components/home/EmailModal.vue'))
 
 defineProps<{
   /** Route name of the active page — drives the arrow indicator. */
@@ -19,7 +25,7 @@ defineProps<{
 
 const askRef = ref<InstanceType<typeof AskOverlay> | null>(null)
 const chatRef = ref<InstanceType<typeof ChatOverlay> | null>(null)
-const privateChatRef = ref<InstanceType<typeof PrivateChatOverlay> | null>(null)
+const emailRef = ref<InstanceType<typeof EmailModal> | null>(null)
 const isMac =  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const mobileOpen = ref(false)
@@ -159,14 +165,13 @@ const navGroups = [
         <MessageCircle class="h-4 w-4" :stroke-width="1.6" />
         community chat
       </button>
-      <button
-        type="button"
+      <RouterLink
+        to="/private-chat"
         class="mt-2 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
-        @click="privateChatRef?.openChat()"
       >
         <MessagesSquare class="h-4 w-4" :stroke-width="1.6" />
         private chat
-      </button>
+      </RouterLink>
     </div>
 
     <div class="mt-6 shrink-0">
@@ -198,26 +203,28 @@ const navGroups = [
       <p class="text-[12px] leading-relaxed text-gray-500 dark:text-gray-400">
         For work, collabs &amp; everything else, reach me at
       </p>
-      <a
-        :href="`mailto:${profile.email}`"
+      <button
+        type="button"
         class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 font-mono text-[10.5px] text-ink hover:text-gray-500 dark:text-gray-950 dark:hover:text-gray-400"
+        aria-haspopup="dialog"
+        @click="emailRef?.openModal()"
       >
         <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
         <span class="whitespace-nowrap">{{ profile.email }}</span>
-      </a>
+      </button>
     </div>
   </nav>
 
   <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
   <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
-    <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
-      <RouterLink to="/" class="font-pixel text-[14px]">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-2.5">
+      <RouterLink to="/" class="-my-2 py-2 font-pixel text-[14px]">
         &lt; Aromin /&gt;
       </RouterLink>
       <button
         type="button"
         aria-label="Open menu"
-        class="-mr-1 p-1 text-gray-700 hover:text-ink"
+        class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
         @click="openMobileMenu"
       >
         <Menu class="h-5 w-5" />
@@ -239,7 +246,7 @@ const navGroups = [
         <button
           type="button"
           aria-label="Close menu"
-          class="-mr-1 p-1 text-gray-700 hover:text-ink"
+          class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
           @click="closeMobileMenu"
         >
           <X class="h-5 w-5" />
@@ -257,7 +264,7 @@ const navGroups = [
             v-for="link in group.links"
             :key="link.name"
             :to="link.to"
-            class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink"
+            class="relative inline-flex w-fit items-center gap-3 py-2 text-gray-700 hover:text-ink"
             :class="{ 'pl-6 text-ink': active === link.name }"
             @click="closeMobileMenu"
           >
@@ -289,7 +296,7 @@ const navGroups = [
           <div>
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              class="mb-3 inline-flex w-fit items-center gap-2 py-2 text-[14px] text-gray-500 hover:text-ink"
               @click="closeMobileMenu(); askRef?.openAsk()"
             >
               <span>ask anything</span>
@@ -303,20 +310,20 @@ const navGroups = [
             </button>
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
+              class="mb-3 inline-flex w-fit items-center gap-2 py-2 text-[14px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); chatRef?.openChat()"
             >
               <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               community chat
             </button>
-            <button
-              type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
-              @click="closeMobileMenu(); privateChatRef?.openChat()"
+            <RouterLink
+              to="/private-chat"
+              class="mb-3 inline-flex w-fit items-center gap-2 py-2 text-[14px] text-gray-600 hover:text-ink"
+              @click="closeMobileMenu"
             >
               <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               private chat
-            </button>
+            </RouterLink>
             <div class="mb-4">
               <ThemeSwitch />
             </div>
@@ -345,13 +352,15 @@ const navGroups = [
             <p class="text-[12px] leading-relaxed text-gray-500">
               For work, collabs &amp; everything else, reach me at
             </p>
-            <a
-              :href="`mailto:${profile.email}`"
-              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 text-[11px] text-ink hover:text-gray-500"
+            <button
+              type="button"
+              class="-my-1.5 mt-1 inline-flex w-fit max-w-full items-center gap-1.5 py-1.5 text-[11px] text-ink hover:text-gray-500"
+              aria-haspopup="dialog"
+              @click="closeMobileMenu(); emailRef?.openModal()"
             >
               <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
               <span class="whitespace-nowrap">{{ profile.email }}</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -364,6 +373,6 @@ const navGroups = [
   <!-- Community chat (bryllim-style) -->
   <ChatOverlay ref="chatRef" />
 
-  <!-- Private chat (1-on-1 DMs) -->
-  <PrivateChatOverlay ref="privateChatRef" />
+  <!-- Email "say hello" modal (bryllim-style, same as home) -->
+  <EmailModal ref="emailRef" />
 </template>

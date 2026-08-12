@@ -70,7 +70,11 @@ function openProject(index: number): void {
 </script>
 
 <template>
-  <div v-if="loading" class="py-16 text-center font-mono text-[13px] text-gray-400">
+  <div
+    v-if="loading"
+    class="animate-blink py-16 text-center font-mono text-[13px] text-gray-400"
+    aria-busy="true"
+  >
     loading...
   </div>
 

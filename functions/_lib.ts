@@ -109,7 +109,19 @@ export function rowToPrivateMessage(row: Record<string, unknown>): Record<string
     id: row.id,
     sender_id: row.sender_id,
     message: row.message,
+    attachment: row.attachment ? parseJson(row.attachment) : null,
+    read_at: row.read_at ?? null,
     created_at: row.created_at,
+  }
+}
+
+/** Parse a stored JSON text column (null on malformed/missing). */
+export function parseJson(text: unknown): unknown {
+  if (typeof text !== 'string' || text === '') return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
   }
 }
 

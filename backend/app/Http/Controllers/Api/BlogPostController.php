@@ -19,7 +19,9 @@ class BlogPostController extends Controller
             ->orderByDesc('published_at')
             ->get();
 
-        return response()->json(['data' => $posts]);
+        return response()
+            ->json(['data' => $posts])
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 
     /**
@@ -32,6 +34,8 @@ class BlogPostController extends Controller
             ->whereNull('archived_at')
             ->firstOrFail();
 
-        return response()->json(['data' => $post]);
+        return response()
+            ->json(['data' => $post])
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 }

@@ -108,6 +108,35 @@ CREATE TABLE visitors (
 CREATE UNIQUE INDEX idx_visitors_site ON visitors(site);
 
 -- ────────────────────────────────────────────────────────────────
+-- Visit analytics (one row per page view)
+-- Unique visitors = COUNT(DISTINCT ip) over this table — never the
+-- visitors.count above (which is a denormalized cache of that value).
+-- ────────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS visits;
+CREATE TABLE visits (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  site         TEXT    NOT NULL DEFAULT 'portfolio',
+  ip           TEXT,                       -- admin-only; masked in the UI
+  country      TEXT,                       -- ISO 3166-1 alpha-2
+  country_name TEXT,
+  region       TEXT,
+  city         TEXT,
+  lat          REAL,
+  lon          REAL,
+  path         TEXT,
+  referrer     TEXT,
+  device       TEXT,
+  browser      TEXT,
+  os           TEXT,
+  created_at   TEXT,
+  updated_at   TEXT
+);
+CREATE INDEX idx_visits_site_created ON visits(site, created_at);
+CREATE INDEX idx_visits_ip ON visits(ip);
+CREATE INDEX idx_visits_country ON visits(site, country);
+
+-- ────────────────────────────────────────────────────────────────
 -- Tech stack CMS (mirrors the Laravel stack_groups migration).
 -- ────────────────────────────────────────────────────────────────
 
@@ -192,6 +221,7 @@ CREATE TABLE private_chat_messages (
   session_id INTEGER NOT NULL,
   sender_id  INTEGER NOT NULL,
   message    TEXT    NOT NULL,
+  attachment TEXT,                          -- JSON { kind, name, size, mime, data }
   read_at    TEXT,
   created_at TEXT,
   updated_at TEXT,
@@ -199,3 +229,15 @@ CREATE TABLE private_chat_messages (
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_pc_messages_session ON private_chat_messages(session_id, id);
+
+-- "Is typing" heartbeats (one row per participant per conversation).
+DROP TABLE IF EXISTS private_chat_typing;
+CREATE TABLE private_chat_typing (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
+  user_id         INTEGER NOT NULL,
+  typing_until    TEXT,
+  created_at      TEXT,
+  updated_at      TEXT,
+  UNIQUE (conversation_id, user_id)
+);

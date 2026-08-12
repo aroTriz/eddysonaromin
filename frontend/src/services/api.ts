@@ -14,18 +14,24 @@ const API_BASE = '/api/v1'
  * Promise cache — the same in-flight request is shared by every caller, so
  * the loading screen can prefetch the home page's data and the components
  * resolve instantly from the same promise (everything appears at once).
+ * Entries expire after CACHE_TTL_MS so CMS edits (made in /aromin) show up
+ * on the public site within a few minutes without a hard refresh.
  */
-const requestCache = new Map<string, Promise<unknown>>()
+const requestCache = new Map<string, { promise: Promise<unknown>; at: number }>()
+
+const CACHE_TTL_MS = 5 * 60 * 1000
 
 function cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  let promise = requestCache.get(key) as Promise<T> | undefined
-  if (!promise) {
-    promise = fetcher().catch((err: unknown) => {
-      requestCache.delete(key)
-      throw err
-    })
-    requestCache.set(key, promise)
+  const hit = requestCache.get(key)
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    return hit.promise as Promise<T>
   }
+  if (hit) requestCache.delete(key)
+  const promise = fetcher().catch((err: unknown) => {
+    requestCache.delete(key)
+    throw err
+  })
+  requestCache.set(key, { promise, at: Date.now() })
   return promise
 }
 

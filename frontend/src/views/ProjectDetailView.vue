@@ -8,7 +8,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AsyncState from '@/components/ui/AsyncState.vue'
-import LaptopMockup from '@/components/ui/LaptopMockup.vue'
+import DeviceShowcase from '@/components/ui/DeviceShowcase.vue'
 import TechTag from '@/components/ui/TechTag.vue'
 import { fetchProject } from '@/services/api'
 import type { Project } from '@/types'
@@ -89,21 +89,12 @@ onMounted(async () => {
           </div>
         </header>
 
-        <!-- Project snapshot image — laptop mockup frame (greyfolio-style) -->
-        <LaptopMockup
-          v-if="project.image_url"
-          :src="project.image_url"
-          :alt="`${project.title} snapshot`"
-          :url="project.url"
-          class="mt-8"
-        />
-        <div
-          v-else
-          class="mt-8 flex aspect-video w-full items-center justify-center rounded-xl border border-gray-200 bg-gray-50"
-          aria-hidden="true"
-        >
-          <Folder class="h-10 w-10 text-gray-300" :stroke-width="1.2" />
-        </div>
+        <!-- Project snapshot — greyfolio-style device switcher: a laptop
+             (PC screen) interface and a phone interface, toggled with the
+             arrows / swipe. Projects without a screenshot (e.g. ARventure)
+             show a computer / smartphone icon inside the screen instead of a
+             blank placeholder box. -->
+        <DeviceShowcase :project="project" />
 
         <section class="mt-10">
           <p class="text-[15.5px] leading-relaxed text-gray-600 md:text-[16px]">

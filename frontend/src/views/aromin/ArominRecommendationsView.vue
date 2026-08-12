@@ -1,10 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * /aromin/recommendations — testimonials CMS. List, create, edit, delete,
  * archive & restore. Confirms destructive/save actions with a themed
  * blur modal (ConfirmModal). Bulk selection with select-all / delete-selected.
  */
-import { Archive, ArchiveRestore, FileText, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, FileText, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
@@ -79,7 +79,7 @@ function askConfirm(opts: {
   confirm.value = opts
 }
 
-// ── Editor ───────────────────────────────────────────────────────
+// -- Editor -------------------------------------------------------
 function startNew(): void {
   editing.value = null
   editorOpen.value = true
@@ -150,7 +150,7 @@ async function save(): Promise<void> {
   }
 }
 
-// ── Archive / restore ────────────────────────────────────────────
+// -- Archive / restore --------------------------------------------
 async function archiveItem(rec: Recommendation): Promise<void> {
   try {
     await archiveAdminRecommendation(rec.id)
@@ -176,7 +176,7 @@ function toggleArchived(): void {
   void load()
 }
 
-// ── Delete (single + bulk) ───────────────────────────────────────
+// -- Delete (single + bulk) ---------------------------------------
 function askDelete(rec: Recommendation): void {
   askConfirm({
     title: 'delete recommendation',
@@ -230,7 +230,7 @@ async function removeSelected(): Promise<void> {
   }
 }
 
-// ── Selection helpers ────────────────────────────────────────────
+// -- Selection helpers --------------------------------------------
 function enterSelection(): void {
   selectionMode.value = true
 }
@@ -287,7 +287,7 @@ onMounted(load)
       // {{ error }}
     </p>
 
-    <!-- ── Editor (create / edit) ─────────────────────────────── -->
+    <!-- -- Editor (create / edit) ------------------------------- -->
     <div v-if="editorOpen" class="mb-8 rounded-xl border border-gray-200 bg-white p-6">
       <div class="mb-5 flex items-center justify-between">
         <p class="font-mono text-[11px] text-gray-500">
@@ -312,7 +312,7 @@ onMounted(load)
               v-model="form.initials"
               type="text"
               maxlength="8"
-              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
               placeholder="e.g. LF"
             />
           </div>
@@ -322,7 +322,7 @@ onMounted(load)
               id="rec-author"
               v-model="form.author"
               type="text"
-              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
               placeholder="Full name or team"
             />
           </div>
@@ -334,7 +334,7 @@ onMounted(load)
             id="rec-role"
             v-model="form.role"
             type="text"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="e.g. Instructor, SLU · Founder, MyVirtual Learning"
           />
         </div>
@@ -345,7 +345,7 @@ onMounted(load)
             id="rec-quote"
             v-model="form.quote"
             rows="4"
-            class="w-full resize-y rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] leading-relaxed text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full resize-y rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] leading-relaxed text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="&quot;What they said about working with me...&quot;"
           ></textarea>
         </div>
@@ -356,7 +356,7 @@ onMounted(load)
             id="rec-email"
             v-model="form.email"
             type="email"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
             placeholder="contact@example.com"
           />
         </div>
@@ -368,7 +368,12 @@ onMounted(load)
             :disabled="saving"
             @click="requestSave"
           >
-            <Save class="h-4 w-4" :stroke-width="1.7" />
+            <LoaderCircle
+              v-if="saving"
+              class="h-4 w-4 animate-spin"
+              :stroke-width="1.7"
+            />
+            <Save v-else class="h-4 w-4" :stroke-width="1.7" />
             {{ saving ? 'Saving...' : editing ? 'Update recommendation' : 'Add recommendation' }}
           </button>
           <button
@@ -383,7 +388,7 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- ── List header: select-all + count + archive toggle ────── -->
+    <!-- -- List header: select-all + count + archive toggle ------ -->
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <template v-if="selectionMode">
         <label
@@ -433,7 +438,7 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- ── Bulk action bar (visible while items are selected) ── -->
+    <!-- -- Bulk action bar (visible while items are selected) -- -->
     <div
       v-if="selectionMode && selected.size > 0"
       class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5"
@@ -457,9 +462,9 @@ onMounted(load)
       </button>
     </div>
 
-    <!-- ── List ───────────────────────────────────────────────── -->
+    <!-- -- List ------------------------------------------------- -->
     <div v-if="loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="h-20 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
+      <div v-for="i in 4" :key="i" class="h-20 skeleton rounded-lg border border-gray-200 bg-gray-50"></div>
     </div>
 
     <div v-else-if="sorted.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
@@ -542,7 +547,7 @@ onMounted(load)
       edits appear instantly on /recommendations
     </div>
 
-    <!-- ── Themed confirm dialog (delete / save) ───────────────── -->
+    <!-- -- Themed confirm dialog (delete / save) ----------------- -->
     <ConfirmModal
       :open="confirm !== null"
       :title="confirm?.title ?? ''"

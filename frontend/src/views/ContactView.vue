@@ -8,6 +8,7 @@ import { ref } from 'vue'
 
 import Reveal from '@/components/ui/Reveal.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import EmailModal from '@/components/home/EmailModal.vue'
 import { profile } from '@/data/profile'
 import { submitContact } from '@/services/api'
 import type { ContactPayload } from '@/types'
@@ -39,14 +40,18 @@ async function onSubmit(): Promise<void> {
   }
 }
 
+const emailModalRef = ref<InstanceType<typeof EmailModal> | null>(null)
+
 const contactInfo = [
-  { label: '// email', value: profile.email, href: `mailto:${profile.email}`, icon: Mail },
+  { label: '// email', value: profile.email, modal: true, icon: Mail },
   { label: '// phone', value: profile.phone, href: `tel:${profile.phone.replace(/\s/g, '')}`, icon: Phone },
   { label: '// location', value: profile.location, href: null, icon: MapPin },
 ]
 
+// text-[16px] on inputs — iOS Safari auto-zooms the page when a focused
+// input's font-size is below 16px; this keeps mobile forms zoom-free.
 const fieldClass =
-  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[13.5px] text-ink placeholder:text-gray-500 focus:border-gray-400 focus:outline-none'
+  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[16px] text-ink placeholder:text-gray-500 focus:border-gray-400 focus:outline-none'
 </script>
 
 <template>
@@ -166,10 +171,19 @@ const fieldClass =
             <div>
               <dt class="font-mono text-[11.5px] text-gray-500">{{ item.label }}</dt>
               <dd>
+                <button
+                  v-if="item.modal"
+                  type="button"
+                  class="-my-1.5 break-all py-1.5 text-left text-[13.5px] text-ink hover:text-gray-500"
+                  aria-haspopup="dialog"
+                  @click="emailModalRef?.openModal()"
+                >
+                  {{ item.value }}
+                </button>
                 <a
-                  v-if="item.href"
+                  v-else-if="item.href"
                   :href="item.href"
-                  class="break-all text-[13.5px] text-ink hover:text-gray-500"
+                  class="-my-1.5 inline-block break-all py-1.5 text-[13.5px] text-ink hover:text-gray-500"
                 >
                   {{ item.value }}
                 </a>
@@ -215,4 +229,7 @@ const fieldClass =
       ></iframe>
     </Reveal>
   </div>
+
+  <!-- Email "say hello" modal (bryllim-style, same as home) -->
+  <EmailModal ref="emailModalRef" />
 </template>

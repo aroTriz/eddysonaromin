@@ -20,7 +20,14 @@ defineProps<{
   >
     <div class="flex items-start justify-between gap-2">
       <div class="flex items-center gap-2 font-mono text-[12px] text-gray-500">
-        <Folder class="h-3.5 w-3.5" :stroke-width="1.6" />
+        <img
+          v-if="project.favicon_url"
+          :src="project.favicon_url"
+          :alt="`${project.title} icon`"
+          class="h-5 w-5 shrink-0 rounded-md border border-gray-200 bg-white object-cover"
+          loading="lazy"
+        />
+        <Folder v-else class="h-3.5 w-3.5" :stroke-width="1.6" />
         {{ project.category }}
       </div>
       <span

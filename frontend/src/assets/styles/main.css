@@ -4,18 +4,14 @@
    Geist family, monochrome scale via RGB variables, halftone textures.
    ════════════════════════════════════════════════════════════════════ */
 
-/* ── Ionic base styles (must precede Tailwind) ─────────────────── */
-/* NOTE: typography.css + normalize.css are intentionally NOT imported.
-   typography.css sets an unlayered `a { background-color: transparent }`
-   that overrides Tailwind's layered utilities, and normalize.css ships an
-   unlayered `button { border:0; border-radius:0; padding:0 }` reset that
-   kills Tailwind's rounded-full/border/padding on every button. Tailwind's
-   own preflight (properly layered) handles resets instead. */
-@import '@ionic/vue/css/core.css';
-@import '@ionic/vue/css/structure.css';
-
 /* ── Tailwind v4 ───────────────────────────────────────────────── */
 @import 'tailwindcss';
+
+/* NOTE: @ionic/vue/css/* are intentionally NOT imported anymore. The app no
+   longer uses Ionic at runtime (IonApp was the only component and it's now a
+   plain div), and Tailwind's preflight provides the base resets. The previous
+   IonApp styles + the custom "neutralize Ionic layout" overrides below are
+   the only remnants of that framework. */
 
 /* Dark mode is driven by the `.dark` class on <html> (applied by the
    theme composable + pre-paint script), NOT by prefers-color-scheme. */
@@ -72,7 +68,10 @@
     to {
       opacity: 1;
       transform: none;
-      filter: blur(0);
+      /* `none` (not blur(0)) — any non-none filter value keeps the element
+         in its own compositing layer after the entrance finishes. Releasing
+         it lets the browser go back to cheap, layer-free painting. */
+      filter: none;
     }
   }
   @keyframes blink {
@@ -175,10 +174,6 @@ html.dark {
       background-color 0.22s ease,
       color 0.22s ease;
   }
-  ion-app {
-    background-color: rgb(var(--bg));
-    transition: background-color 0.22s ease;
-  }
 }
 
 ::selection {
@@ -203,14 +198,16 @@ html.theme-flip *::after {
   transition: none !important;
 }
 html.theme-flip,
-html.theme-flip body,
-html.theme-flip ion-app {
+html.theme-flip body {
   transition:
     background-color 0.22s ease,
     color 0.22s ease !important;
 }
 .page-enter {
-  animation: page-enter 0.42s cubic-bezier(0.2, 0, 0, 1) both;
+  /* `backwards` (not `both`): after the entrance the element returns to its
+     natural styles, so the animated filter/transform are released instead of
+     being held on the whole routed container for the lifetime of the page. */
+  animation: page-enter 0.42s cubic-bezier(0.2, 0, 0, 1) backwards;
 }
 @keyframes page-enter {
   from {
@@ -221,12 +218,53 @@ html.theme-flip ion-app {
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
+    filter: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .page-enter {
     animation: none !important;
+  }
+  .skeleton,
+  .skeleton::after {
+    animation: none !important;
+  }
+}
+
+/* ── Loading skeletons — shimmer sweep over a soft pulse ───────── */
+/* Every data view (web + admin) uses `.skeleton` on its loading blocks:
+   the block keeps its own bg/border/rounded classes, this class adds the
+   moving shimmer highlight + gentle pulse so loading is visibly animated. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.45),
+    transparent
+  );
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
@@ -336,45 +374,31 @@ button {
 /*
  * Element-level theme defaults live in `@layer base` (NOT unlayered).
  * Unlayered CSS beats Tailwind's layered utilities regardless of
- * specificity — if these sat outside the layer, `ion-app a { color }`
+ * specificity — if these sat outside the layer, `body a { color }`
  * would override every `text-gray-*` / `text-bg` utility on links.
  */
 @layer base {
-  ion-app {
-    --ion-background-color: transparent;
-    --ion-color-primary: rgb(var(--ink));
-    background-color: transparent;
+  /* Fonts + default link styling for the SPA root (previously scoped
+     under `ion-app` — the root div in App.vue inherits these). */
+  #app {
     font-family: var(--font-sans);
     color: rgb(var(--ink));
   }
 
-  /* Neutralize Ionic's default link color & typography blues */
-  ion-app a {
+  #app a {
     color: inherit;
     text-decoration: none;
   }
 
-  ion-app body,
   body {
     font-family: var(--font-sans);
-  }
-
-  ion-router-outlet {
-    background-color: transparent;
-  }
-
-  ion-content {
-    --background: transparent;
   }
 }
 
 /*
- * This site uses a custom layout (no ion-page / ion-content scroll
- * containers), so document scrolling must live on the <html> element.
- * Ionic's structure.css sets `body { position: fixed; overflow: hidden }`
- * and the runtime injects absolute positioning on ion-app/ion-router-outlet
- * for app-style internal scrolling — neutralize all of it so the page
- * scrolls naturally like a normal website.
+ * Document scrolling lives on the <html> element (natural website
+ * scrolling — no Ionic scroll containers anymore). Keep the html/body
+ * overrides explicit so nothing re-introduces app-style fixed scrolling.
  */
 html {
   position: static;
@@ -384,28 +408,15 @@ html {
 }
 
 body {
-  position: static !important;
-  overflow: visible !important;
+  position: static;
+  overflow: visible;
   width: auto;
-  height: auto !important;
-  max-height: none !important;
-  /* Ionic sets `transform: translateZ(0)` on body — even an identity
-     transform makes body the containing block for `position: fixed`
-     descendants, so the fixed sidebar would scroll with the page.
-     Remove it so fixed/sticky elements anchor to the viewport. */
-  transform: none !important;
-}
-
-ion-app,
-ion-router-outlet {
-  position: relative !important;
-  display: block !important;
-  width: 100%;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  contain: none !important;
-  overflow: visible !important;
+  height: auto;
+  max-height: none;
+  /* An identity transform on body would make it the containing block
+     for `position: fixed` descendants, so the fixed sidebar would scroll
+     with the page. Keep it neutral. */
+  transform: none;
 }
 
 /* ── Spotlight card deck (home showcase) ───────────────────────── */

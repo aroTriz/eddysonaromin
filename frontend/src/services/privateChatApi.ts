@@ -14,10 +14,21 @@ export interface PrivateUser {
   email: string
 }
 
+/** Attachment carried by a message (image renders inline, file as a card). */
+export interface ChatAttachment {
+  kind: 'image' | 'file'
+  name: string
+  size: number
+  mime: string
+  /** Base64 data-URL. */
+  data: string
+}
+
 export interface PrivateMessage {
   id: number
   sender_id: number
   message: string
+  attachment: ChatAttachment | null
   created_at: string
 }
 
@@ -77,16 +88,26 @@ async function post<T>(url: string, body: unknown): Promise<T> {
     errors?: Record<string, string[]>
   }
   if (!res.ok) {
-    // Laravel validation errors surface as { message, errors } — unwrap the
-    // first field error so the UI can show something useful.
+    // Laravel validation errors surface as { message, errors } — keep the
+    // full field map on the error so the UI can render per-field messages
+    // (e.g. "please include an '@' in the email address" under the email
+    // input), and fall back to the first field error / generic text.
     let msg = data.error ?? data.reason ?? data.message ?? 'Request failed'
+    let fieldErrors: Record<string, string> | undefined
     if (data.errors) {
-      const first = Object.values(data.errors)[0]?.[0]
+      const entries = Object.entries(data.errors)
+      const first = entries[0]?.[1]?.[0]
       if (first) msg = first
+      fieldErrors = Object.fromEntries(entries.map(([k, v]) => [k, v[0]]))
     }
-    const err = new Error(msg) as Error & { reason?: string; status: number }
+    const err = new Error(msg) as Error & {
+      reason?: string
+      status: number
+      errors?: Record<string, string>
+    }
     err.reason = data.reason
     err.status = res.status
+    err.errors = fieldErrors
     throw err
   }
   return data
@@ -101,12 +122,16 @@ async function get<T>(url: string): Promise<T> {
       errors?: Record<string, string[]>
     }
     let msg = data.error ?? data.message ?? 'Request failed'
+    let fieldErrors: Record<string, string> | undefined
     if (data.errors) {
-      const first = Object.values(data.errors)[0]?.[0]
+      const entries = Object.entries(data.errors)
+      const first = entries[0]?.[1]?.[0]
       if (first) msg = first
+      fieldErrors = Object.fromEntries(entries.map(([k, v]) => [k, v[0]]))
     }
-    const err = new Error(msg) as Error & { status: number }
+    const err = new Error(msg) as Error & { status: number; errors?: Record<string, string> }
     err.status = res.status
+    err.errors = fieldErrors
     throw err
   }
   return (await res.json()) as T
@@ -144,15 +169,18 @@ export async function privateLogout(): Promise<void> {
   }
 }
 
-/** Validate the stored token against the server; null when logged out. */
+/** Validate the stored token against the server.
+ *  Returns null ONLY when the token is definitively invalid (HTTP 401 or the
+ *  server answers `authenticated: false`). Transport/server errors propagate
+ *  so callers can tell "logged out" apart from "can't reach the server right
+ *  now" — the latter must never clear the stored token, or a single request
+ *  hiccup logs a still-valid visitor out. */
 export async function privateSession(): Promise<PrivateUser | null> {
   if (!privateToken()) return null
-  try {
-    const data = await get<{ authenticated: boolean; user: PrivateUser }>('/private/auth/session')
-    return data.authenticated ? data.user : null
-  } catch {
-    return null
-  }
+  const data = await get<{ authenticated: boolean; user: PrivateUser }>(
+    '/private/auth/session',
+  )
+  return data.authenticated ? data.user : null
 }
 
 // ── Chat (visitor ↔ admin) ──────────────────────────────────────────
@@ -182,12 +210,28 @@ export async function fetchPrivateMessages(
 export async function sendPrivateMessage(
   convId: number,
   message: string,
+  attachment?: ChatAttachment | null,
 ): Promise<PrivateMessage> {
+  const body: Record<string, unknown> = { message }
+  if (attachment) body.attachment = attachment
   const data = await post<{ message: PrivateMessage }>(
     `/private/conversations/${convId}/messages`,
-    { message },
+    body,
   )
   return data.message
+}
+
+/** Typing heartbeat — typing:false clears the indicator immediately. */
+export async function sendPrivateTyping(convId: number, typing: boolean): Promise<void> {
+  await post<{ success: boolean }>(`/private/conversations/${convId}/typing`, { typing })
+}
+
+/** Who is typing right now in a conversation. */
+export async function fetchPrivateTyping(convId: number): Promise<{ id: number; name: string }[]> {
+  const data = await get<{ typing: { id: number; name: string }[] }>(
+    `/private/conversations/${convId}/typing`,
+  )
+  return data.typing
 }
 
 export async function markPrivateRead(convId: number): Promise<void> {

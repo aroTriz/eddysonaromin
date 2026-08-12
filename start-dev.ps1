@@ -28,6 +28,10 @@ if (-not (Test-Path (Join-Path $Backend 'database\database.sqlite'))) {
     Pop-Location
 }
 
+# Multi-worker PHP built-in server - REQUIRED for live SSE chat. Without
+# workers the server is single-threaded, so one open stream blocks every
+# other request (sends/polls hang until you refresh).
+$env:PHP_CLI_SERVER_WORKERS = '8'
 Start-Process -FilePath 'php' -ArgumentList 'artisan serve --port=8000' -WorkingDirectory $Backend -WindowStyle Hidden
 
 # ── 2. Frontend (Vite) ─────────────────────────────────────

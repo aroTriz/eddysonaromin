@@ -62,6 +62,76 @@ export interface AdminStats {
   projects: number
   messages: number
   recommendations: number
+  analytics: Analytics
+}
+
+/** One day in the 14-day trend. */
+export interface SeriesPoint {
+  date: string
+  visitors: number
+  views: number
+}
+
+/** Country row for the map-heat ranking. */
+export interface CountryStat {
+  country: string
+  country_name: string
+  visits: number
+  visitors: number
+  lat: number | null
+  lon: number | null
+}
+
+/** City/town row for the top-cities ranking. */
+export interface CityStat {
+  city: string
+  country_name: string
+  visits: number
+  visitors: number
+}
+
+/** Aggregated geo point for the map dots. */
+export interface GeoPoint {
+  lat: number
+  lon: number
+  visits: number
+}
+
+export interface LabelCount {
+  label: string
+  count: number
+}
+
+export interface RecentVisit {
+  ip: string
+  country: string
+  city: string
+  path: string
+  device: string
+  browser: string
+  os: string
+  created_at: string
+}
+
+/** Everything the /aromin dashboard charts, computed from the visits table. */
+export interface Analytics {
+  totals: {
+    visitors: number
+    views: number
+    visitors_today: number
+    views_today: number
+  }
+  series: SeriesPoint[]
+  hourly: number[]
+  top_pages: { path: string; views: number; visitors: number }[]
+  countries: CountryStat[]
+  cities: CityStat[]
+  geo: GeoPoint[]
+  devices: LabelCount[]
+  browsers: LabelCount[]
+  os: LabelCount[]
+  referrers: { domain: string; count: number }[]
+  recent: RecentVisit[]
 }
 
 export interface BlogPostInput {
@@ -73,12 +143,26 @@ export interface BlogPostInput {
   published_at?: string | null
 }
 
-/** Dashboard stats. */
-export function fetchAdminStats(): Promise<AdminStats> {
+/** Dashboard stats + analytics. Pass force=true to bypass the 30s cache. */
+export function fetchAdminStats(force = false): Promise<AdminStats> {
+  if (force) adminCache.delete('admin:stats')
   return cachedAdmin('admin:stats', async () => {
     const res = await fetch(`${API_BASE}/admin/stats`, { headers: authHeaders() })
     return handle<AdminStats>(res)
   })
+}
+
+/**
+ * Reset all analytics — wipes the visits table and zeroes the visitor
+ * counter. Recording restarts from the moment this is called.
+ */
+export async function clearAdminStats(): Promise<void> {
+  adminCache.delete('admin:stats')
+  const res = await fetch(`${API_BASE}/admin/stats/clear`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
 }
 
 /** All posts (including drafts) â€” newest first. Pass archived=true for archived ones. */
@@ -341,13 +425,102 @@ export async function deleteAdminRecommendations(ids: number[]): Promise<{ delet
   return handle<{ deleted: number }>(res)
 }
 
+// ── Account management (registered site accounts) ────────────────────
+
+export interface AdminUser {
+  id: number
+  name: string
+  email: string
+  /** SHA-256 hash — one-way; original plaintext is never stored. */
+  password: string
+  /** True when this users row is linked to an admin (cannot be deleted). */
+  is_admin: boolean
+  conversations: number
+  created_at: string
+}
+
+export interface AdminUserInput {
+  name: string
+  email: string
+  /** Required on create; blank/omitted on update keeps the current password. */
+  password?: string
+}
+
+export interface BulkDeleteResult {
+  deleted: number
+  protected: number
+}
+
+/** All registered accounts. */
+export function fetchAdminUsers(): Promise<AdminUser[]> {
+  return cachedAdmin('admin:users', async () => {
+    const res = await fetch(`${API_BASE}/admin/users`, { headers: authHeaders() })
+    return handle<AdminUser[]>(res)
+  })
+}
+
+/** Create an account. */
+export async function createAdminUser(input: AdminUserInput): Promise<AdminUser> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<AdminUser>(res)
+}
+
+/** Edit an account (password blank keeps the current one). */
+export async function updateAdminUser(id: number, input: Partial<AdminUserInput>): Promise<AdminUser> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<AdminUser>(res)
+}
+
+/** Delete an account (admin-linked accounts are rejected server-side). */
+export async function deleteAdminUser(id: number): Promise<void> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
+}
+
+/** Bulk delete accounts; admin-linked ids are excluded server-side. */
+export async function deleteAdminUsers(ids: number[]): Promise<BulkDeleteResult> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  })
+  return handle<BulkDeleteResult>(res)
+}
+
 // ── Private chat (visitor DMs) ──────────────────────────────────────
 // Raw (no cache, no data-unwrap) — the threads must always be fresh.
+
+/** Attachment carried by a message (image renders inline, file as a card). */
+export interface ChatAttachment {
+  kind: 'image' | 'file'
+  name: string
+  size: number
+  mime: string
+  /** Base64 data-URL. */
+  data: string
+}
 
 export interface AdminPrivateMessage {
   id: number
   sender_id: number
   message: string
+  attachment: ChatAttachment | null
+  read_at: string | null
   created_at: string
 }
 
@@ -358,6 +531,8 @@ export interface AdminPrivateConversation {
     id: number
     sender_id: number
     message: string
+    attachment: ChatAttachment | null
+    read_at: string | null
     created_at: string
   } | null
   unread: number
@@ -384,6 +559,16 @@ export function fetchAdminPrivateConversations(): Promise<AdminPrivateConversati
   )
 }
 
+/** Total unread visitor messages across all threads (navbar badge). */
+export async function fetchAdminPrivateUnread(): Promise<number> {
+  try {
+    const d = await rawAdmin<{ unread: number }>('/admin/private/unread')
+    return d.unread ?? 0
+  } catch {
+    return 0
+  }
+}
+
 export function fetchAdminPrivateMessages(
   convId: number,
   after = 0,
@@ -393,15 +578,33 @@ export function fetchAdminPrivateMessages(
   ).then((d) => d.messages)
 }
 
-/** Reply as the admin. */
+/** Reply as the admin (optionally with an attachment). */
 export function sendAdminPrivateMessage(
   convId: number,
   message: string,
+  attachment?: ChatAttachment | null,
 ): Promise<AdminPrivateMessage> {
+  const body: Record<string, unknown> = { message }
+  if (attachment) body.attachment = attachment
   return rawAdmin<{ message: AdminPrivateMessage }>(
     `/admin/private/conversations/${convId}/messages`,
-    { method: 'POST', body: JSON.stringify({ message }) },
+    { method: 'POST', body: JSON.stringify(body) },
   ).then((d) => d.message)
+}
+
+/** Typing heartbeat — typing:false clears the indicator immediately. */
+export function sendAdminTyping(convId: number, typing: boolean): Promise<void> {
+  return rawAdmin<{ success: boolean }>(
+    `/admin/private/conversations/${convId}/typing`,
+    { method: 'POST', body: JSON.stringify({ typing }) },
+  ).then(() => undefined)
+}
+
+/** Who is typing right now in a thread (visitor names included). */
+export function fetchAdminTyping(convId: number): Promise<{ id: number; name: string }[]> {
+  return rawAdmin<{ typing: { id: number; name: string }[] }>(
+    `/admin/private/conversations/${convId}/typing`,
+  ).then((d) => d.typing)
 }
 
 /** Mark all of the visitor's messages as read. */

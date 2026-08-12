@@ -20,6 +20,8 @@ class StackController extends Controller
             ->orderBy('id')
             ->get(['id', 'label', 'items', 'sort_order']);
 
-        return response()->json(['data' => $groups]);
+        return response()
+            ->json(['data' => $groups])
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 }

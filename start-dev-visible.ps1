@@ -9,6 +9,9 @@ $Backend = Join-Path $Root 'backend'
 $Frontend = Join-Path $Root 'frontend'
 
 Write-Host "`n[1/2] Starting Laravel API on http://127.0.0.1:8000 ..." -ForegroundColor Cyan
+# Multi-worker PHP built-in server - REQUIRED for live SSE chat (a single
+# worker blocks every other request while a stream is open).
+$env:PHP_CLI_SERVER_WORKERS = '8'
 $api = Start-Job -ScriptBlock {
   Set-Location $using:Backend
   php artisan serve --port=8000

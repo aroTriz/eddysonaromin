@@ -424,7 +424,7 @@ onMounted(load)
 
     <!-- â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div v-if="loading" class="space-y-2">
-      <div v-for="i in 5" :key="i" class="h-14 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
+      <div v-for="i in 5" :key="i" class="h-14 skeleton rounded-lg border border-gray-200 bg-gray-50"></div>
     </div>
 
     <div

@@ -21,17 +21,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const password = String(body.password ?? '')
     const confirmation = String(body.password_confirmation ?? '')
 
-    if (!name || name.length > NAME_MAX) {
-      return jsonNoStore({ error: 'The name field is required.' }, 422)
+    // Field-level validation — mirrors the Laravel custom messages so the UI
+    // can render each error under its own input.
+    const fieldErrors: Record<string, string[]> = {}
+    if (!name) fieldErrors.name = ['pick a name to be known by']
+    else if (name.length > NAME_MAX) fieldErrors.name = ['name must be 40 characters or fewer']
+    if (!email) fieldErrors.email = ['please enter your email address']
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fieldErrors.email = ["please include an \u2018@\u2019 in the email address"]
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return jsonNoStore({ error: 'The email must be a valid email address.' }, 422)
-    }
-    if (password.length < 8) {
-      return jsonNoStore({ error: 'The password must be at least 8 characters.' }, 422)
-    }
+    if (!password) fieldErrors.password = ['please enter your password']
+    else if (password.length < 8) fieldErrors.password = ['password needs at least 8 characters']
     if (password !== confirmation) {
-      return jsonNoStore({ error: 'The password confirmation does not match.' }, 422)
+      fieldErrors.password_confirmation = ['passwords don\u2019t match']
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return jsonNoStore({ message: 'The given data was invalid.', errors: fieldErrors }, 422)
     }
 
     const existing = await env.blog_db
@@ -39,7 +44,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .bind(email)
       .first()
     if (existing) {
-      return jsonNoStore({ error: 'The email has already been taken.' }, 422)
+      return jsonNoStore(
+        {
+          message: 'The given data was invalid.',
+          errors: { email: ['that email is already registered — try logging in'] },
+        },
+        422,
+      )
     }
 
     const now = new Date().toISOString()

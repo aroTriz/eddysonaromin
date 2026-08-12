@@ -28,7 +28,11 @@ function formatDate(iso: string | null): string {
 </script>
 
 <template>
-  <div v-if="loading" class="py-8 text-center font-mono text-[13px] text-gray-400">
+  <div
+    v-if="loading"
+    class="animate-blink py-8 text-center font-mono text-[13px] text-gray-400"
+    aria-busy="true"
+  >
     loading...
   </div>
 

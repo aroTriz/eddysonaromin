@@ -29,6 +29,7 @@ let dpr = 1
 let ink = '10 10 10'
 let ripples: Ripple[] = []
 let reduced = false
+let running = false
 let visible = true
 
 function readInk(): void {
@@ -57,6 +58,12 @@ function onPointerDown(e: PointerEvent): void {
   if (reduced) return
   ripples.push({ x: e.clientX, y: e.clientY, start: performance.now() })
   if (ripples.length > MAX_RIPPLES) ripples.shift()
+  // The loop is idle-aware: it only runs while there are active ripples,
+  // so an empty page doesn't burn a permanent 60fps full-viewport canvas.
+  if (!running && visible) {
+    running = true
+    raf = requestAnimationFrame(tick)
+  }
 }
 
 function draw(now: number): void {
@@ -94,16 +101,24 @@ function draw(now: number): void {
 
 function tick(now: number): void {
   draw(now)
-  raf = requestAnimationFrame(tick)
+  if (ripples.length > 0 && visible) {
+    raf = requestAnimationFrame(tick)
+  } else {
+    // All ripples finished (or the tab hid) — stop the loop entirely.
+    raf = 0
+    running = false
+  }
 }
 
 function onVisibility(): void {
   visible = document.visibilityState === 'visible'
-  if (visible && !reduced && !raf) {
+  if (visible && !reduced && ripples.length > 0 && !running) {
+    running = true
     raf = requestAnimationFrame(tick)
-  } else if (!visible && raf) {
+  } else if (!visible && running) {
     cancelAnimationFrame(raf)
     raf = 0
+    running = false
   }
 }
 
@@ -120,12 +135,13 @@ onMounted(() => {
   window.addEventListener('resize', resize)
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
   document.addEventListener('visibilitychange', onVisibility)
-  if (!reduced) raf = requestAnimationFrame(tick)
+  // No startup frame needed — the loop only runs while ripples are active.
 })
 
 onBeforeUnmount(() => {
   if (raf) cancelAnimationFrame(raf)
   raf = 0
+  running = false
   window.removeEventListener('pointerdown', onPointerDown)
   window.removeEventListener('resize', resize)
   window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange)

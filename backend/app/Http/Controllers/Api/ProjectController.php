@@ -27,7 +27,11 @@ class ProjectController extends Controller
             ->orderByDesc('year')
             ->get();
 
-        return response()->json(['data' => $projects]);
+        return response()
+            ->json(['data' => $projects])
+            // Public read — let browsers/CDNs reuse it briefly; stale-while-
+            // revalidate keeps it fresh after 60s without a hard request.
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 
     /**
@@ -37,6 +41,8 @@ class ProjectController extends Controller
     {
         $project = Project::where('slug', $slug)->firstOrFail();
 
-        return response()->json(['data' => $project]);
+        return response()
+            ->json(['data' => $project])
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 }

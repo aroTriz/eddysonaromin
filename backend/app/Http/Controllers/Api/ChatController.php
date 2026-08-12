@@ -20,21 +20,8 @@ class ChatController extends Controller
     private const COOLDOWN_MS = 8000;
     private const MAX_AFTER = 60;
 
-    /** Loose profanity list (substring match) — same spirit as the frontend. */
-    private const BAD_LOOSE = [
-        'fuck', 'motherfuck', 'shit', 'bullshit', 'bitch', 'asshole', 'cunt',
-        'faggot', 'nigger', 'nigga', 'dickhead', 'jackass', 'dumbass',
-        'cocksuck', 'dipshit', 'putangina', 'putanginamo', 'tangina', 'taena',
-        'tarantado', 'gago', 'gaga', 'ulol', 'kingina', 'kupal', 'pakshet',
-        'pakyu', 'hinayupak', 'hindot', 'hindut', 'buwiset', 'bwisit',
-        'putang ina', 'tang ina', 'walang hiya', 'hayop ka', 'gunggong',
-    ];
-
-    private const BAD_STRICT = [
-        'ass', 'dick', 'cock', 'prick', 'slut', 'whore', 'twat', 'wank',
-        'piss', 'bastard', 'pussy', 'puta', 'tanga', 'bobo', 'tite', 'titi',
-        'puki', 'pekpek', 'jakol', 'leche', 'peste', 'lintik', 'ungas', 'inutil',
-    ];
+    /** Censored words loaded once per request from the `censored_words` table. */
+    private static ?array $words = null;
 
     private const LINK_TLDS = [
         'com', 'net', 'org', 'io', 'co', 'dev', 'app', 'ai', 'xyz', 'info',
@@ -91,6 +78,10 @@ class ChatController extends Controller
         if ($this->containsLink($name) || $this->containsLink($message)) {
             return response()->json(['reason' => 'link'], 422);
         }
+        // Offensive names AND messages are rejected outright (mirrors the
+        // Cloudflare Pages Functions build) — a profane message is never
+        // stored, never displayed, never counted. Censoring-in-place used to
+        // post masked words that still showed up in the wall and the total.
         if ($this->isOffensive($name) || $this->isOffensive($message)) {
             return response()->json(['reason' => 'blocked'], 422);
         }
@@ -169,6 +160,9 @@ class ChatController extends Controller
         $after = max(0, (int) $request->query('after', 0));
 
         return response()->stream(function () use ($after) {
+            // SSE runs for as long as the client keeps the connection open —
+            // don't let PHP's max_execution_time kill it after 30s.
+            set_time_limit(0);
             $lastId = $after;
 
             while (true) {
@@ -188,7 +182,8 @@ class ChatController extends Controller
 
                 foreach ($messages as $m) {
                     echo "event: message\n";
-                    echo 'data: ' . $m->toJson() . "\n\n";
+                    // DB::table() rows are stdClass — json_encode, not ->toJson().
+                    echo 'data: ' . json_encode($m) . "\n\n";
                     $lastId = $m->id;
                 }
 
@@ -228,15 +223,42 @@ class ChatController extends Controller
         return (bool) preg_match("/[a-z0-9][a-z0-9-]*\.(?:{$tlds})\b/", $t);
     }
 
+    /** Censored words from the DB, split into loose (substring) + strict (whole word). */
+    private function words(): array
+    {
+        if (self::$words === null) {
+            $loose = [];
+            $strict = [];
+            foreach (DB::table('censored_words')->get(['word', 'kind']) as $row) {
+                $w = mb_strtolower(trim((string) $row->word));
+                if ($w === '') {
+                    continue;
+                }
+                if ($row->kind === 'strict') {
+                    $strict[] = $w;
+                } else {
+                    $loose[] = $w;
+                }
+            }
+            // Longest first so "motherfuck" masks before "fuck" inside it.
+            usort($loose, fn (string $a, string $b) => mb_strlen($b) <=> mb_strlen($a));
+            usort($strict, fn (string $a, string $b) => mb_strlen($b) <=> mb_strlen($a));
+            self::$words = ['loose' => $loose, 'strict' => $strict];
+        }
+
+        return self::$words;
+    }
+
     private function isOffensive(string $text): bool
     {
         $t = mb_strtolower($text);
-        foreach (self::BAD_LOOSE as $w) {
+        $words = $this->words();
+        foreach ($words['loose'] as $w) {
             if (str_contains($t, $w)) {
                 return true;
             }
         }
-        foreach (self::BAD_STRICT as $w) {
+        foreach ($words['strict'] as $w) {
             if (preg_match('/\b' . preg_quote($w, '/') . '\b/u', $t)) {
                 return true;
             }

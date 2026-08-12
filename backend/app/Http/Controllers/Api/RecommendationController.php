@@ -20,6 +20,8 @@ class RecommendationController extends Controller
             ->orderBy('id')
             ->get(['id', 'initials', 'quote', 'author', 'role', 'email', 'sort_order']);
 
-        return response()->json(['data' => $recommendations]);
+        return response()
+            ->json(['data' => $recommendations])
+            ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 }

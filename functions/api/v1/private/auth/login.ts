@@ -17,8 +17,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const email = String(body.email ?? '').trim().toLowerCase()
     const password = String(body.password ?? '')
 
-    if (!email || !password) {
-      return jsonNoStore({ error: 'The email and password fields are required.' }, 422)
+    const fieldErrors: Record<string, string[]> = {}
+    if (!email) fieldErrors.email = ['please enter your email address']
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fieldErrors.email = ["please include an \u2018@\u2019 in the email address"]
+    }
+    if (!password) fieldErrors.password = ['please enter your password']
+    if (Object.keys(fieldErrors).length > 0) {
+      return jsonNoStore({ message: 'The given data was invalid.', errors: fieldErrors }, 422)
     }
 
     const user = await env.blog_db

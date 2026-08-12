@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\ValidatesChatAttachment;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,15 +16,21 @@ use Illuminate\Support\Facades\DB;
  * /aromin admin session (same Bearer token as the rest of the admin API).
  *
  *   GET    /api/v1/admin/private/conversations
+ *   GET    /api/v1/admin/private/unread
  *   GET    /api/v1/admin/private/conversations/{id}/messages?after=
- *   POST   /api/v1/admin/private/conversations/{id}/messages   { message }
+ *   POST   /api/v1/admin/private/conversations/{id}/messages   { message, attachment? }
+ *   POST   /api/v1/admin/private/conversations/{id}/typing     { typing: bool }   heartbeat
+ *   GET    /api/v1/admin/private/conversations/{id}/typing     who is typing
  *   POST   /api/v1/admin/private/conversations/{id}/read
  *   GET    /api/v1/admin/private/conversations/{id}/stream?after=   SSE
  */
 class AdminPrivateChatController extends Controller
 {
+    use ValidatesChatAttachment;
+
     private const MESSAGE_MAX = 2000;
     private const MAX_AFTER = 100;
+    private const TYPING_TTL_SECONDS = 4;
 
     /** Private chat — the ADMIN side of the visitor ↔ admin DMs. */
     public function conversations(Request $request): JsonResponse
@@ -50,6 +57,24 @@ class AdminPrivateChatController extends Controller
         return response()->json(['conversations' => $result]);
     }
 
+    /** Total unread visitor messages across all conversations (navbar badge). */
+    public function unread(Request $request): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $total = DB::table('private_chat_messages as m')
+            ->join('private_chat_sessions as s', 's.id', '=', 'm.session_id')
+            ->where(fn ($q) => $q->where('s.user_a_id', $admin->id)->orWhere('s.user_b_id', $admin->id))
+            ->where('m.sender_id', '!=', $admin->id)
+            ->whereNull('m.read_at')
+            ->count();
+
+        return response()->json(['unread' => $total]);
+    }
+
     public function messages(Request $request, int $id): JsonResponse
     {
         $admin = $this->adminFromRequest($request);
@@ -67,13 +92,15 @@ class AdminPrivateChatController extends Controller
             ->when($after > 0, fn ($q) => $q->where('id', '>', $after)->limit(self::MAX_AFTER))
             ->unless($after > 0, fn ($q) => $q->limit(200))
             ->orderBy('id')
-            ->get(['id', 'sender_id', 'message', 'created_at']);
+            ->get(['id', 'sender_id', 'message', 'attachment', 'read_at', 'created_at']);
 
         return response()->json([
             'messages' => $rows->map(fn ($r): array => [
                 'id' => $r->id,
                 'sender_id' => $r->sender_id,
                 'message' => $r->message,
+                'attachment' => $this->parseAttachment($r->attachment),
+                'read_at' => $r->read_at,
                 'created_at' => $r->created_at,
             ])->values(),
         ]);
@@ -90,7 +117,13 @@ class AdminPrivateChatController extends Controller
         }
 
         $message = trim((string) $request->input('message', ''));
-        if ($message === '' || mb_strlen($message) > self::MESSAGE_MAX) {
+        if (mb_strlen($message) > self::MESSAGE_MAX) {
+            return response()->json(['error' => 'Invalid message.'], 422);
+        }
+
+        $attachment = $this->attachmentJson($request);
+
+        if ($message === '' && $attachment === null) {
             return response()->json(['error' => 'Invalid message.'], 422);
         }
 
@@ -98,11 +131,13 @@ class AdminPrivateChatController extends Controller
             'session_id' => $id,
             'sender_id' => $admin->id,
             'message' => $message,
+            'attachment' => $attachment,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         DB::table('private_chat_sessions')->where('id', $id)->update(['updated_at' => now()]);
+        DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $admin->id)->delete();
 
         $row = DB::table('private_chat_messages')->where('id', $msgId)->first();
 
@@ -111,9 +146,48 @@ class AdminPrivateChatController extends Controller
                 'id' => $row->id,
                 'sender_id' => $row->sender_id,
                 'message' => $row->message,
+                'attachment' => $this->parseAttachment($row->attachment),
+                'read_at' => $row->read_at,
                 'created_at' => $row->created_at,
             ],
         ], 201);
+    }
+
+    /** Typing heartbeat (admin side). */
+    public function typing(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($request->boolean('typing', true)) {
+            DB::table('private_chat_typing')->updateOrInsert(
+                ['conversation_id' => $id, 'user_id' => $admin->id],
+                ['typing_until' => now()->addSeconds(self::TYPING_TTL_SECONDS), 'created_at' => now(), 'updated_at' => now()]
+            );
+        } else {
+            DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $admin->id)->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Who is currently typing in a conversation (admin side). */
+    public function typingStatus(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json(['typing' => $this->activeTyping($id)]);
     }
 
     /** Mark every message from the visitor as read. */
@@ -147,7 +221,15 @@ class AdminPrivateChatController extends Controller
         $after = max(0, (int) $request->query('after', 0));
 
         return response()->stream(function () use ($after, $id): void {
+            // SSE runs for as long as the client keeps the connection open —
+            // don't let PHP's max_execution_time kill it after 30s, and force
+            // incremental flushes so live frames aren't held in the buffer.
+            set_time_limit(0);
+            @ini_set('output_buffering', 'off');
+            @ini_set('zlib.output_compression', 'off');
+            @ini_set('implicit_flush', '1');
             $lastId = $after;
+            $lastTypingKey = null;
 
             while (true) {
                 if (connection_aborted()) {
@@ -159,7 +241,7 @@ class AdminPrivateChatController extends Controller
                     ->where('id', '>', $lastId)
                     ->orderBy('id')
                     ->limit(self::MAX_AFTER)
-                    ->get(['id', 'sender_id', 'message', 'created_at']);
+                    ->get(['id', 'sender_id', 'message', 'attachment', 'read_at', 'created_at']);
 
                 foreach ($rows as $m) {
                     echo "event: message\n";
@@ -167,9 +249,20 @@ class AdminPrivateChatController extends Controller
                         'id' => $m->id,
                         'sender_id' => $m->sender_id,
                         'message' => $m->message,
+                        'attachment' => $this->parseAttachment($m->attachment),
+                        'read_at' => $m->read_at,
                         'created_at' => $m->created_at,
                     ]) . "\n\n";
                     $lastId = $m->id;
+                }
+
+                // Typing state — emit only when the set of typers changes.
+                $typing = $this->activeTyping($id);
+                $typingKey = json_encode($typing);
+                if ($typingKey !== $lastTypingKey) {
+                    $lastTypingKey = $typingKey;
+                    echo "event: typing\n";
+                    echo 'data: ' . json_encode(['users' => $typing]) . "\n\n";
                 }
 
                 echo ": keepalive\n\n";
@@ -229,7 +322,7 @@ class AdminPrivateChatController extends Controller
         $last = DB::table('private_chat_messages')
             ->where('session_id', $session->id)
             ->orderByDesc('id')
-            ->first(['id', 'sender_id', 'message', 'created_at']);
+            ->first(['id', 'sender_id', 'message', 'read_at', 'created_at']);
 
         $unread = DB::table('private_chat_messages')
             ->where('session_id', $session->id)
@@ -244,11 +337,26 @@ class AdminPrivateChatController extends Controller
                 'id' => $last->id,
                 'sender_id' => $last->sender_id,
                 'message' => $last->message,
+                'read_at' => $last->read_at,
                 'created_at' => $last->created_at,
             ] : null,
             'unread' => $unread,
             'updated_at' => $session->updated_at,
         ];
+    }
+
+    /** Currently typing participants (non-expired typing rows + names). */
+    private function activeTyping(int $id): array
+    {
+        return DB::table('private_chat_typing as t')
+            ->join('users as u', 'u.id', '=', 't.user_id')
+            ->where('t.conversation_id', $id)
+            ->where('t.typing_until', '>', now())
+            ->select('t.user_id', 'u.name')
+            ->get()
+            ->map(fn ($r): array => ['id' => (int) $r->user_id, 'name' => (string) $r->name])
+            ->values()
+            ->all();
     }
 
     private function bearerToken(Request $request): ?string

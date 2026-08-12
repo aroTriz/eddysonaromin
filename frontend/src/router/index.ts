@@ -93,6 +93,12 @@ const router = createRouter({
       component: () => import('@/views/ContactView.vue'),
       meta: { title: 'Contact — Eddyson Aromin' },
     },
+    {
+      path: '/private-chat',
+      name: 'private-chat',
+      component: () => import('@/views/PrivateChatView.vue'),
+      meta: { title: 'Private Chat — Eddyson Aromin' },
+    },
     // ── Admin area (/aromin) ───────────────────────────────────
     {
       path: '/aromin',
@@ -123,6 +129,12 @@ const router = createRouter({
       name: 'aromin-preferences',
       component: () => import('@/views/aromin/ArominPreferencesView.vue'),
       meta: { title: 'Preferences — Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/users',
+      name: 'aromin-users',
+      component: () => import('@/views/aromin/ArominUsersView.vue'),
+      meta: { title: 'Accounts — Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/chat',
