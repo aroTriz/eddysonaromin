@@ -14,6 +14,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AppShell from '@/components/layout/AppShell.vue'
 import ClickRipple from '@/components/ui/ClickRipple.vue'
+import SalaryCat from '@/components/ui/SalaryCat.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
@@ -100,6 +101,9 @@ onMounted(async () => {
       <SiteBackdrop />
 
       <AppShell :active="activeRoute" />
+
+      <!-- SalaryCat desktop pet — walks along the bottom of public pages -->
+      <SalaryCat />
 
       <!-- Routed content — offset by the fixed sidebar width on lg+.
            Keyed wrapper replays the blur entrance on route change; the

@@ -11,12 +11,15 @@ import { computed } from 'vue'
 
 import worldMap from '@/assets/world-map.svg?raw'
 import philippinesMap from '@/assets/philippines-map.svg?raw'
-import type { GeoPoint } from '@/services/adminApi'
+import type { CityStat, GeoPoint } from '@/services/adminApi'
 
 const props = defineProps<{
   points: GeoPoint[]
   /** ISO code of the selected country — zooms the map to its bounds. */
   country?: string
+  /** City heat rows (with lat/lon) — shown as labeled markers when a
+   *  specific country is selected, so strong cities stand out. */
+  cities?: CityStat[]
 }>()
 
 /** amcharts worldLow mercator bounds (declared in the source SVG). */
@@ -27,12 +30,22 @@ const LAT_BOTTOM = -55.55
 
 const VIEW_BOX = '-20 -25 1040 690'
 
-/** amcharts philippinesLow mercator bounds (from its <ammap> header). */
-const PH_LON_LEFT = 116.927358
-const PH_LON_RIGHT = 126.606334
-const PH_LAT_TOP = 20.834567
-const PH_LAT_BOTTOM = 4.641372
-const PH_VIEW_BOX = '-10 -10 1050 1100'
+/**
+ * amcharts philippinesLow SVG paths are drawn in a coordinate space that is
+ * OFFSET from the geographic bounds — calibrated empirically against
+ * province centroids:
+ *   x = 71.278 * lon - 8277.7
+ *   y = -4053.1 * merc(lat) + 1534.7
+ * Full landmass bbox in the PH SVG space (computed from all paths).
+ */
+const PH_BBOX = { minX: 44.79, maxX: 747.2, minY: 18.24, maxY: 1220.02 }
+const PH_PAD = 35
+const PH_VIEW_BOX = `${PH_BBOX.minX - PH_PAD} ${PH_BBOX.minY - PH_PAD} ${PH_BBOX.maxX - PH_BBOX.minX + PH_PAD * 2} ${PH_BBOX.maxY - PH_BBOX.minY + PH_PAD * 2}`
+/** Display height for the PH map (px) — keeps the tall archipelago from
+ *  blowing up the card. Everything else is scaled to match. */
+const PH_RENDER_H = 480
+/** viewBox→screen scale for the PH map at its constrained height. */
+const PH_SCALE = PH_RENDER_H / (PH_BBOX.maxY - PH_BBOX.minY + PH_PAD * 2)
 
 /** True when the detailed Philippines map is being shown. */
 const isPh = computed(() => props.country?.toUpperCase() === 'PH')
@@ -108,13 +121,12 @@ function project(lon: number, lat: number): { x: number; y: number } {
   return { x, y }
 }
 
-/** lon/lat → coordinates on the detailed Philippines map. */
+/** lon/lat → coordinates on the detailed Philippines map (calibrated). */
 function projectPh(lon: number, lat: number): { x: number; y: number } {
-  const x = ((((lon - PH_LON_LEFT) / (PH_LON_RIGHT - PH_LON_LEFT)) * 1000) % 1000 + 1000) % 1000
-  const t = merc(PH_LAT_TOP)
-  const b = merc(PH_LAT_BOTTOM)
-  const y = ((t - merc(lat)) / (t - b)) * 1030
-  return { x, y }
+  return {
+    x: 71.278 * lon - 8277.7,
+    y: -4053.1 * merc(lat) + 1534.7,
+  }
 }
 
 /** Zoomed viewBox for the selected country — world view when none. */
@@ -172,17 +184,52 @@ const dots = computed(() => {
   return props.points.map((p) => {
     const { x, y } = projectFn(p.lon, p.lat)
     const t = p.visits / maxVisits.value
+    // Sizes are in viewBox units — scale them so they look the same on
+    // screen once the PH map is constrained to PH_RENDER_H.
+    const k = isPh.value ? 1 / PH_SCALE : 1
     return {
       ...p,
       x,
       y,
-      r: isPh.value ? Math.min(3.5 + Math.log2(1 + p.visits) * 2.2, 14) : Math.min(2.2 + Math.log2(1 + p.visits) * 1.5, 11),
+      r: isPh.value
+        ? Math.min((3.5 + Math.log2(1 + p.visits) * 2.2) * k, 14 * k)
+        : Math.min(2.2 + Math.log2(1 + p.visits) * 1.5, 11),
       opacity: 0.35 + 0.65 * t,
     }
   })
 })
 
 const maxVisits = computed(() => Math.max(1, ...props.points.map((p) => p.visits)))
+
+/**
+ * Top cities of the selected country with lat/lon — rendered as labeled
+ * heat markers on the country map (e.g. Manila, Cebu on the PH map).
+ */
+const cityMarkers = computed(() => {
+  const code = props.country?.toUpperCase()
+  if (!code || !props.cities) return []
+  const projectFn = isPh.value ? projectPh : project
+  const maxCity = Math.max(1, ...props.cities.map((c) => c.visits))
+  const k = isPh.value ? 1 / PH_SCALE : 1
+  return props.cities
+    .filter((c) => c.country === code && c.lat !== null && c.lon !== null && c.visits > 0)
+    .slice(0, 8)
+    .map((c) => {
+      const { x, y } = projectFn(c.lon as number, c.lat as number)
+      return {
+        name: c.city,
+        x,
+        y,
+        visits: c.visits,
+        r: isPh.value
+          ? Math.min((5 + (c.visits / maxCity) * 9) * k, 15 * k)
+          : Math.min(3 + (c.visits / maxCity) * 6, 10),
+        labelOffset: isPh.value ? 5 * k + 4 : 0,
+        showLabel: isPh.value && c.visits >= maxCity * 0.3,
+      }
+    })
+    .sort((a, b) => b.visits - a.visits)
+})
 
 /** Native <title> tooltip text for one dot. */
 function dotTitle(d: { lat: number; lon: number; visits: number }): string {
@@ -195,7 +242,7 @@ function dotTitle(d: { lat: number; lon: number; visits: number }): string {
   <div>
     <svg
       :viewBox="viewBox"
-      class="h-auto w-full"
+      :class="isPh ? 'mx-auto h-auto max-h-[480px] w-auto max-w-full' : 'h-auto w-full'"
       preserveAspectRatio="xMidYMid meet"
       role="img"
       :aria-label="isPh
@@ -218,6 +265,23 @@ function dotTitle(d: { lat: number; lon: number; visits: number }): string {
           <title>{{ dotTitle(d) }}</title>
         </circle>
       </g>
+      <!-- City heat markers — labeled on the country map -->
+      <g v-if="cityMarkers.length" class="city-heat">
+        <g v-for="c in cityMarkers" :key="c.name" class="city-marker">
+          <circle :cx="c.x" :cy="c.y" :r="c.r" class="city-ring">
+            <title>{{ c.name }} — {{ c.visits }} visits</title>
+          </circle>
+          <text
+            v-if="c.showLabel"
+            :x="c.x"
+            :y="c.y - c.r - c.labelOffset"
+            :class="['city-label', isPh ? 'city-label-ph' : '']"
+            text-anchor="middle"
+          >
+            {{ c.name }}
+          </text>
+        </g>
+      </g>
     </svg>
 
     <p v-if="dots.length === 0" class="pb-6 text-center font-mono text-[11.5px] text-gray-400">
@@ -234,5 +298,29 @@ function dotTitle(d: { lat: number; lon: number; visits: number }): string {
 }
 .heat-dot {
   fill: rgb(var(--ink));
+}
+.city-ring {
+  fill: rgb(var(--ink));
+  opacity: 0.5;
+  stroke: rgb(var(--bg));
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.city-label {
+  fill: rgb(var(--ink));
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgb(var(--bg));
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+/* On the PH map the viewBox is large (≈1272 tall → 480px screen), so
+   text + stroke must be scaled up to stay readable. */
+.city-label-ph {
+  font-size: 30px;
+  stroke-width: 7px;
 }
 </style>

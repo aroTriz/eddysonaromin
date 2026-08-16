@@ -183,7 +183,7 @@ class AdminController extends Controller
             ->where('created_at', '>=', $retentionStart)
             ->whereNotNull('city')
             ->where('city', '!=', '')
-            ->selectRaw("city, country, max(nullif(country_name, '')) as country_name, count(*) as visits, count(distinct ip) as visitors")
+            ->selectRaw("city, country, max(nullif(country_name, '')) as country_name, count(*) as visits, count(distinct ip) as visitors, min(lat) as lat, min(lon) as lon")
             ->groupBy('city', 'country')
             ->orderByDesc('visits')
             ->get()
@@ -193,6 +193,8 @@ class AdminController extends Controller
                 'country_name' => (string) ($r->country_name ?? ''),
                 'visits' => (int) $r->visits,
                 'visitors' => (int) $r->visitors,
+                'lat' => $r->lat !== null ? (float) $r->lat : null,
+                'lon' => $r->lon !== null ? (float) $r->lon : null,
             ])
             ->all();
 

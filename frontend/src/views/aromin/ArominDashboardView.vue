@@ -367,7 +367,7 @@ function timeAgo(iso: string): string {
               label="Map filter — world or one country"
             />
           </div>
-          <WorldHeatMap :points="mapPoints" :country="mapCountry" />
+          <WorldHeatMap :points="mapPoints" :country="mapCountry" :cities="a.cities" />
         </div>
         <div class="rounded-xl border border-gray-200 bg-white p-6">
           <p class="mb-4 font-mono text-[11px] text-gray-500">// top countries</p>
