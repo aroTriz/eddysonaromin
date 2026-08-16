@@ -412,12 +412,12 @@ onMounted(load)
           @click="toggleAll72h"
         >
           <span
-            class="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200 dark:bg-white"
+            class="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
             :class="allScheduled ? 'translate-x-[1.125rem]' : 'translate-x-0.5'"
           >
             <Check
               v-if="allScheduled"
-              class="h-2.5 w-2.5 text-white dark:text-black"
+              class="h-2.5 w-2.5 text-white"
               :stroke-width="3"
               aria-hidden="true"
             />

@@ -75,6 +75,12 @@ function pick(option: ThemePreference, event: MouseEvent): void {
   color: rgb(var(--ink));
 }
 
+/* Dark mode: the g100 pill (rgb 30 30 34) nearly vanishes against the
+   --bg sidebar (rgb 12 12 15) — lift the pill so the selected theme reads. */
+.dark .theme-opt.is-active {
+  background: rgb(var(--g300));
+}
+
 .theme-opt svg {
   width: 13px;
   height: 13px;

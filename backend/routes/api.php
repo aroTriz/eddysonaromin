@@ -49,10 +49,12 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/chat/identity', [ChatController::class, 'identityGet']);
     Route::post('/chat/identity', [ChatController::class, 'identityPost']);
 
-    // ── Site settings (community chat on/off + backdrop on/off) ──
+    // ── Site settings (community chat on/off, backdrops, pet config) ──
     Route::get('/settings', [SiteSettingsController::class, 'show']);
+    Route::get('/settings/pet', [SiteSettingsController::class, 'pet']);
     Route::post('/admin/settings/community-chat', [SiteSettingsController::class, 'updateCommunityChat']);
     Route::post('/admin/settings/backdrop', [SiteSettingsController::class, 'updateBackdrop']);
+    Route::post('/admin/settings/pet', [SiteSettingsController::class, 'updatePet']);
 
     // ── Private chat (visitor ↔ admin DMs) ─────────────────────
     Route::post('/private/auth/register', [PrivateChatController::class, 'register']);

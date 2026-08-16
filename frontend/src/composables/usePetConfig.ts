@@ -1,13 +1,16 @@
 import { reactive } from 'vue'
 
+import { getToken } from './useAuth'
+
 /**
- * Pet configuration — shared by the navbar toggle (AppShell), the SalaryCat
- * pet itself, and the /aromin/preferences admin page. Persisted in
- * localStorage under `aromin-pet-config`; changes apply instantly because
- * every consumer reads the same reactive singleton.
+ * Pet configuration — the GLOBAL config lives in the backend API
+ * (site_settings.pet_settings, edited from the /aromin/pet admin page).
+ * The navbar toggle is a per-browser override of `enabled` only. Every
+ * consumer (SalaryCat, AppShell, the pet admin page) reads the same
+ * reactive singleton, so changes apply instantly.
  */
 export interface PetConfig {
-  /** Show the pet on public pages (navbar toggle + admin switch). */
+  /** Show the pet on public pages (global default). */
   enabled: boolean
   /** Sprite scale multiplier (0.35 small → 0.65 large). */
   scale: number
@@ -25,8 +28,6 @@ export const DEFAULT_PET_CONFIG: PetConfig = {
   animate: true,
 }
 
-const STORAGE_KEY = 'aromin-pet-config'
-
 /** Size presets used by the admin page. */
 export const PET_SCALE_OPTIONS = [
   { value: 0.35, label: 'small' },
@@ -41,37 +42,107 @@ export const PET_SPEED_OPTIONS = [
   { value: 1.5, label: 'fast' },
 ] as const
 
-function readConfig(): PetConfig {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const j = JSON.parse(raw) as Partial<PetConfig>
-      return {
-        enabled: typeof j.enabled === 'boolean' ? j.enabled : DEFAULT_PET_CONFIG.enabled,
-        scale: PET_SCALE_OPTIONS.some((o) => o.value === j.scale)
-          ? (j.scale as number)
-          : DEFAULT_PET_CONFIG.scale,
-        speed: PET_SPEED_OPTIONS.some((o) => o.value === j.speed)
-          ? (j.speed as number)
-          : DEFAULT_PET_CONFIG.speed,
-        animate: typeof j.animate === 'boolean' ? j.animate : DEFAULT_PET_CONFIG.animate,
-      }
-    }
-  } catch {
-    /* storage unavailable — use defaults */
-  }
-  return { ...DEFAULT_PET_CONFIG }
-}
+const API_BASE = '/api/v1'
+const CACHE_KEY = 'aromin-pet-config'
+const LOCAL_ENABLED_KEY = 'aromin-pet-local-enabled' // '0' | '1' | unset
 
 /** Reactive singleton — every consumer reads the same instance. */
-export const petConfig = reactive<PetConfig>(readConfig())
+export const petConfig = reactive<PetConfig>({ ...DEFAULT_PET_CONFIG })
 
-/** Merge a partial update, persist it, and let all consumers react. */
-export function updatePetConfig(patch: Partial<PetConfig>): void {
-  Object.assign(petConfig, patch)
+function readCache(): Partial<PetConfig> | null {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...petConfig }))
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const j = JSON.parse(raw) as Partial<PetConfig>
+    return typeof j === 'object' && j !== null ? j : null
   } catch {
-    /* storage unavailable — keep in-session state */
+    return null
+  }
+}
+
+function writeCache(): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ...petConfig }))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function readLocalEnabled(): boolean | null {
+  try {
+    const v = localStorage.getItem(LOCAL_ENABLED_KEY)
+    return v === '1' ? true : v === '0' ? false : null
+  } catch {
+    return null
+  }
+}
+
+function clearLocalEnabled(): void {
+  try {
+    localStorage.removeItem(LOCAL_ENABLED_KEY)
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/**
+ * Boot — load the GLOBAL config from the API, then apply this browser's
+ * local enabled override (from the navbar toggle). Call once at app start;
+ * safe to run before the admin login (the endpoint is public).
+ */
+export async function bootPetConfig(): Promise<void> {
+  let api: Partial<PetConfig> | null = null
+  try {
+    const res = await fetch(`${API_BASE}/settings/pet`)
+    if (res.ok) api = (await res.json()) as Partial<PetConfig>
+  } catch {
+    /* offline — fall back to the cached config */
+  }
+
+  const base = { ...DEFAULT_PET_CONFIG, ...(api ?? readCache() ?? {}) }
+  const local = readLocalEnabled()
+
+  petConfig.enabled = local ?? base.enabled ?? DEFAULT_PET_CONFIG.enabled
+  petConfig.scale = base.scale ?? DEFAULT_PET_CONFIG.scale
+  petConfig.speed = base.speed ?? DEFAULT_PET_CONFIG.speed
+  petConfig.animate = base.animate ?? DEFAULT_PET_CONFIG.animate
+  writeCache()
+}
+
+/**
+ * Admin page — apply the config locally AND persist it globally through
+ * the API. Clears the per-browser navbar override so the global value wins.
+ */
+export async function savePetConfigToApi(): Promise<void> {
+  const token = getToken()
+  if (!token) return
+
+  const res = await fetch(`${API_BASE}/admin/settings/pet`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ ...petConfig }),
+  })
+  if (!res.ok) {
+    const j = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(j.error ?? 'Failed to save pet settings')
+  }
+
+  const saved = (await res.json()) as PetConfig
+  Object.assign(petConfig, saved)
+  clearLocalEnabled()
+  writeCache()
+}
+
+/**
+ * Navbar toggle — a per-browser on/off for the CURRENT visitor. It never
+ * touches the global API config (the admin pet page owns that).
+ */
+export function togglePetLocal(): void {
+  const next = !petConfig.enabled
+  petConfig.enabled = next
+  try {
+    localStorage.setItem(LOCAL_ENABLED_KEY, next ? '1' : '0')
+  } catch {
+    /* storage unavailable */
   }
 }

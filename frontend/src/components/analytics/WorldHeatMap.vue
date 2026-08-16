@@ -181,19 +181,17 @@ const landHtml = computed(() => {
 /** Dots projected onto whichever map is showing. */
 const dots = computed(() => {
   const projectFn = isPh.value ? projectPh : project
+  // Fixed-size markers — the hover <title> already shows the visit count.
+  // Sizes are in viewBox units, so scale them to a constant screen size.
+  const k = isPh.value ? 1 / PH_SCALE : 1
   return props.points.map((p) => {
     const { x, y } = projectFn(p.lon, p.lat)
     const t = p.visits / maxVisits.value
-    // Sizes are in viewBox units — scale them so they look the same on
-    // screen once the PH map is constrained to PH_RENDER_H.
-    const k = isPh.value ? 1 / PH_SCALE : 1
     return {
       ...p,
       x,
       y,
-      r: isPh.value
-        ? Math.min((3.5 + Math.log2(1 + p.visits) * 2.2) * k, 14 * k)
-        : Math.min(2.2 + Math.log2(1 + p.visits) * 1.5, 11),
+      r: isPh.value ? 3.5 * k : 3.5,
       opacity: 0.35 + 0.65 * t,
     }
   })
@@ -221,9 +219,8 @@ const cityMarkers = computed(() => {
         x,
         y,
         visits: c.visits,
-        r: isPh.value
-          ? Math.min((5 + (c.visits / maxCity) * 9) * k, 15 * k)
-          : Math.min(3 + (c.visits / maxCity) * 6, 10),
+        // Fixed-size ring — the hover <title> shows the visit count.
+        r: isPh.value ? 5 * k : 5,
         labelOffset: isPh.value ? 5 * k + 4 : 0,
         showLabel: isPh.value && c.visits >= maxCity * 0.3,
       }

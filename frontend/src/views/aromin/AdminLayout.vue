@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { FolderKanban, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { FolderKanban, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -104,6 +104,7 @@ const navGroups = [
     label: 'g4',
     links: [
       { label: 'Users', to: '/aromin/users', name: 'aromin-users', icon: Users },
+      { label: 'Pet', to: '/aromin/pet', name: 'aromin-pet', icon: PawPrint },
       { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
     ],
   },

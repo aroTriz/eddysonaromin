@@ -10,7 +10,7 @@ import EmailModal from '@/components/home/EmailModal.vue'
 import AskOverlay from '@/components/ui/AskOverlay.vue'
 import ChatOverlay from '@/components/ui/ChatOverlay.vue'
 import PrivateChatOverlay from '@/components/ui/PrivateChatOverlay.vue'
-import { petConfig, updatePetConfig } from '@/composables/usePetConfig'
+import { petConfig, togglePetLocal } from '@/composables/usePetConfig'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
@@ -37,11 +37,15 @@ function closeMobileMenu(): void {
   document.documentElement.style.overflow = ''
 }
 
-/** ⌘K / Alt+K — open the "ask anything" overlay (bryllim-style). */
+/** ⌘K / Alt+K — open the "ask anything" overlay. ⌘P / Alt+P — toggle pet. */
 function onGlobalKeydown(e: KeyboardEvent): void {
   if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     askRef.value?.openAsk()
+  }
+  if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'p') {
+    e.preventDefault()
+    togglePetLocal()
   }
 }
 
@@ -150,6 +154,32 @@ const navGroups = [
       </span>
     </button>
 
+    <!-- Pet toggle — right next to "ask anything", one line, ⌘P / Alt+P -->
+    <button
+      type="button"
+      class="mt-3 inline-flex w-fit items-center gap-2 whitespace-nowrap text-[12px] transition-colors"
+      :class="petConfig.enabled
+        ? 'text-gray-700 hover:text-ink dark:text-gray-300 dark:hover:text-gray-950'
+        : 'text-gray-400 hover:text-ink dark:text-gray-500 dark:hover:text-gray-950'"
+      :aria-pressed="petConfig.enabled"
+      :aria-label="petConfig.enabled ? 'Hide pet' : 'Show pet'"
+      @click="togglePetLocal"
+    >
+      <PawPrint
+        class="h-3.5 w-3.5"
+        :stroke-width="1.8"
+        :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : 'text-gray-400'"
+      />
+      <span :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : ''">toggle pet</span>
+      <span class="inline-flex items-center gap-1">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
+          {{ isMac ? '⌘' : 'Alt' }}
+        </kbd>
+        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">P</kbd>
+      </span>
+    </button>
+
     <div class="mt-4 border-y border-gray-200 py-3.5 dark:border-gray-300">
       <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500 dark:text-gray-400">
         <b class="presence-num font-bold text-ink dark:text-gray-950">1</b> person viewing now
@@ -173,29 +203,6 @@ const navGroups = [
     </div>
 
     <div class="mt-6 shrink-0">
-      <!-- Pet toggle — show/hide the SalaryCat (greyfolio-style "my pets") -->
-      <button
-        type="button"
-        class="mb-3.5 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
-        :aria-pressed="petConfig.enabled"
-        :aria-label="petConfig.enabled ? 'Hide salary cat' : 'Show salary cat'"
-        :title="petConfig.enabled ? 'Hide salary cat' : 'Show salary cat'"
-        @click="updatePetConfig({ enabled: !petConfig.enabled })"
-      >
-        <PawPrint
-          class="h-4 w-4"
-          :stroke-width="1.6"
-          :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : 'text-gray-300 dark:text-gray-600'"
-        />
-        <span :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : ''">salary cat</span>
-        <span
-          class="ml-0.5 rounded-full px-1.5 py-0.5 font-mono text-[9.5px] leading-none"
-          :class="petConfig.enabled ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400'"
-        >
-          {{ petConfig.enabled ? 'on' : 'off' }}
-        </span>
-      </button>
-
       <div class="mb-4">
         <ThemeSwitch />
       </div>
@@ -247,9 +254,10 @@ const navGroups = [
         <button
           type="button"
           :aria-pressed="petConfig.enabled"
-          :aria-label="petConfig.enabled ? 'Hide salary cat' : 'Show salary cat'"
+          :aria-label="petConfig.enabled ? 'Hide pet' : 'Show pet'"
+          title="Toggle pet (Alt+P)"
           class="p-1 text-gray-700 hover:text-ink"
-          @click="updatePetConfig({ enabled: !petConfig.enabled })"
+          @click="togglePetLocal"
         >
           <PawPrint
             class="h-5 w-5"

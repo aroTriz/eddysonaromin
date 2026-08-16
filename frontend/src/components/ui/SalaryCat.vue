@@ -41,6 +41,10 @@ const catW = computed(() => FRAME_W * petConfig.scale)
 const catH = computed(() => FRAME_H * petConfig.scale)
 const floorY = () => window.innerHeight - FRAME_H * petConfig.scale
 
+/** Walk/drag left limit — on desktop stay right of the fixed sidebar
+ *  (w-56 = 224px) so the cat never roams behind/over the navbar. */
+const minX = () => (window.innerWidth >= 1024 ? 232 : 8)
+
 const x = ref(0) // top-left x in viewport px
 const y = ref(0) // top-left y in viewport px
 const bgPos = ref('0px 0px')
@@ -52,6 +56,11 @@ let vy = 0
 let grounded = true
 const GRAVITY = 2400 // px/s²
 const BOUNCE = 0.32
+// Fixed-timestep integration (120Hz) — gravity is always the same speed,
+// even when the frame rate drops (a naive capped dt used to make the cat
+// fall in slow motion during heavy frames / theme transitions).
+const PHYS_STEP = 1 / 120
+let physAccum = 0
 
 // ── Animation state ──────────────────────────────────────────────
 let rafId = 0
@@ -153,7 +162,7 @@ function onPointerMove(e: PointerEvent): void {
   if (Math.abs(e.clientX - downX) > 4 || Math.abs(e.clientY - downY) > 4) {
     movedDuringPress = true
   }
-  x.value = Math.max(6, Math.min(window.innerWidth - catW.value - 6, e.clientX - dragOffX))
+  x.value = Math.max(minX(), Math.min(window.innerWidth - catW.value - 6, e.clientX - dragOffX))
   y.value = Math.max(0, Math.min(window.innerHeight - 4, e.clientY - dragOffY))
 }
 
@@ -182,14 +191,12 @@ function onPointerUp(): void {
   }
 }
 
-function tick(t: number): void {
-  const dt = Math.min(0.05, (t - lastT) / 1000)
-  lastT = t
-
+/** One fixed physics step — gravity + walking, integrated at 120Hz. */
+function stepPhysics(h: number): void {
   // ── Gravity — only when it isn't being held ─────────────────
   if (!dragging.value && !grounded) {
-    vy += GRAVITY * dt
-    y.value += vy * dt
+    vy += GRAVITY * h
+    y.value += vy * h
     const floor = floorY()
     if (y.value >= floor) {
       y.value = floor
@@ -203,20 +210,33 @@ function tick(t: number): void {
     }
   }
 
-  // ── Walking on the floor — bounce off the viewport edges ────
+  // ── Walking on the floor — bounce off the content-area edges ──
   if (!dragging.value && grounded && (animName === 'walkL' || animName === 'walkR')) {
     const dir = animName === 'walkL' ? -1 : 1
-    x.value += dir * WALK_SPEED * petConfig.speed * dt
-    if (x.value <= 8) {
-      x.value = 8
+    x.value += dir * WALK_SPEED * petConfig.speed * h
+    if (x.value <= minX()) {
+      x.value = minX()
       startWalk('R')
     } else if (x.value >= window.innerWidth - catW.value - 8) {
       x.value = window.innerWidth - catW.value - 8
       startWalk('L')
     }
   }
+}
 
-  // ── Frame stepping ──────────────────────────────────────────
+function tick(t: number): void {
+  const dt = Math.min(0.25, (t - lastT) / 1000)
+  lastT = t
+
+  // Run the physics on a fixed cadence so the fall/landing is identical
+  // regardless of how many frames actually render per second.
+  physAccum += dt
+  while (physAccum >= PHYS_STEP) {
+    stepPhysics(PHYS_STEP)
+    physAccum -= PHYS_STEP
+  }
+
+  // ── Frame stepping (real time) ──────────────────────────────
   frameAcc += dt
   const step = 1 / anim.fps
   while (frameAcc >= step) {
@@ -254,7 +274,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="petConfig.enabled" class="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
+  <div v-if="petConfig.enabled" class="pointer-events-none fixed inset-0 z-[70]" aria-hidden="true">
     <button
       type="button"
       class="salary-cat group pointer-events-auto absolute left-0 top-0 block cursor-grab touch-none select-none border-0 bg-transparent p-0"

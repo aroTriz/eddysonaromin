@@ -18,10 +18,14 @@ import SalaryCat from '@/components/ui/SalaryCat.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
+import { bootPetConfig } from '@/composables/usePetConfig'
 import { trackVisit } from '@/utils/analytics'
 
 // Boot theme handling (applies the persisted preference immediately).
 useTheme()
+
+// Boot the pet config from the backend API (global enabled/scale/speed/animate).
+void bootPetConfig()
 
 // Right-click protection toast.
 const { toastVisible } = useSiteBehavior()
