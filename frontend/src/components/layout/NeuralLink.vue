@@ -164,7 +164,9 @@ function tick(): void {
 
 function onVisibility(): void {
   const nowVisible = document.visibilityState === 'visible'
-  if (nowVisible && !reduced && !raf) {
+  // Only run when BOTH the tab is visible AND this layer is the active
+  // backdrop — a hidden layer must never keep animating (double rAF = lag).
+  if (nowVisible && !reduced && props.active !== false && !raf) {
     raf = requestAnimationFrame(tick)
   } else if (!nowVisible && raf) {
     cancelAnimationFrame(raf)

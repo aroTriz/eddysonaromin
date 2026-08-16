@@ -147,7 +147,9 @@ function start(): void {
 }
 
 function onVisibility(): void {
-  if (document.visibilityState === 'visible') start()
+  // Only run when BOTH the tab is visible AND this layer is the active
+  // backdrop — a hidden layer must never keep animating (double rAF = lag).
+  if (document.visibilityState === 'visible' && props.active !== false) start()
   else stop()
 }
 
