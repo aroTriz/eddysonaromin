@@ -15,9 +15,11 @@
  *
  * The whole layer can be turned off from /aromin/preferences ("Animated
  * Backdrops"): when disabled the canvases are not rendered at all and the
- * themes show PURE colors (plain white / plain near-black).
+ * themes show PURE colors (plain white / plain near-black). The toggle
+ * broadcasts a `backdrop-change` event so this layer reacts INSTANTLY —
+ * no page refresh required.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import NeuralLink from '@/components/layout/NeuralLink.vue'
 import StarsThree from '@/components/ui/StarsThree.vue'
@@ -30,10 +32,25 @@ const isDark = computed(() => resolveIsDark(preference.value))
 
 /** Animated backdrops on/off — from the server-side site setting. Fail-open. */
 const backdropOn = ref(true)
+
+const BACKDROP_CHANGE_EVENT = 'backdrop-change'
+
+function onBackdropChange(e: Event): void {
+  const detail = (e as CustomEvent).detail
+  if (detail && typeof detail.enabled === 'boolean') {
+    backdropOn.value = detail.enabled
+  }
+}
+
 onMounted(() => {
   void fetchBackdropEnabled().then((ok) => {
     backdropOn.value = ok
   })
+  window.addEventListener(BACKDROP_CHANGE_EVENT, onBackdropChange)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener(BACKDROP_CHANGE_EVENT, onBackdropChange)
 })
 </script>
 

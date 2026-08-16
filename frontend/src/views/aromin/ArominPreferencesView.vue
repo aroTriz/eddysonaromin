@@ -79,6 +79,10 @@ const backdropEnabled = ref(true)
 const backdropBusy = ref(false)
 const backdropError = ref('')
 
+/** Event broadcast after the backdrop setting changes — SiteBackdrop listens
+ *  for it so the effect applies INSTANTLY (no page refresh needed). */
+const BACKDROP_CHANGE_EVENT = 'backdrop-change'
+
 const backdropStatusLabel = computed(() =>
   backdropEnabled.value
     ? 'on — neural links in light · stars in dark'
@@ -91,6 +95,9 @@ async function toggleBackdrop(): Promise<void> {
   backdropBusy.value = true
   backdropError.value = ''
   backdropEnabled.value = next // optimistic — flip the switch immediately
+  // Tell every mounted SiteBackdrop (public pages, admin, login) to react
+  // NOW — no manual refresh required.
+  window.dispatchEvent(new CustomEvent(BACKDROP_CHANGE_EVENT, { detail: { enabled: next } }))
   try {
     await setBackdropEnabled(next)
   } catch (err) {
