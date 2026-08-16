@@ -7,7 +7,7 @@
  *    tick again = fresh 72h countdown)
  *  - select-all + selection bulk bar
  */
-import { Archive, ArchiveRestore, Clock, Eye, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, Check, Clock, Eye, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -128,7 +128,7 @@ async function restoreItem(m: ChatAdminMessage): Promise<void> {
 // â”€â”€ Delete (single + bulk) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function askDelete(m: ChatAdminMessage): void {
   askConfirm({
-    title: 'delete message',
+    title: 'Delete message',
     message: `Delete the message from "${m.name}" permanently?`,
     confirmLabel: 'delete',
     danger: true,
@@ -156,7 +156,7 @@ async function remove(m: ChatAdminMessage): Promise<void> {
 function askDeleteSelected(): void {
   const count = selected.value.size
   askConfirm({
-    title: 'delete selected',
+    title: 'Delete selected',
     message: `Permanently delete ${count} selected message${count > 1 ? 's' : ''}?`,
     confirmLabel: 'delete',
     danger: true,
@@ -218,7 +218,7 @@ function toggleAll72h(): void {
 function askDeleteAll(): void {
   const count = sorted.value.length
   askConfirm({
-    title: 'delete all',
+    title: 'Delete all',
     message: `Permanently delete all ${count} active message${count > 1 ? 's' : ''}?`,
     confirmLabel: 'delete all',
     danger: true,
@@ -397,7 +397,7 @@ onMounted(load)
       </button>
 
       <div class="flex items-center gap-2.5">
-        <span class="font-mono text-[11.5px] text-gray-500">delete after 72h</span>
+        <span class="font-mono text-[11.5px] text-gray-500">Delete after 72h</span>
         <button
           type="button"
           role="switch"
@@ -406,18 +406,25 @@ onMounted(load)
           class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors duration-200"
           :class="[
             allScheduled
-              ? 'border-gray-400 bg-gray-900 dark:border-gray-400 dark:bg-gray-50'
+              ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
               : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
           ]"
           @click="toggleAll72h"
         >
           <span
-            class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 dark:bg-gray-950"
+            class="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200 dark:bg-white"
             :class="allScheduled ? 'translate-x-[1.125rem]' : 'translate-x-0.5'"
-          ></span>
+          >
+            <Check
+              v-if="allScheduled"
+              class="h-2.5 w-2.5 text-white dark:text-black"
+              :stroke-width="3"
+              aria-hidden="true"
+            />
+          </span>
         </button>
         <span v-if="allScheduled" class="font-mono text-[10.5px] text-gray-400">
-          all delete in {{ deleteAllIn() }}
+          All delete in {{ deleteAllIn() }}
         </span>
       </div>
     </div>

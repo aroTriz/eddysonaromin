@@ -5,7 +5,7 @@
  * Mirrors the Laravel PrivateChatController.
  */
 
-import { jsonNoStore, adminPrivateUser, privateUserFromRequest } from '../../../_lib'
+import { jsonNoStore, adminPrivateUser, isBannedUser, privateUserFromRequest } from '../../../_lib'
 
 interface Env {
   blog_db: D1Database
@@ -57,6 +57,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const user = await privateUserFromRequest(env, request)
   if (!user) {
     return jsonNoStore({ error: 'Unauthorized' }, 401)
+  }
+  if (isBannedUser(user)) {
+    return jsonNoStore({ reason: 'banned' }, 403)
   }
 
   const admin = await adminPrivateUser(env)

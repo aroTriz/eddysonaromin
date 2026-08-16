@@ -8,6 +8,7 @@
 import {
   jsonNoStore,
   isOffensive,
+  isBannedUser,
   privateUserFromRequest,
   rowToPrivateMessage,
   sessionForUser,
@@ -66,6 +67,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!(await sessionForUser(env, id, user.id))) {
     return jsonNoStore({ error: 'Not found' }, 404)
   }
+  if (isBannedUser(user)) {
+    return jsonNoStore({ reason: 'banned' }, 403)
+  }
 
   const body = (await request.json().catch(() => ({}))) as {
     message?: string
@@ -76,6 +80,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return jsonNoStore({ error: 'Invalid message.' }, 422)
   }
   if (message !== '' && isOffensive(message)) {
+    // Auto-blacklist: vulgar language earns the account a ban — the message
+    // is rejected AND the account is locked out of chat until an admin
+    // removes it from the blacklist (accounts page).
+    const now = new Date().toISOString()
+    await env.blog_db
+      .prepare('UPDATE users SET banned_at = ?, updated_at = ? WHERE id = ?')
+      .bind(now, now, user.id)
+      .run()
     return jsonNoStore({ reason: 'blocked' }, 422)
   }
 
@@ -94,8 +106,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     )
     .bind(id, user.id, message, attachment, now, now)
     .run()
+  // Bump the session so it floats to the top, clear the sender's typing row,
+  // and un-archive the thread if the admin had archived it: fresh activity
+  // re-opens it so the admin never misses a reply.
   await env.blog_db
-    .prepare('UPDATE private_chat_sessions SET updated_at = ? WHERE id = ?')
+    .prepare('UPDATE private_chat_sessions SET updated_at = ?, archived_at = NULL WHERE id = ?')
     .bind(now, id)
     .run()
   await env.blog_db

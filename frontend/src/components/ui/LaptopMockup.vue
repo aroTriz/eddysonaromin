@@ -13,6 +13,8 @@ defineProps<{
   alt?: string
   /** Shown in the browser address bar; hidden when absent. */
   url?: string | null
+  /** Render a <video> instead of an <img> (uploaded showcase clips). */
+  video?: boolean
 }>()
 </script>
 
@@ -35,7 +37,19 @@ defineProps<{
         </div>
         <!-- Screen -->
         <div v-if="src" class="aspect-[16/9] w-full bg-gray-100">
+          <video
+            v-if="video"
+            :src="src"
+            class="h-full w-full object-cover"
+            muted
+            loop
+            playsinline
+            controls
+            preload="metadata"
+            :aria-label="alt"
+          ></video>
           <img
+            v-else
             :src="src"
             :alt="alt"
             class="h-full w-full object-cover"

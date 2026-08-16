@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AskController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminChatController;
 use App\Http\Controllers\Api\AdminPrivateChatController;
+use App\Http\Controllers\Api\AdminProjectController;
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContactController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\GithubController;
 use App\Http\Controllers\Api\PrivateChatController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\StackController;
 use App\Http\Controllers\Api\VisitorController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +48,10 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/chat', [ChatController::class, 'store']);
     Route::get('/chat/identity', [ChatController::class, 'identityGet']);
     Route::post('/chat/identity', [ChatController::class, 'identityPost']);
+
+    // ── Site settings (community chat on/off) ─────────────────
+    Route::get('/settings', [SiteSettingsController::class, 'show']);
+    Route::post('/admin/settings/community-chat', [SiteSettingsController::class, 'updateCommunityChat']);
 
     // ── Private chat (visitor ↔ admin DMs) ─────────────────────
     Route::post('/private/auth/register', [PrivateChatController::class, 'register']);
@@ -80,6 +86,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('/admin/stats', [AdminController::class, 'stats']);
     Route::post('/admin/stats/clear', [AdminController::class, 'clear']);
+    Route::get('/admin/visits/{ip}', [AdminController::class, 'visitHistory']);
 
     Route::get('/admin/chat/messages', [AdminChatController::class, 'index']);
     Route::delete('/admin/chat/messages/bulk', [AdminChatController::class, 'bulkDestroy']);
@@ -97,6 +104,10 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/admin/private/conversations/{id}/typing', [AdminPrivateChatController::class, 'typingStatus']);
     Route::post('/admin/private/conversations/{id}/read', [AdminPrivateChatController::class, 'read']);
     Route::get('/admin/private/conversations/{id}/stream', [AdminPrivateChatController::class, 'stream']);
+    Route::post('/admin/private/conversations/{id}/archive', [AdminPrivateChatController::class, 'archive']);
+    Route::post('/admin/private/conversations/{id}/restore', [AdminPrivateChatController::class, 'restore']);
+    Route::delete('/admin/private/conversations/{id}', [AdminPrivateChatController::class, 'destroy']);
+    Route::delete('/admin/private/conversations/{id}/messages/{messageId}', [AdminPrivateChatController::class, 'destroyMessage']);
 
     Route::get('/admin/blog/posts', [AdminBlogPostController::class, 'index']);
     Route::post('/admin/blog/posts', [AdminBlogPostController::class, 'store']);
@@ -125,12 +136,25 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/recommendations/{id}/restore', [AdminRecommendationController::class, 'restore']);
     Route::delete('/admin/recommendations/{id}', [AdminRecommendationController::class, 'destroy']);
 
+    Route::get('/admin/projects', [AdminProjectController::class, 'index']);
+    Route::post('/admin/projects', [AdminProjectController::class, 'store']);
+    Route::post('/admin/projects/media', [AdminProjectController::class, 'media']);
+    Route::post('/admin/projects/image', [AdminProjectController::class, 'image']);
+    Route::delete('/admin/projects/bulk', [AdminProjectController::class, 'bulkDestroy']);
+    Route::get('/admin/projects/{id}', [AdminProjectController::class, 'show']);
+    Route::put('/admin/projects/{id}', [AdminProjectController::class, 'update']);
+    Route::post('/admin/projects/{id}/archive', [AdminProjectController::class, 'archive']);
+    Route::post('/admin/projects/{id}/restore', [AdminProjectController::class, 'restore']);
+    Route::delete('/admin/projects/{id}', [AdminProjectController::class, 'destroy']);
+
     // ── Account management (registered site accounts) ─────────
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::post('/admin/users', [AdminUserController::class, 'store']);
     Route::delete('/admin/users/bulk', [AdminUserController::class, 'bulkDestroy']);
     Route::put('/admin/users/{id}', [AdminUserController::class, 'update']);
     Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy']);
+    Route::post('/admin/users/{id}/ban', [AdminUserController::class, 'ban']);
+    Route::post('/admin/users/{id}/unban', [AdminUserController::class, 'unban']);
 
     // ── Visitor counter ────────────────────────────────────────
     Route::get('/visitors', [VisitorController::class, 'index']);

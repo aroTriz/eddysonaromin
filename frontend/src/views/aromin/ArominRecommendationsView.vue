@@ -113,7 +113,7 @@ function requestSave(): void {
     return
   }
   askConfirm({
-    title: 'save changes',
+    title: 'Save changes',
     message: editing.value
       ? `Update the recommendation from "${editing.value.author}"?`
       : 'Add this recommendation to the wall?',
@@ -179,7 +179,7 @@ function toggleArchived(): void {
 // -- Delete (single + bulk) ---------------------------------------
 function askDelete(rec: Recommendation): void {
   askConfirm({
-    title: 'delete recommendation',
+    title: 'Delete recommendation',
     message: `Delete "${rec.author}"'s recommendation permanently?`,
     confirmLabel: 'delete',
     danger: true,
@@ -207,7 +207,7 @@ async function remove(rec: Recommendation): Promise<void> {
 function askDeleteSelected(): void {
   const count = selected.value.size
   askConfirm({
-    title: 'delete selected',
+    title: 'Delete selected',
     message: `Delete ${count} selected recommendation${count > 1 ? 's' : ''} permanently?`,
     confirmLabel: 'delete',
     danger: true,

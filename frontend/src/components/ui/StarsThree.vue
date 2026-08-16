@@ -20,6 +20,9 @@ let resizeHandler: (() => void) | null = null
 let visibilityHandler: (() => void) | null = null
 let running = false
 let reduced = false
+let lowEnd = false
+let frameSkip = 1
+let frame = 0
 let positions: Float32Array = new Float32Array(0)
 let count = 0
 let rotX = Math.PI / 4 // matches the original points.rotation.x start
@@ -49,7 +52,10 @@ function generateSphere(n: number): Float32Array {
 function resize(): void {
   const canvas = canvasRef.value
   if (!canvas) return
-  const lowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false
+  lowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false
+  // Low-end machines render every other frame (30fps) — the rotation is
+  // imperceptibly different but the GPU/CPU cost is halved.
+  frameSkip = lowEnd ? 2 : 1
   const mobile = window.innerWidth < 768
   const dpr = Math.min(window.devicePixelRatio || 1, reduced || lowEnd ? 1 : 1.5)
   const w = Math.round(window.innerWidth * dpr)
@@ -110,9 +116,12 @@ function draw(ctx: CanvasRenderingContext2D, w: number, h: number): void {
 }
 
 function tick(): void {
-  const canvas = canvasRef.value
-  const ctx = canvas?.getContext('2d')
-  if (canvas && ctx) draw(ctx, canvas.width, canvas.height)
+  frame++
+  if (frame % frameSkip === 0) {
+    const canvas = canvasRef.value
+    const ctx = canvas?.getContext('2d')
+    if (canvas && ctx) draw(ctx, canvas.width, canvas.height)
+  }
   animId = requestAnimationFrame(tick)
 }
 

@@ -85,6 +85,10 @@ class ChatController extends Controller
         if ($this->isOffensive($name) || $this->isOffensive($message)) {
             return response()->json(['reason' => 'blocked'], 422);
         }
+        // Community chat turned off from /aromin preferences — reject sends.
+        if (! app(SiteSettingsController::class)->communityChatEnabled()) {
+            return response()->json(['reason' => 'disabled'], 423);
+        }
 
         // Per-client cooldown — one message every 8s.
         if ($clientId !== '') {

@@ -116,6 +116,9 @@ class PrivateChatController extends Controller
         if (! $user || ! hash_equals((string) $user->password, hash('sha256', $validated['password']))) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
+        if ($this->isBanned($user->id)) {
+            return response()->json(['error' => 'This account has been banned.'], 403);
+        }
 
         return response()->json([
             'success' => true,
@@ -144,6 +147,7 @@ class PrivateChatController extends Controller
 
         return response()->json([
             'authenticated' => true,
+            'banned' => $this->isBanned($user->id),
             'user' => $this->publicUser($user->id),
         ]);
     }
@@ -176,6 +180,9 @@ class PrivateChatController extends Controller
         $user = $this->userFromRequest($request);
         if (! $user) {
             return $this->unauthorized();
+        }
+        if ($this->isBanned($user->id)) {
+            return response()->json(['reason' => 'banned'], 403);
         }
 
         $admin = $this->adminUser();
@@ -248,12 +255,20 @@ class PrivateChatController extends Controller
         if (! $this->sessionForUser($id, $user->id)) {
             return response()->json(['error' => 'Not found'], 404);
         }
+        if ($this->isBanned($user->id)) {
+            return response()->json(['reason' => 'banned'], 403);
+        }
 
         $message = trim((string) $request->input('message', ''));
         if (mb_strlen($message) > self::MESSAGE_MAX) {
             return response()->json(['error' => 'Invalid message.'], 422);
         }
         if ($message !== '' && $this->isOffensive($message)) {
+            // Auto-blacklist: vulgar language earns the account a ban — the
+            // message is rejected AND the account is locked out of chat until
+            // an admin removes it from the blacklist (accounts page).
+            $this->banUser($user->id);
+
             return response()->json(['reason' => 'blocked'], 422);
         }
 
@@ -274,8 +289,12 @@ class PrivateChatController extends Controller
         ]);
 
         // Bump the session so it floats to the top of the conversation list,
-        // and clear the sender's typing row — they just sent.
-        DB::table('private_chat_sessions')->where('id', $id)->update(['updated_at' => now()]);
+        // clear the sender's typing row — they just sent — and un-archive the
+        // thread if the admin had archived it: fresh activity re-opens it so
+        // the admin never misses a reply.
+        DB::table('private_chat_sessions')
+            ->where('id', $id)
+            ->update(['updated_at' => now(), 'archived_at' => null]);
         DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $user->id)->delete();
 
         $row = DB::table('private_chat_messages')->where('id', $msgId)->first();
@@ -478,6 +497,24 @@ class PrivateChatController extends Controller
             ->where('id', $id)
             ->where(fn ($q) => $q->where('user_a_id', $userId)->orWhere('user_b_id', $userId))
             ->first();
+    }
+
+    /** True when the account is on the blacklist (users.banned_at set). */
+    private function isBanned(int $userId): bool
+    {
+        return DB::table('users')
+            ->where('id', $userId)
+            ->whereNotNull('banned_at')
+            ->exists();
+    }
+
+    /** Add an account to the blacklist (auto-ban on vulgar language). */
+    private function banUser(int $userId): void
+    {
+        DB::table('users')->where('id', $userId)->update([
+            'banned_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     /** Currently typing participants (non-expired typing rows + names). */

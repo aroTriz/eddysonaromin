@@ -51,19 +51,24 @@ export function bearerToken(request: Request): string | null {
 export async function privateUserFromRequest(
   env: Env,
   request: Request,
-): Promise<{ id: number; name: string; email: string } | null> {
+): Promise<{ id: number; name: string; email: string; banned_at: string | null } | null> {
   const token = bearerToken(request)
   if (!token) return null
   const row = await env.blog_db
     .prepare(
-      `SELECT users.id, users.name, users.email
+      `SELECT users.id, users.name, users.email, users.banned_at
        FROM private_chat_tokens
        JOIN users ON users.id = private_chat_tokens.user_id
        WHERE private_chat_tokens.token = ? AND private_chat_tokens.expires_at > ?`,
     )
     .bind(token, new Date().toISOString())
-    .first<{ id: number; name: string; email: string }>()
+    .first<{ id: number; name: string; email: string; banned_at: string | null }>()
   return row ?? null
+}
+
+/** True when the account is on the blacklist (users.banned_at set). */
+export function isBannedUser(user: { banned_at?: string | null } | null): boolean {
+  return Boolean(user?.banned_at)
 }
 
 /** The site admin's private-chat account (admins → admins.user_id → users). */

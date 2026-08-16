@@ -4,17 +4,23 @@
  * bulk delete with select-all. Passwords are stored as one-way SHA-256
  * hashes, so the table shows the hash (copyable) and edit can reset it —
  * the original plaintext is never recoverable.
+ *
+ * Blacklist: accounts banned from private chat (auto-banned for vulgar
+ * language, or blacklisted manually) land in the blacklist section at the
+ * bottom — unban or delete them there.
  */
-import { Check, Copy, LoaderCircle, Pencil, Plus, Save, Shield, Trash2, Users, X } from 'lucide-vue-next'
+import { Ban, Check, Copy, LoaderCircle, Pencil, Plus, Save, Trash2, UserCheck, Users, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
+  banAdminUser,
   createAdminUser,
   deleteAdminUser,
   deleteAdminUsers,
   fetchAdminUsers,
+  unbanAdminUser,
   updateAdminUser,
   type AdminUser,
   type AdminUserInput,
@@ -25,6 +31,12 @@ const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
 const deleting = ref(false)
+const banning = ref(false)
+
+/** Active accounts (not banned) — the main table. */
+const activeItems = computed(() => items.value.filter((u) => u.banned_at === null))
+/** Banned accounts — the blacklist section. */
+const bannedItems = computed(() => items.value.filter((u) => u.banned_at !== null))
 
 // Editor state
 const editing = ref<AdminUser | null>(null)
@@ -49,10 +61,10 @@ const confirm = ref<{
 } | null>(null)
 
 const allSelected = computed(
-  () => items.value.length > 0 && items.value.every((u) => selected.value.has(u.id)),
+  () => activeItems.value.length > 0 && activeItems.value.every((u) => selected.value.has(u.id)),
 )
 const someSelected = computed(
-  () => items.value.some((u) => selected.value.has(u.id)) && !allSelected.value,
+  () => activeItems.value.some((u) => selected.value.has(u.id)) && !allSelected.value,
 )
 
 async function load(): Promise<void> {
@@ -118,7 +130,7 @@ function requestSave(): void {
     return
   }
   askConfirm({
-    title: 'save changes',
+    title: 'Save changes',
     message: editing.value
       ? `Update the account "${editing.value.email}"?`
       : `Create the account "${form.value.email.trim()}"?`,
@@ -176,10 +188,8 @@ async function copyHash(user: AdminUser): Promise<void> {
 // -- Delete (single + bulk) ---------------------------------------
 function askDelete(user: AdminUser): void {
   askConfirm({
-    title: 'delete account',
-    message: user.is_admin
-      ? `"${user.email}" is linked to an admin and cannot be deleted.`
-      : `Delete "${user.email}" permanently? Their chat history goes with it.`,
+    title: 'Delete account',
+    message: `Delete "${user.email}" permanently? Their chat history goes with it.`,
     confirmLabel: 'delete',
     danger: true,
     action: () => remove(user),
@@ -207,8 +217,8 @@ async function remove(user: AdminUser): Promise<void> {
 function askDeleteSelected(): void {
   const count = selected.value.size
   askConfirm({
-    title: 'delete selected',
-    message: `Delete ${count} selected account${count > 1 ? 's' : ''} permanently? The admin-linked account is skipped automatically.`,
+    title: 'Delete selected',
+    message: `Delete ${count} selected account${count > 1 ? 's' : ''} permanently?`,
     confirmLabel: 'delete',
     danger: true,
     action: removeSelected,
@@ -219,10 +229,7 @@ async function removeSelected(): Promise<void> {
   deleting.value = true
   error.value = ''
   try {
-    const result = await deleteAdminUsers([...selected.value])
-    if (result.protected > 0) {
-      error.value = `${result.deleted} deleted — ${result.protected} admin-linked account skipped`
-    }
+    await deleteAdminUsers([...selected.value])
     confirm.value = null
     exitSelection()
     await load()
@@ -254,14 +261,60 @@ function toggleSelect(id: number): void {
 function toggleSelectAll(): void {
   const next = new Set(selected.value)
   if (allSelected.value) {
-    items.value.forEach((u) => next.delete(u.id))
+    activeItems.value.forEach((u) => next.delete(u.id))
   } else {
-    items.value.forEach((u) => next.add(u.id))
+    activeItems.value.forEach((u) => next.add(u.id))
   }
   selected.value = next
 }
 
+// -- Blacklist (ban / unban) --------------------------------------
+function askBan(user: AdminUser): void {
+  askConfirm({
+    title: 'Blacklist account',
+    message: `Ban "${user.email}"? They'll be locked out of private chat until you remove them from the blacklist.`,
+    confirmLabel: 'blacklist',
+    danger: true,
+    action: () => ban(user),
+  })
+}
+
+async function ban(user: AdminUser): Promise<void> {
+  banning.value = true
+  error.value = ''
+  try {
+    await banAdminUser(user.id)
+    confirm.value = null
+    await load()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to blacklist account'
+    confirm.value = null
+  } finally {
+    banning.value = false
+  }
+}
+
+async function unban(user: AdminUser): Promise<void> {
+  banning.value = true
+  error.value = ''
+  try {
+    await unbanAdminUser(user.id)
+    await load()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to remove from blacklist'
+  } finally {
+    banning.value = false
+  }
+}
+
 function createdLabel(iso: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso.replace(' ', 'T'))
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function bannedLabel(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso.replace(' ', 'T'))
   if (Number.isNaN(d.getTime())) return iso
@@ -339,7 +392,7 @@ onMounted(load)
 
         <div class="flex flex-col gap-1.5">
           <label class="font-mono text-[11px] text-gray-500" for="user-password">
-            {{ editing ? 'new password (leave blank to keep current)' : 'password' }}
+            {{ editing ? 'New password (leave blank to keep current)' : 'Password' }}
           </label>
           <input
             id="user-password"
@@ -347,7 +400,7 @@ onMounted(load)
             type="text"
             autocomplete="new-password"
             class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="min 8 characters"
+            placeholder="Min 8 characters"
           />
           <p class="font-mono text-[10px] text-gray-400">
             stored as a one-way SHA-256 hash — nobody (including you) can see the plaintext again
@@ -399,7 +452,7 @@ onMounted(load)
         </label>
       </template>
       <p class="font-mono text-[11px] text-gray-500">
-        // accounts ({{ items.length }})
+        // accounts ({{ activeItems.length }})<span v-if="bannedItems.length > 0" class="text-gray-400"> · blacklist ({{ bannedItems.length }})</span>
       </p>
       <div class="ml-auto flex items-center gap-2">
         <button
@@ -454,7 +507,7 @@ onMounted(load)
     </div>
 
     <div
-      v-else-if="items.length === 0"
+      v-else-if="activeItems.length === 0"
       class="rounded-xl border border-dashed border-gray-200 p-10 text-center"
     >
       <p class="font-mono text-[12px] text-gray-500">
@@ -478,7 +531,7 @@ onMounted(load)
           </thead>
           <tbody>
             <tr
-              v-for="user in items"
+              v-for="user in activeItems"
               :key="user.id"
               class="border-b border-gray-100 last:border-0 dark:border-gray-200"
               :class="{ 'bg-gray-50 dark:bg-gray-200': selected.has(user.id) }"
@@ -495,14 +548,6 @@ onMounted(load)
               <td class="px-4 py-3">
                 <span class="inline-flex items-center gap-2 font-medium text-ink">
                   {{ user.name }}
-                  <span
-                    v-if="user.is_admin"
-                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[9.5px] text-gray-500"
-                    title="Linked to an admin account — cannot be deleted"
-                  >
-                    <Shield class="h-2.5 w-2.5" :stroke-width="2" />
-                    admin
-                  </span>
                 </span>
               </td>
               <td class="px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
@@ -540,9 +585,18 @@ onMounted(load)
                   </button>
                   <button
                     type="button"
+                    class="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                    :aria-label="`Blacklist ${user.email}`"
+                    title="Blacklist"
+                    @click="askBan(user)"
+                  >
+                    <Ban class="h-3.5 w-3.5" :stroke-width="1.7" />
+                  </button>
+                  <button
+                    type="button"
                     class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
                     :aria-label="`Delete ${user.email}`"
-                    :title="user.is_admin ? 'Linked to an admin — cannot be deleted' : 'Delete'"
+                    title="Delete"
                     @click="askDelete(user)"
                   >
                     <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -555,11 +609,88 @@ onMounted(load)
       </div>
     </div>
 
+    <!-- -- Blacklist (banned accounts) -------------------------- -->
+    <div v-if="!loading" class="mt-8">
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <p class="font-mono text-[11px] text-gray-500">
+          // blacklist ({{ bannedItems.length }}) — locked out of private chat
+        </p>
+        <span
+          v-if="bannedItems.length > 0"
+          class="ml-auto rounded-md border border-red-100 bg-red-50 px-2 py-0.5 font-mono text-[10px] text-red-500"
+        >
+          auto-banned for vulgar language, or blacklisted manually
+        </span>
+      </div>
+
+      <div
+        v-if="bannedItems.length === 0"
+        class="rounded-xl border border-dashed border-gray-200 p-6 text-center"
+      >
+        <p class="font-mono text-[11.5px] text-gray-400">
+          // blacklist empty — no banned accounts
+        </p>
+      </div>
+
+      <div v-else class="overflow-hidden rounded-xl border border-red-100 bg-white">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[640px] text-left font-mono text-[12px]">
+            <thead>
+              <tr class="border-b border-red-100 text-[10px] uppercase tracking-wide text-red-400">
+                <th class="px-4 py-3 font-normal">name</th>
+                <th class="px-3 py-3 font-normal">email</th>
+                <th class="px-3 py-3 font-normal">banned</th>
+                <th class="px-4 py-3 text-right font-normal">actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="user in bannedItems"
+                :key="user.id"
+                class="border-b border-red-50 bg-red-50/40 last:border-0"
+              >
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-2 font-medium text-ink">
+                    <Ban class="h-3.5 w-3.5 shrink-0 text-red-500" :stroke-width="1.7" />
+                    {{ user.name }}
+                  </span>
+                </td>
+                <td class="px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
+                <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ bannedLabel(user.banned_at) }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      class="rounded-md p-2 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                      :aria-label="`Remove ${user.email} from blacklist`"
+                      title="Remove from blacklist"
+                      @click="unban(user)"
+                    >
+                      <UserCheck class="h-3.5 w-3.5" :stroke-width="1.7" />
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+                      :aria-label="`Delete ${user.email}`"
+                      title="Delete"
+                      @click="askDelete(user)"
+                    >
+                      <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-6 flex items-start gap-2 font-mono text-[10.5px] leading-relaxed text-gray-400">
       <Users class="mt-0.5 h-3.5 w-3.5 shrink-0" :stroke-width="1.7" />
       <span>
         passwords are stored as one-way SHA-256 hashes — the original can never be recovered, even by you. To change one,
-        edit the account and set a new password. Accounts linked to an admin (badge) are protected from deletion.
+        edit the account and set a new password.
       </span>
     </div>
 
@@ -570,7 +701,7 @@ onMounted(load)
       :message="confirm?.message ?? ''"
       :confirm-label="confirm?.confirmLabel ?? 'confirm'"
       :danger="confirm?.danger ?? false"
-      :busy="saving || deleting"
+      :busy="saving || deleting || banning"
       @confirm="confirm?.action()"
       @cancel="confirm = null"
     />

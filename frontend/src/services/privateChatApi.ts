@@ -175,13 +175,17 @@ export async function privateLogout(): Promise<void> {
  *  so callers can tell "logged out" apart from "can't reach the server right
  *  now" — the latter must never clear the stored token, or a single request
  *  hiccup logs a still-valid visitor out. */
-export async function privateSession(): Promise<PrivateUser | null> {
-  if (!privateToken()) return null
-  const data = await get<{ authenticated: boolean; user: PrivateUser }>(
-    '/private/auth/session',
-  )
-  return data.authenticated ? data.user : null
-}
+  /**
+   * Validate the stored token. Null = not logged in. `banned` = the account
+   * is on the blacklist (locked out of private chat).
+   */
+  export async function privateSession(): Promise<{ user: PrivateUser; banned: boolean } | null> {
+    if (!privateToken()) return null
+    const data = await get<{ authenticated: boolean; banned?: boolean; user: PrivateUser }>(
+      '/private/auth/session',
+    )
+    return data.authenticated ? { user: data.user, banned: Boolean(data.banned) } : null
+  }
 
 // ── Chat (visitor ↔ admin) ──────────────────────────────────────────
 

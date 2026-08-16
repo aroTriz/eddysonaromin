@@ -6,12 +6,13 @@
  * send cooldown, and shows live presence via dicebear avatars + device +
  * location. Opened from the sidebar "community chat" button.
  */
-import { LoaderCircle } from 'lucide-vue-next'
+import { LoaderCircle, MessageSquareOff } from 'lucide-vue-next'
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import {
   fetchChatIdentity,
   fetchChatMessages,
+  fetchCommunityChatEnabled,
   postChatMessage,
   saveChatIdentity,
   type ChatMessage,
@@ -24,11 +25,14 @@ const phase = ref<'name' | 'message'>('name')
 const messages = ref<ChatMessage[]>([])
 const totalCount = ref(0)
 const input = ref('')
-const promptText = ref("what's your name?")
+const promptText = ref("What's your name?")
 const hintTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const messagesEl = ref<HTMLDivElement | null>(null)
 const inputEl = ref<HTMLInputElement | null>(null)
 const sendDisabled = ref(false)
+/** False when the admin turned the chat off (Preferences) — shows the
+ *  "community chat has been turned off" notice instead of the wall. */
+const chatEnabled = ref(true)
 
 // ── Identity / presence ───────────────────────────────────────────
 let clientId = ''
@@ -160,19 +164,19 @@ function setPrompt(text: string, revertTo = 'message'): void {
   if (hintTimer.value) clearTimeout(hintTimer.value)
   promptText.value = text
   hintTimer.value = setTimeout(() => {
-    promptText.value = revertTo === 'name' ? "what's your name?" : `chatting as ${chatName}`
+    promptText.value = revertTo === 'name' ? "What's your name?" : `Chatting as ${chatName}`
   }, 2400)
 }
 
 function showMessagePrompt(): void {
-  promptText.value = `chatting as ${chatName}`
+  promptText.value = `Chatting as ${chatName}`
 }
 
 function setPhase(p: 'name' | 'message'): void {
   phase.value = p
   input.value = ''
   if (p === 'name') {
-    promptText.value = "what's your name?"
+    promptText.value = "What's your name?"
   } else {
     showMessagePrompt()
   }
@@ -412,6 +416,18 @@ async function onSubmit(e: Event): Promise<void> {
     else if (reason === 'blocked') {
       setPrompt("let's keep it kind — opening a guide for you")
       window.open(KIND_URL, '_blank', 'noopener')
+    } else if (reason === 'disabled') {
+      // Admin turned the chat off while it was open — flip to the notice.
+      chatEnabled.value = false
+      stopStream()
+      if (pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
+      }
+      if (timeTimer) {
+        clearInterval(timeTimer)
+        timeTimer = null
+      }
     } else {
       input.value = val // let them retry
     }
@@ -425,29 +441,36 @@ function openChat(): void {
   document.documentElement.style.overflow = 'hidden'
   myDevice = detectDevice()
 
-  // Render a cached snapshot instantly, then refresh with the live fetch.
-  const cache = readCache()
-  if (cache && messages.value.length === 0) {
-    for (const m of cache.messages) addMessage(m)
-    totalCount.value = cache.total
-  }
+  // The admin can turn the chat off from Preferences — check first so a
+  // disabled chat renders the notice instead of the wall + input.
+  void fetchCommunityChatEnabled().then((ok) => {
+    chatEnabled.value = ok
+    if (!ok) return
 
-  void resolveClientId().then(() => {
-    void loadRememberedIdentity()
+    // Render a cached snapshot instantly, then refresh with the live fetch.
+    const cache = readCache()
+    if (cache && messages.value.length === 0) {
+      for (const m of cache.messages) addMessage(m)
+      totalCount.value = cache.total
+    }
+
+    void resolveClientId().then(() => {
+      void loadRememberedIdentity()
+    })
+    void collectLocation()
+    void load(messages.value.length === 0)
+    // The PHP built-in dev server pins one worker per open SSE stream and
+    // WEDGES (every request hangs, incl. the API) once streams stack up. The
+    // 8s poll below is a complete fallback, so skip the stream locally.
+    // Production (Cloudflare Pages Functions) handles SSE fine — keep it there.
+    if (!import.meta.env.DEV) startStream()
+    setPhase(chatName ? 'message' : 'name')
+    void nextTick(() => inputEl.value?.focus())
+    if (pollTimer) clearInterval(pollTimer)
+    pollTimer = setInterval(() => void load(false), 8000)
+    if (timeTimer) clearInterval(timeTimer)
+    timeTimer = setInterval(() => updateTimes(), 20000)
   })
-  void collectLocation()
-  void load(messages.value.length === 0)
-  // The PHP built-in dev server pins one worker per open SSE stream and
-  // WEDGES (every request hangs, incl. the API) once streams stack up. The
-  // 8s poll below is a complete fallback, so skip the stream locally.
-  // Production (Cloudflare Pages Functions) handles SSE fine — keep it there.
-  if (!import.meta.env.DEV) startStream()
-  setPhase(chatName ? 'message' : 'name')
-  void nextTick(() => inputEl.value?.focus())
-  if (pollTimer) clearInterval(pollTimer)
-  pollTimer = setInterval(() => void load(false), 8000)
-  if (timeTimer) clearInterval(timeTimer)
-  timeTimer = setInterval(() => updateTimes(), 20000)
 }
 
 function closeChat(): void {
@@ -519,7 +542,7 @@ function deviceSvg(label: string | null): string {
         </p>
 
         <!-- presence count -->
-        <div class="mb-2 flex items-center gap-1.5 pl-1 font-mono text-[11px] text-gray-400">
+        <div v-if="chatEnabled" class="mb-2 flex items-center gap-1.5 pl-1 font-mono text-[11px] text-gray-400">
           <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 5.5h16v10H10l-4.5 4v-4H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
           </svg>
@@ -528,11 +551,12 @@ function deviceSvg(label: string | null): string {
 
         <!-- messages -->
         <div
+          v-if="chatEnabled"
           ref="messagesEl"
           class="chat-scroll flex max-h-[min(340px,50vh)] min-h-[120px] flex-col gap-3 overflow-y-auto pr-2"
         >
           <div v-if="messages.length === 0" class="my-auto font-mono text-[14px] text-gray-400">
-            no messages yet — say hi ✦
+            No messages yet — say hi ✦
           </div>
 
           <div
@@ -554,7 +578,7 @@ function deviceSvg(label: string | null): string {
                 <span class="text-[9.5px] text-gray-400">{{ timeAgo(m.created_at) }}</span>
               </div>
               <div
-                class="whitespace-pre-wrap break-words rounded-[15px] rounded-bl-[5px] bg-gray-200 px-3 py-2 font-pixel text-[13px] leading-[1.5] text-ink dark:bg-gray-200"
+                class="whitespace-pre-wrap break-words rounded-[15px] rounded-bl-[5px] bg-gray-200 px-3 py-2 font-sans text-[13px] leading-[1.55] text-ink dark:bg-gray-200"
               >
                 {{ m.message }}
               </div>
@@ -562,10 +586,22 @@ function deviceSvg(label: string | null): string {
           </div>
         </div>
 
+        <!-- turned off — admin disabled the chat from Preferences -->
+        <div
+          v-else
+          class="flex min-h-[120px] max-h-[min(340px,50vh)] flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-gray-200 px-6 py-8 text-center"
+        >
+          <MessageSquareOff class="h-6 w-6 text-gray-300" :stroke-width="1.5" />
+          <p class="font-pixel text-[15px] text-gray-400">Community chat has been turned off</p>
+          <p class="font-mono text-[11px] leading-relaxed text-gray-400">
+            New messages are paused — check back soon
+          </p>
+        </div>
+
         <!-- input -->
-        <form class="mt-7 flex max-w-[92%] flex-col gap-2.5" @submit="onSubmit">
+        <form v-if="chatEnabled" class="mt-7 flex max-w-[92%] flex-col gap-2.5" @submit="onSubmit">
           <p class="font-mono text-[12.5px] text-gray-500">
-            {{ phase === 'name' ? "what's your name?" : `chatting as ` }}
+            {{ phase === 'name' ? "What's your name?" : `Chatting as ` }}
             <b v-if="phase === 'message'" class="text-ink">{{ chatName }}</b>
           </p>
           <div class="flex items-center gap-3">
@@ -573,7 +609,7 @@ function deviceSvg(label: string | null): string {
               ref="inputEl"
               v-model="input"
               type="text"
-              :placeholder="phase === 'name' ? 'your name' : 'say something…'"
+              :placeholder="phase === 'name' ? 'Your name' : 'Say something…'"
               :maxlength="phase === 'name' ? 40 : 500"
               autocomplete="off"
               autocorrect="off"
@@ -591,7 +627,7 @@ function deviceSvg(label: string | null): string {
                 class="inline-block h-3.5 w-3.5 animate-spin align-middle"
                 :stroke-width="1.8"
               />
-              <span v-else>{{ phase === 'name' ? 'next →' : 'send →' }}</span>
+              <span v-else>{{ phase === 'name' ? 'Next →' : 'Send →' }}</span>
             </button>
           </div>
         </form>

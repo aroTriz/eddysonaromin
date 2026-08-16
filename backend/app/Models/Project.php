@@ -32,6 +32,8 @@ class Project extends Model
         'source_url',
         'image_url',
         'favicon_url',
+        'showcase',
+        'archived_at',
         'sort_order',
     ];
 
@@ -43,6 +45,8 @@ class Project extends Model
     protected $casts = [
         'featured' => 'boolean',
         'technologies' => 'array',
+        'showcase' => 'array',
+        'archived_at' => 'datetime',
     ];
 
     /**

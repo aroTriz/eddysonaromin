@@ -36,7 +36,7 @@ class AdminController extends Controller
             ->first();
 
         $posts = BlogPost::count();
-        $projects = DB::table('projects')->count();
+        $projects = DB::table('projects')->whereNull('archived_at')->count();
         $messages = DB::table('contact_messages')->count();
         $recommendations = DB::table('recommendations')->count();
 
@@ -145,7 +145,7 @@ class AdminController extends Controller
             ->selectRaw("coalesce(nullif(path, ''), '/') as path, count(*) as views, count(distinct ip) as visitors")
             ->groupBy('path')
             ->orderByDesc('views')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(fn ($r) => [
                 'path' => (string) $r->path,
@@ -154,7 +154,9 @@ class AdminController extends Controller
             ])
             ->all();
 
-        // ── Countries (map heat ranking) — top 5 ──────────────
+        // ── Countries (map heat ranking) — all, ordered by visits.
+        //    The dashboard shows the top 5; the full list also drives the
+        //    cities + map country-filter dropdowns.
         $countries = DB::table('visits')->where('site', $site)
             ->where('created_at', '>=', $retentionStart)
             ->whereNotNull('country')
@@ -162,7 +164,6 @@ class AdminController extends Controller
             ->selectRaw("country, max(nullif(country_name, '')) as country_name, count(*) as visits, count(distinct ip) as visitors, min(lat) as lat, min(lon) as lon")
             ->groupBy('country')
             ->orderByDesc('visits')
-            ->limit(5)
             ->get()
             ->map(fn ($r) => [
                 'country' => (string) $r->country,
@@ -174,83 +175,94 @@ class AdminController extends Controller
             ])
             ->all();
 
-        // ── Top cities / towns — top 5 ─────────────────────────
+        // ── Cities / towns — all, each tagged with its country code so the
+        //    dashboard can filter by "all" or one specific country. Grouped
+        //    by (city, country) so same-named cities in different countries
+        //    stay separate. The dashboard shows the top 5 of the filtered set.
         $cities = DB::table('visits')->where('site', $site)
             ->where('created_at', '>=', $retentionStart)
             ->whereNotNull('city')
             ->where('city', '!=', '')
-            ->selectRaw("city, max(nullif(country_name, '')) as country_name, count(*) as visits, count(distinct ip) as visitors")
-            ->groupBy('city')
+            ->selectRaw("city, country, max(nullif(country_name, '')) as country_name, count(*) as visits, count(distinct ip) as visitors")
+            ->groupBy('city', 'country')
             ->orderByDesc('visits')
-            ->limit(5)
             ->get()
             ->map(fn ($r) => [
                 'city' => (string) $r->city,
+                'country' => (string) ($r->country ?? ''),
                 'country_name' => (string) ($r->country_name ?? ''),
                 'visits' => (int) $r->visits,
                 'visitors' => (int) $r->visitors,
             ])
             ->all();
 
-        // ── Geo points (map heat dots) ─────────────────────────
+        // ── Geo points (map heat dots) — each tagged with its country code
+        //    so the map can show the whole world or just one country.
         $geo = DB::table('visits')->where('site', $site)
             ->where('created_at', '>=', $retentionStart)
             ->whereNotNull('lat')
             ->whereNotNull('lon')
-            ->selectRaw('lat, lon, count(*) as visits')
-            ->groupBy('lat', 'lon')
+            ->selectRaw('lat, lon, country, count(*) as visits')
+            ->groupBy('lat', 'lon', 'country')
             ->orderByDesc('visits')
             ->limit(300)
             ->get()
             ->map(fn ($r) => [
                 'lat' => (float) $r->lat,
                 'lon' => (float) $r->lon,
+                'country' => (string) ($r->country ?? ''),
                 'visits' => (int) $r->visits,
             ])
             ->all();
 
-        // ── Device / browser / OS breakdown ────────────────────
-        $devices = $this->labels('device', $retentionStart);
-        $browsers = $this->labels('browser', $retentionStart);
+        // ── Operating system breakdown ─────────────────────────
         $os = $this->labels('os', $retentionStart);
 
-        // ── Referrers (grouped by domain) ──────────────────────
-        $referrerRows = DB::table('visits')->where('site', $site)
+        // ── Recent visits — one row per IP (latest activity + visit count) ──
+        $recent = DB::table('visits')
+            ->where('site', $site)
             ->where('created_at', '>=', $retentionStart)
-            ->whereNotNull('referrer')
-            ->where('referrer', '!=', '')
-            ->selectRaw('referrer, count(*) as count')
-            ->groupBy('referrer')
-            ->orderByDesc('count')
-            ->limit(20)
-            ->get();
-
-        $referrerTotals = [];
-        foreach ($referrerRows as $row) {
-            $domain = $this->referrerDomain((string) $row->referrer);
-            $referrerTotals[$domain] = ($referrerTotals[$domain] ?? 0) + (int) $row->count;
-        }
-        arsort($referrerTotals);
-        $referrers = collect($referrerTotals)
-            ->take(10)
-            ->map(fn (int $count, string $domain) => ['domain' => $domain, 'count' => $count])
-            ->values()
-            ->all();
-
-        // ── Recent visits (IPs masked) — latest 5 only ─────────
-        $recent = DB::table('visits')->where('site', $site)
-            ->where('created_at', '>=', $retentionStart)
+            ->whereNotNull('ip')
+            ->where('ip', '!=', '')
+            ->selectRaw("ip,
+                count(*) as visits,
+                max(created_at) as created_at,
+                (select v2.id from visits v2
+                   where v2.site = visits.site and v2.ip = visits.ip
+                   order by v2.created_at desc limit 1) as visit_id,
+                (select v2.path from visits v2
+                   where v2.site = visits.site and v2.ip = visits.ip
+                   order by v2.created_at desc limit 1) as path,
+                (select v3.country from visits v3
+                   where v3.site = visits.site and v3.ip = visits.ip
+                   order by v3.created_at desc limit 1) as country,
+                (select v4.city from visits v4
+                   where v4.site = visits.site and v4.ip = visits.ip
+                   order by v4.created_at desc limit 1) as city,
+                (select v5.device from visits v5
+                   where v5.site = visits.site and v5.ip = visits.ip
+                   order by v5.created_at desc limit 1) as device,
+                (select v6.browser from visits v6
+                   where v6.site = visits.site and v6.ip = visits.ip
+                   order by v6.created_at desc limit 1) as browser,
+                (select v7.os from visits v7
+                   where v7.site = visits.site and v7.ip = visits.ip
+                   order by v7.created_at desc limit 1) as os")
+            ->groupBy('ip')
             ->orderByDesc('created_at')
-            ->limit(5)
+            ->limit(10)
             ->get()
             ->map(fn ($r) => [
+                'id' => (int) ($r->visit_id ?? 0),
                 'ip' => $this->maskIp((string) ($r->ip ?? '')),
+                'raw_ip' => (string) ($r->ip ?? ''),
                 'country' => (string) ($r->country ?? ''),
                 'city' => (string) ($r->city ?? ''),
                 'path' => (string) ($r->path ?? ''),
                 'device' => (string) ($r->device ?? ''),
                 'browser' => (string) ($r->browser ?? ''),
                 'os' => (string) ($r->os ?? ''),
+                'visits' => (int) ($r->visits ?? 0),
                 'created_at' => (string) ($r->created_at ?? ''),
             ])
             ->all();
@@ -263,12 +275,46 @@ class AdminController extends Controller
             'countries' => $countries,
             'cities' => $cities,
             'geo' => $geo,
-            'devices' => $devices,
-            'browsers' => $browsers,
             'os' => $os,
-            'referrers' => $referrers,
             'recent' => $recent,
         ];
+    }
+
+    /**
+     * Full visit history for one IP (used by the dashboard "eye" detail modal).
+     *
+     * GET /api/v1/admin/visits/{ip}
+     *   → every recorded visit for that IP, newest first, with masked IPs.
+     */
+    public function visitHistory(Request $request, string $ip): JsonResponse
+    {
+        $auth = app(AuthController::class);
+        if (! $auth->adminFromRequest($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $retentionStart = now()->subYear()->toDateTimeString();
+
+        $rows = DB::table('visits')
+            ->where('site', 'portfolio')
+            ->where('ip', $ip)
+            ->where('created_at', '>=', $retentionStart)
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->get()
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'path' => (string) ($r->path ?? ''),
+                'device' => (string) ($r->device ?? ''),
+                'browser' => (string) ($r->browser ?? ''),
+                'os' => (string) ($r->os ?? ''),
+                'country' => (string) ($r->country ?? ''),
+                'city' => (string) ($r->city ?? ''),
+                'created_at' => (string) ($r->created_at ?? ''),
+            ])
+            ->all();
+
+        return response()->json(['data' => $rows]);
     }
 
     /** COUNT(DISTINCT ip) with empty/null guard. */
@@ -296,17 +342,6 @@ class AdminController extends Controller
             'label' => (string) $r->label,
             'count' => (int) $r->count,
         ])->values()->all();
-    }
-
-    /** Hostname of a referrer URL (or the raw string when unparsable). */
-    private function referrerDomain(string $url): string
-    {
-        $host = parse_url($url, PHP_URL_HOST);
-        if (is_string($host) && $host !== '') {
-            return preg_replace('/^www\./', '', $host) ?? $host;
-        }
-
-        return $url !== '' ? $url : 'direct';
     }
 
     /** 192.168.1.5 → 192.168.1.x · 2001:db8::1 → 2001:db8::x */

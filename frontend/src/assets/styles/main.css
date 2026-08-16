@@ -158,11 +158,11 @@ html.dark {
 }
 
 /* Themed base — no flash before utilities compile.
-   `transition` on html/body/ion-app ONLY (background-color + color, 220ms) —
-   exactly greyfolio's approach: the page's own background/text fades subtly
-   while the CSS variables flip instantly, so every other element (cards,
-   borders, fills) switches in one atomic paint. No per-element transitions =
-   no jank. */
+   html/body keep a gentle background/color fade as the FALLBACK for
+   browsers without the View Transitions API (with it, the composited
+   cross-fade covers the whole page and this fade is hidden behind the
+   opaque snapshots). Everything else switches instantly — smoothness
+   comes from the snapshot cross-fade, not from per-element transitions. */
 @layer base {
   html,
   body {
@@ -171,8 +171,8 @@ html.dark {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     transition:
-      background-color 0.22s ease,
-      color 0.22s ease;
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 }
 
@@ -185,23 +185,39 @@ html.dark {
    Every route change remounts the .page-enter wrapper, replaying this
    entrance: blurred + faded-up, sharpening in place. */
 
-/* Theme flip — greyfolio-style. While this class is on <html> (one frame, set
-   by useTheme), every element's color/border transition is suppressed so the
-   light↔dark flip doesn't fire hundreds of independent transitions at once.
-   EXCEPT html/body, which keep their own 220ms background/color fade — that
-   subtle page-level fade is greyfolio's signature; everything else switches
-   in one atomic paint. */
-html.theme-flip,
-html.theme-flip *,
-html.theme-flip *::before,
-html.theme-flip *::after {
-  transition: none !important;
+/* Theme flip — smooth View Transition (driven by useTheme.ts). The browser
+   captures a screenshot of the old theme, applies the new one, then
+   cross-fades the two snapshots on the GPU compositor — one atomic paint,
+   no per-element `transition-colors` firing (that burst was the source of
+   the old jank). The new theme reveals in a circle growing from the click
+   origin (--theme-origin-x/y set by useTheme; defaults to center). */
+::view-transition-old(root) {
+  animation: theme-fade-out 0.28s ease;
 }
-html.theme-flip,
-html.theme-flip body {
-  transition:
-    background-color 0.22s ease,
-    color 0.22s ease !important;
+::view-transition-new(root) {
+  animation: theme-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
 }
 .page-enter {
   /* `backwards` (not `both`): after the entrance the element returns to its
@@ -213,7 +229,7 @@ html.theme-flip body {
   from {
     opacity: 0;
     transform: translateY(10px);
-    filter: blur(7px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;

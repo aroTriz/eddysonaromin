@@ -69,10 +69,11 @@ function detectDevice(): string {
   const touch = navigator.maxTouchPoints || 0
   if (/iPad/.test(ua) || (/Macintosh/.test(ua) && touch > 1)) return 'iPad'
   if (/iPhone|iPod/.test(ua)) return 'iPhone'
-  if (/Android/.test(ua)) return /Mobile/.test(ua) ? 'Android' : 'Android tablet'
+  if (/Android/.test(ua)) return /Mobile/.test(ua) ? 'Android phone' : 'Android tablet'
+  if (/Windows/.test(ua)) return 'Windows'
+  if (/Macintosh|Mac OS X/.test(ua)) return 'macOS'
+  if (/CrOS/.test(ua)) return 'Chromebook'
   if (/Linux/.test(ua)) return 'Linux'
-  if (/Windows/.test(ua)) return 'Desktop'
-  if (/Macintosh/.test(ua)) return 'Desktop'
   return 'Unknown'
 }
 

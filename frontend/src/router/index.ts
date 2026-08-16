@@ -125,6 +125,12 @@ const router = createRouter({
       meta: { title: 'Recommendations — Aromin Admin', requiresAuth: true },
     },
     {
+      path: '/aromin/projects',
+      name: 'aromin-projects',
+      component: () => import('@/views/aromin/ArominProjectsView.vue'),
+      meta: { title: 'Projects — Aromin Admin', requiresAuth: true },
+    },
+    {
       path: '/aromin/preferences',
       name: 'aromin-preferences',
       component: () => import('@/views/aromin/ArominPreferencesView.vue'),

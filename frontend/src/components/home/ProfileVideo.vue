@@ -65,9 +65,10 @@
 
 <script setup lang="ts">
 /**
- * ProfileVideo — 3D-flippable terminal card with a theme-triggered video:
- *  - Light theme → plays profile-forward.mp4 (light-colored profile)
- *  - Dark theme  → plays profile-reverse.mp4 (dark profile)
+ * ProfileVideo — 3D-flippable terminal card with a theme-triggered video.
+ * The video/theme mapping is intentionally REVERSED (per client request):
+ *  - Light theme → plays profile-reverse.mp4 (the dark-colored clip)
+ *  - Dark theme  → plays profile-forward.mp4 (the light-colored clip)
  * Draggable to flip between profile.sh and contact.json.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
@@ -192,8 +193,10 @@ function playReverse(): void {
 }
 
 function handleThemeChange(dark: boolean): void {
-  if (dark) playReverse()
-  else playForward()
+  // Reversed mapping: dark theme shows the forward (light-colored) clip,
+  // light theme shows the reverse (dark-colored) clip.
+  if (dark) playForward()
+  else playReverse()
 }
 
 function currentThemeIsDark(): boolean {
@@ -208,7 +211,8 @@ onMounted(() => {
 
   // Show the correct theme's poster instantly — the video itself only
   // downloads when the theme flips (rare), so the page stays fast.
-  posterSrc.value = dark ? posterForDark : posterForLight
+  // Reversed mapping: dark → forward poster, light → reverse poster.
+  posterSrc.value = dark ? posterForLight : posterForDark
   v.style.opacity = '1'
 
   const onThemeChange = (e: Event): void => {

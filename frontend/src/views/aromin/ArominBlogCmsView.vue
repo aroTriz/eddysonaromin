@@ -148,7 +148,7 @@ function requestSave(): void {
     return
   }
   askConfirm({
-    title: 'save changes',
+    title: 'Save changes',
     message: editing.value
       ? `Update "${form.value.title.trim()}"?`
       : `Publish "${form.value.title.trim()}"?`,
@@ -214,7 +214,7 @@ function toggleArchived(): void {
 // -- Delete (single + bulk) ---------------------------------------
 function askDelete(post: BlogPost): void {
   askConfirm({
-    title: 'delete post',
+    title: 'Delete post',
     message: `Delete "${post.title}" permanently?`,
     confirmLabel: 'delete',
     danger: true,
@@ -242,7 +242,7 @@ async function remove(post: BlogPost): Promise<void> {
 function askDeleteSelected(): void {
   const count = selected.value.size
   askConfirm({
-    title: 'delete selected',
+    title: 'Delete selected',
     message: `Delete ${count} selected post${count > 1 ? 's' : ''} permanently?`,
     confirmLabel: 'delete',
     danger: true,
@@ -403,7 +403,7 @@ onMounted(load)
               class="flex h-24 w-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-gray-300 text-gray-400 transition-colors hover:border-gray-400 hover:text-ink"
             >
               <ImagePlus class="h-5 w-5" :stroke-width="1.7" />
-              <span class="font-mono text-[10.5px]">add images</span>
+              <span class="font-mono text-[10.5px]">Add images</span>
               <input
                 id="cms-images"
                 type="file"

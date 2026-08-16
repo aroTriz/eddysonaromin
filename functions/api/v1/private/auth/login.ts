@@ -28,12 +28,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     const user = await env.blog_db
-      .prepare('SELECT id, name, email, password FROM users WHERE email = ?')
+      .prepare('SELECT id, name, email, password, banned_at FROM users WHERE email = ?')
       .bind(email)
-      .first<{ id: number; name: string; email: string; password: string }>()
+      .first<{ id: number; name: string; email: string; password: string; banned_at: string | null }>()
 
     if (!user || (await sha256Hex(password)) !== user.password) {
       return jsonNoStore({ error: 'Invalid credentials' }, 401)
+    }
+    if (user.banned_at) {
+      return jsonNoStore({ error: 'This account has been banned.' }, 403)
     }
 
     const token = randomTokenHex()

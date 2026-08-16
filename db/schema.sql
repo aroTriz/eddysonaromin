@@ -187,6 +187,7 @@ CREATE TABLE users (
   name       TEXT    NOT NULL,
   email      TEXT    NOT NULL UNIQUE,
   password   TEXT    NOT NULL,                -- SHA-256 hex (admins pattern)
+  banned_at  TEXT,                            -- account blacklist (null = active)
   created_at TEXT,
   updated_at TEXT
 );
@@ -241,3 +242,21 @@ CREATE TABLE private_chat_typing (
   updated_at      TEXT,
   UNIQUE (conversation_id, user_id)
 );
+
+-- ─────────────────────────────────────────────────────────────────
+-- Site settings (key-value) — mirrors the Laravel site_settings migration.
+-- `community_chat_enabled` = '1' (default) | '0' — toggled from the
+-- /aromin preferences page; the community chat rejects new messages
+-- and shows a "turned off" notice to visitors when '0'.
+-- ─────────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS site_settings;
+CREATE TABLE site_settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  created_at TEXT,
+  updated_at TEXT
+);
+
+INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
+VALUES ('community_chat_enabled', '1', NULL, NULL);

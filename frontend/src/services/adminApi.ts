@@ -1,5 +1,5 @@
 ﻿import { getToken } from '@/composables/useAuth'
-import type { BlogPost, Recommendation } from '@/types'
+import type { BlogPost, Project, ProjectShowcase, Recommendation } from '@/types'
 /**
  * Authenticated API client for the /aromin admin area.
  * Every call attaches the admin Bearer token.
@@ -85,6 +85,8 @@ export interface CountryStat {
 /** City/town row for the top-cities ranking. */
 export interface CityStat {
   city: string
+  /** ISO country code (e.g. "PH") — drives the country filter. */
+  country: string
   country_name: string
   visits: number
   visitors: number
@@ -94,6 +96,8 @@ export interface CityStat {
 export interface GeoPoint {
   lat: number
   lon: number
+  /** ISO country code (e.g. "PH") — drives the country/world map filter. */
+  country: string
   visits: number
 }
 
@@ -103,13 +107,32 @@ export interface LabelCount {
 }
 
 export interface RecentVisit {
+  /** Latest visit id for this IP — used to jump into the detail modal. */
+  id: number
+  /** Masked for display (e.g. 192.168.1.x). */
   ip: string
+  /** Raw IP — only used to fetch the per-IP visit history in the modal. */
+  raw_ip: string
   country: string
   city: string
   path: string
   device: string
   browser: string
   os: string
+  /** How many times this IP visited in the retention window. */
+  visits: number
+  created_at: string
+}
+
+/** One recorded page view inside a per-IP history. */
+export interface VisitHistoryEntry {
+  id: number
+  path: string
+  device: string
+  browser: string
+  os: string
+  country: string
+  city: string
   created_at: string
 }
 
@@ -127,10 +150,7 @@ export interface Analytics {
   countries: CountryStat[]
   cities: CityStat[]
   geo: GeoPoint[]
-  devices: LabelCount[]
-  browsers: LabelCount[]
   os: LabelCount[]
-  referrers: { domain: string; count: number }[]
   recent: RecentVisit[]
 }
 
@@ -150,6 +170,14 @@ export function fetchAdminStats(force = false): Promise<AdminStats> {
     const res = await fetch(`${API_BASE}/admin/stats`, { headers: authHeaders() })
     return handle<AdminStats>(res)
   })
+}
+
+/** Full visit history for one raw IP — newest first, for the detail modal. */
+export async function fetchVisitHistory(rawIp: string): Promise<VisitHistoryEntry[]> {
+  const res = await fetch(`${API_BASE}/admin/visits/${encodeURIComponent(rawIp)}`, {
+    headers: authHeaders(),
+  })
+  return handle<VisitHistoryEntry[]>(res)
 }
 
 /**
@@ -339,6 +367,144 @@ export async function deleteAdminChatMessages(ids: number[]): Promise<void> {
   await handle<void>(res)
 }
 
+// ── Projects CMS ─────────────────────────────────────────────────────
+
+/** Fields the admin can edit on a project (mirrors the backend rules). */
+export interface ProjectInput {
+  title: string
+  category: 'personal' | 'academic'
+  type: Project['type']
+  summary: string
+  tagline?: string | null
+  description?: string | null
+  role?: string | null
+  year?: string | null
+  featured?: boolean
+  technologies?: string[]
+  url?: string | null
+  source_url?: string | null
+  image_url?: string | null
+  favicon_url?: string | null
+  showcase?: ProjectShowcase | null
+  sort_order?: number
+}
+
+/** All projects (active by default). Pass archived=true for archived ones. */
+export function fetchAdminProjects(archived = false): Promise<Project[]> {
+  const key = `admin:projects:${archived ? 'archived' : 'active'}`
+  return cachedAdmin(key, async () => {
+    const res = await fetch(`${API_BASE}/admin/projects${archived ? '?archived=1' : ''}`, {
+      headers: authHeaders(),
+    })
+    return handle<Project[]>(res)
+  })
+}
+
+/**
+ * Upload a device-showcase image/video (multipart). Returns the served
+ * relative URL plus the detected media kind ("image" | "video").
+ */
+export async function uploadProjectMedia(
+  file: File,
+  device: 'laptop' | 'phone',
+): Promise<{ url: string; kind: 'image' | 'video' }> {
+  const token = getToken()
+  const body = new FormData()
+  body.append('file', file)
+  body.append('device', device)
+  const res = await fetch(`${API_BASE}/admin/projects/media`, {
+    method: 'POST',
+    // NO Content-Type header — the browser sets the multipart boundary itself.
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  })
+  return handle<{ url: string; kind: 'image' | 'video' }>(res)
+}
+
+/**
+ * Upload a project cover image or favicon (multipart). Returns the served
+ * relative URL to store in image_url / favicon_url — no URL typing needed.
+ */
+export async function uploadProjectImage(
+  file: File,
+  kind: 'cover' | 'favicon',
+): Promise<{ url: string }> {
+  const token = getToken()
+  const body = new FormData()
+  body.append('file', file)
+  body.append('kind', kind)
+  const res = await fetch(`${API_BASE}/admin/projects/image`, {
+    method: 'POST',
+    // NO Content-Type header — the browser sets the multipart boundary itself.
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  })
+  return handle<{ url: string }>(res)
+}
+
+/** Create a project. */
+export async function createAdminProject(input: ProjectInput): Promise<Project> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Project>(res)
+}
+
+/** Update a project by id. */
+export async function updateAdminProject(id: number, input: Partial<ProjectInput>): Promise<Project> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Project>(res)
+}
+
+/** Delete a project permanently. */
+export async function deleteAdminProject(id: number): Promise<void> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
+}
+
+/** Bulk delete projects by ids. */
+export async function deleteAdminProjects(ids: number[]): Promise<{ deleted: number }> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  })
+  return handle<{ deleted: number }>(res)
+}
+
+/** Archive a project (hides it from the site + active list; restorable). */
+export async function archiveAdminProject(id: number): Promise<Project> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects/${id}/archive`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Project>(res)
+}
+
+/** Restore an archived project. */
+export async function restoreAdminProject(id: number): Promise<Project> {
+  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/projects/${id}/restore`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Project>(res)
+}
+
 export interface RecommendationInput {
   initials: string
   quote: string
@@ -435,6 +601,8 @@ export interface AdminUser {
   password: string
   /** True when this users row is linked to an admin (cannot be deleted). */
   is_admin: boolean
+  /** Blacklist: null = active, a date = banned from private chat. */
+  banned_at: string | null
   conversations: number
   created_at: string
 }
@@ -502,6 +670,26 @@ export async function deleteAdminUsers(ids: number[]): Promise<BulkDeleteResult>
   return handle<BulkDeleteResult>(res)
 }
 
+/** Blacklist an account — locks it out of private chat. */
+export async function banAdminUser(id: number): Promise<AdminUser> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users/${id}/ban`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<AdminUser>(res)
+}
+
+/** Remove an account from the blacklist. */
+export async function unbanAdminUser(id: number): Promise<AdminUser> {
+  invalidateAdmin('admin:users', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/users/${id}/unban`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<AdminUser>(res)
+}
+
 // ── Private chat (visitor DMs) ──────────────────────────────────────
 // Raw (no cache, no data-unwrap) — the threads must always be fresh.
 
@@ -536,6 +724,7 @@ export interface AdminPrivateConversation {
     created_at: string
   } | null
   unread: number
+  archived_at: string | null
   updated_at: string
 }
 
@@ -552,11 +741,40 @@ async function rawAdmin<T>(url: string, init?: RequestInit): Promise<T> {
   return payload
 }
 
-/** All visitor ↔ admin threads, newest first. */
-export function fetchAdminPrivateConversations(): Promise<AdminPrivateConversation[]> {
-  return rawAdmin<{ conversations: AdminPrivateConversation[] }>('/admin/private/conversations').then(
-    (d) => d.conversations,
-  )
+/** All visitor ↔ admin threads, newest first. Pass archived=true for archived ones. */
+export function fetchAdminPrivateConversations(archived = false): Promise<AdminPrivateConversation[]> {
+  return rawAdmin<{ conversations: AdminPrivateConversation[] }>(
+    `/admin/private/conversations${archived ? '?archived=1' : ''}`,
+  ).then((d) => d.conversations)
+}
+
+/** Archive a conversation (hides it from the active list; restorable). */
+export function archiveAdminPrivateConversation(convId: number): Promise<void> {
+  return rawAdmin<{ success: boolean }>(`/admin/private/conversations/${convId}/archive`, {
+    method: 'POST',
+  }).then(() => undefined)
+}
+
+/** Restore an archived conversation. */
+export function restoreAdminPrivateConversation(convId: number): Promise<void> {
+  return rawAdmin<{ success: boolean }>(`/admin/private/conversations/${convId}/restore`, {
+    method: 'POST',
+  }).then(() => undefined)
+}
+
+/** Delete a conversation permanently (all of its messages go with it). */
+export function deleteAdminPrivateConversation(convId: number): Promise<void> {
+  return rawAdmin<{ success: boolean }>(`/admin/private/conversations/${convId}`, {
+    method: 'DELETE',
+  }).then(() => undefined)
+}
+
+/** Delete a single message from a conversation permanently. */
+export function deleteAdminPrivateMessage(convId: number, messageId: number): Promise<void> {
+  return rawAdmin<{ success: boolean }>(
+    `/admin/private/conversations/${convId}/messages/${messageId}`,
+    { method: 'DELETE' },
+  ).then(() => undefined)
 }
 
 /** Total unread visitor messages across all threads (navbar badge). */
@@ -617,4 +835,16 @@ export function markAdminPrivateRead(convId: number): Promise<void> {
 /** Live stream endpoint for a thread (SSE, Bearer-auth via fetch). */
 export function adminPrivateStreamUrl(convId: number, after: number): string {
   return `${API_BASE}/admin/private/conversations/${convId}/stream?after=${after}`
+}
+
+// ── Site settings (community chat on/off) ────────────────────────────
+
+/** Turn the community chat on/off site-wide (admin only). */
+export async function setCommunityChatEnabled(enabled: boolean): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/settings/community-chat`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ enabled }),
+  })
+  await handle<void>(res)
 }

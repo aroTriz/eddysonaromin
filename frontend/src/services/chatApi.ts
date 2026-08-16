@@ -80,3 +80,18 @@ export async function saveChatIdentity(clientId: string, name: string): Promise<
   const data = (await res.json()) as { name: string }
   return data.name
 }
+
+/** Whether the community chat currently accepts new messages. Fail-open. */
+export async function fetchCommunityChatEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return true
+    const data = (await res.json()) as { community_chat_enabled?: boolean }
+    return data.community_chat_enabled !== false
+  } catch {
+    return true
+  }
+}

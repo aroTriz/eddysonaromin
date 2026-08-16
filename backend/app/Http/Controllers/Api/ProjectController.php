@@ -20,6 +20,7 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         $projects = Project::query()
+            ->whereNull('archived_at')
             ->when($request->filled('category'), fn ($query) => $query->ofCategory($request->string('category')))
             ->when($request->filled('type'), fn ($query) => $query->ofType($request->string('type')))
             ->when($request->boolean('featured'), fn ($query) => $query->featured())
@@ -39,7 +40,9 @@ class ProjectController extends Controller
      */
     public function show(string $slug): JsonResponse
     {
-        $project = Project::where('slug', $slug)->firstOrFail();
+        $project = Project::where('slug', $slug)
+            ->whereNull('archived_at')
+            ->firstOrFail();
 
         return response()
             ->json(['data' => $project])

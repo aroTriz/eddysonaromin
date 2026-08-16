@@ -5,27 +5,36 @@
  * where the admin replies. Live via a Bearer-auth SSE stream with a 3s
  * poll fallback; the thread list refreshes every 10s.
  *
- * Unread visitor messages are RED + bold (thread list badge, preview and
- * bubble) — the moment they're read the red + bold clears. Supports image
- * + file attachments and a visitor typing indicator.
+ * Unread visitor messages are flagged with a red count badge in the thread
+ * list and a subtle "· unread" label under the message — the message text
+ * itself stays normal; the moment they're read the label clears. Supports
+ * image + file attachments and a visitor typing indicator.
  */
 import {
+  Archive,
+  ArchiveRestore,
   ArrowLeft,
   FileImage,
   MessageSquareDashed,
   Paperclip,
   Send,
+  Trash2,
   X,
 } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
 import ChatAttachment from '@/components/chat/ChatAttachment.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
+  archiveAdminPrivateConversation,
+  deleteAdminPrivateConversation,
+  deleteAdminPrivateMessage,
   fetchAdminPrivateConversations,
   fetchAdminPrivateMessages,
   fetchAdminTyping,
   markAdminPrivateRead,
+  restoreAdminPrivateConversation,
   sendAdminPrivateMessage,
   sendAdminTyping,
   type AdminPrivateConversation,
@@ -34,10 +43,25 @@ import {
 } from '@/services/adminApi'
 import { fileToAttachment } from '@/utils/attachments'
 
+const TYPING_BEAT_MS = 2500
+const TYPING_IDLE_MS = 3000
+
 const conversations = ref<AdminPrivateConversation[]>([])
 const loading = ref(true)
 const error = ref('')
 const mobileView = ref<'list' | 'chat'>('list')
+/** Archived thread list toggle — archived chats hide from the active inbox. */
+const showArchived = ref(false)
+
+// Confirm dialog state (delete chat / delete message)
+const confirm = ref<{
+  title: string
+  message: string
+  confirmLabel: string
+  danger: boolean
+  action: () => void | Promise<void>
+} | null>(null)
+const confirmBusy = ref(false)
 
 const active = ref<AdminPrivateConversation | null>(null)
 const messages = ref<AdminPrivateMessage[]>([])
@@ -55,7 +79,7 @@ const typingUsers = ref<{ id: number; name: string }[]>([])
 const typingNow = ref(false)
 let typingInputActive = false
 let typingBeatAt = 0
-let lastInputAt = 0
+let typingIdleTimer: ReturnType<typeof setTimeout> | null = null
 
 let listTimer: ReturnType<typeof setInterval> | null = null
 let convTimer: ReturnType<typeof setInterval> | null = null
@@ -104,7 +128,7 @@ async function loadList(force = false): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    conversations.value = await fetchAdminPrivateConversations()
+    conversations.value = await fetchAdminPrivateConversations(showArchived.value)
     if (active.value) {
       const fresh = conversations.value.find((c) => c.id === active.value!.id)
       if (fresh) active.value = fresh
@@ -116,6 +140,117 @@ async function loadList(force = false): Promise<void> {
   }
 }
 
+/** Flip between the active and archived thread lists. */
+function toggleArchived(): void {
+  stopConvTimer()
+  stopTyping()
+  active.value = null
+  messages.value = []
+  typingUsers.value = []
+  typingNow.value = false
+  pendingFile.value = null
+  mobileView.value = 'list'
+  showArchived.value = !showArchived.value
+  void loadList(true)
+}
+
+// -- Archive / restore / delete (chat level) -------------------------
+async function archiveConv(conv: AdminPrivateConversation): Promise<void> {
+  try {
+    await archiveAdminPrivateConversation(conv.id)
+    // Archiving the open thread closes it — an archived chat is resolved.
+    if (active.value?.id === conv.id) {
+      stopConvTimer()
+      stopTyping()
+      active.value = null
+      messages.value = []
+      typingUsers.value = []
+      typingNow.value = false
+      pendingFile.value = null
+      mobileView.value = 'list'
+    }
+    void loadList(true)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to archive conversation'
+  }
+}
+
+async function restoreConv(conv: AdminPrivateConversation): Promise<void> {
+  try {
+    await restoreAdminPrivateConversation(conv.id)
+    // If this thread is open, clear its "archived" badge right away.
+    if (active.value?.id === conv.id) {
+      active.value = { ...active.value, archived_at: null }
+    }
+    void loadList(true)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to restore conversation'
+  }
+}
+
+function askDeleteConv(conv: AdminPrivateConversation): void {
+  confirm.value = {
+    title: 'Delete chat',
+    message: `Delete the conversation with ${conv.visitor.name} permanently?\nAll messages in this chat will be gone.`,
+    confirmLabel: 'delete',
+    danger: true,
+    action: () => removeConv(conv),
+  }
+}
+
+async function removeConv(conv: AdminPrivateConversation): Promise<void> {
+  confirmBusy.value = true
+  try {
+    await deleteAdminPrivateConversation(conv.id)
+    conversations.value = conversations.value.filter((c) => c.id !== conv.id)
+    if (active.value?.id === conv.id) {
+      stopConvTimer()
+      stopTyping()
+      active.value = null
+      messages.value = []
+      typingUsers.value = []
+      typingNow.value = false
+      pendingFile.value = null
+      mobileView.value = 'list'
+    }
+    void loadList(true)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to delete conversation'
+  } finally {
+    confirmBusy.value = false
+    confirm.value = null
+  }
+}
+
+// -- Delete message (thread level) -----------------------------------
+function askDeleteMessage(m: AdminPrivateMessage): void {
+  const convId = active.value?.id
+  if (!convId) return
+  confirm.value = {
+    title: 'Delete message',
+    message: 'Delete this message permanently?',
+    confirmLabel: 'delete',
+    danger: true,
+    action: () => removeMessage(convId, m),
+  }
+}
+
+async function removeMessage(convId: number, m: AdminPrivateMessage): Promise<void> {
+  confirmBusy.value = true
+  try {
+    await deleteAdminPrivateMessage(convId, m.id)
+    seenIds.delete(m.id)
+    messages.value = messages.value.filter((x) => x.id !== m.id)
+    // Refresh the list so the thread preview reflects the deletion.
+    void loadList(true)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to delete message'
+  } finally {
+    confirmBusy.value = false
+    confirm.value = null
+  }
+}
+
 function startListTimer(): void {
   if (listTimer) clearInterval(listTimer)
   listTimer = setInterval(() => void loadList(false), 10_000)
@@ -123,6 +258,11 @@ function startListTimer(): void {
 
 // -- Thread ---------------------------------------------------------
 async function openThread(conv: AdminPrivateConversation): Promise<void> {
+  // Leaving the previous thread stops the admin's own typing heartbeat and
+  // clears any stale visitor typing from it.
+  stopTyping()
+  typingUsers.value = []
+  typingNow.value = false
   active.value = conv
   messages.value = []
   seenIds = new Set()
@@ -136,6 +276,7 @@ async function openThread(conv: AdminPrivateConversation): Promise<void> {
 
 function backToList(): void {
   stopConvTimer()
+  stopTyping()
   active.value = null
   messages.value = []
   typingUsers.value = []
@@ -183,14 +324,12 @@ function startConvTimer(): void {
 
 /** Keep the "typing" heartbeat alive while text sits in the box. */
 function maybeKeepTypingAlive(): void {
-  const hasText = reply.value.trim().length > 0
-  if (hasText && Date.now() - lastInputAt < 60_000) {
-    if (Date.now() - typingBeatAt >= 2500) {
-      typingBeatAt = Date.now()
-      void sendTyping(true)
-    }
-  } else if (!hasText && typingInputActive) {
-    stopTyping()
+  // Refresh the server heartbeat only while genuinely typing — the idle
+  // timer in onReplyInput() clears the indicator ~3s after the last
+  // keystroke, so "typing…" never lingers once the admin actually stops.
+  if (typingInputActive && Date.now() - typingBeatAt >= TYPING_BEAT_MS) {
+    typingBeatAt = Date.now()
+    void sendTyping(true)
   }
 }
 
@@ -291,6 +430,9 @@ async function sendReply(e: Event): Promise<void> {
     const msg = await sendAdminPrivateMessage(active.value.id, val, attachment)
     addMessage(msg)
     scrollBottom()
+    // A reply auto-unarchives the thread — if it came from the archived
+    // view, refresh so the list moves it back to the active inbox.
+    if (showArchived.value) void loadList(true)
   } catch (err) {
     reply.value = val
     pendingFile.value = attachment
@@ -302,21 +444,36 @@ async function sendReply(e: Event): Promise<void> {
 
   // -- Typing (admin ↔ visitor heartbeat) -----------------------------
 function onReplyInput(): void {
-  lastInputAt = Date.now()
   const hasText = reply.value.trim().length > 0
-  if (hasText && !typingInputActive) {
+  if (!hasText) {
+    stopTyping()
+    return
+  }
+  // Restart the idle countdown — TYPING_IDLE_MS without a keystroke clears
+  // the indicator, so the visitor sees "typing…" if and only if the admin
+  // is really typing right now.
+  if (typingIdleTimer) clearTimeout(typingIdleTimer)
+  typingIdleTimer = setTimeout(() => {
+    typingIdleTimer = null
+    stopTyping()
+  }, TYPING_IDLE_MS)
+  if (!typingInputActive) {
     typingInputActive = true
     typingBeatAt = Date.now()
     void sendTyping(true)
     return
   }
-  if (hasText && Date.now() - typingBeatAt > 2500) {
+  if (Date.now() - typingBeatAt > TYPING_BEAT_MS) {
     typingBeatAt = Date.now()
     void sendTyping(true)
   }
 }
 
 function stopTyping(): void {
+  if (typingIdleTimer) {
+    clearTimeout(typingIdleTimer)
+    typingIdleTimer = null
+  }
   if (typingInputActive) {
     typingInputActive = false
     void sendTyping(false)
@@ -392,9 +549,21 @@ onBeforeUnmount(() => {
           mobileView === 'chat' ? 'hidden sm:flex' : 'flex',
         ]"
       >
-        <div class="flex items-center gap-2 border-b border-gray-200 px-4 py-3 font-mono text-[11px] text-gray-500 dark:border-gray-300">
-          <MessageSquareDashed class="h-3.5 w-3.5" :stroke-width="1.7" />
-          <span>// threads ({{ conversations.length }})</span>
+        <div class="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2.5 font-mono text-[11px] text-gray-500 dark:border-gray-300">
+          <div class="flex items-center gap-2">
+            <MessageSquareDashed class="h-3.5 w-3.5" :stroke-width="1.7" />
+            <span>// {{ showArchived ? 'archived' : 'threads' }} ({{ conversations.length }})</span>
+          </div>
+          <button
+            type="button"
+            class="flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2 py-1 font-mono text-[10.5px] text-gray-500 transition-colors hover:bg-gray-50 hover:text-ink dark:border-gray-300 dark:hover:bg-gray-200"
+            :aria-label="showArchived ? 'Show active conversations' : 'Show archived conversations'"
+            @click="toggleArchived"
+          >
+            <Archive v-if="!showArchived" class="h-3 w-3" :stroke-width="1.7" />
+            <ArchiveRestore v-else class="h-3 w-3" :stroke-width="1.7" />
+            {{ showArchived ? 'Show active' : 'Show archived' }}
+          </button>
         </div>
 
         <div class="min-h-0 flex-1 overflow-y-auto">
@@ -402,48 +571,84 @@ onBeforeUnmount(() => {
             <div v-for="i in 4" :key="i" class="h-14 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
           </div>
           <p v-else-if="conversations.length === 0" class="px-4 py-10 text-center font-mono text-[11px] leading-relaxed text-gray-400">
-            no visitor conversations yet.<br />the first DM will show up here
+            <template v-if="showArchived">Nothing archived yet.<br />Archived chats land here</template>
+            <template v-else>No visitor conversations yet.<br />The first DM will show up here</template>
           </p>
-          <button
+          <div
             v-for="c in conversations"
             :key="c.id"
-            type="button"
-            class="flex w-full items-center gap-3 border-b border-gray-100 px-3 py-3 text-left transition-colors last:border-b-0 dark:border-gray-200/50"
+            class="flex items-stretch border-b border-gray-100 transition-colors last:border-b-0 dark:border-gray-200/50"
             :class="active && active.id === c.id
               ? 'bg-gray-100 dark:bg-gray-200'
               : 'hover:bg-gray-50 dark:hover:bg-gray-200/50'"
-            @click="openThread(c)"
           >
-            <img class="h-9 w-9 shrink-0 rounded-full bg-gray-100" :src="avatarUrl(c.visitor.name)" :alt="`${c.visitor.name} avatar`" loading="lazy" />
-            <div class="min-w-0 flex-1">
-              <div class="flex items-baseline justify-between gap-2">
-                <p class="truncate font-mono text-[12px] text-ink" :class="c.unread > 0 ? 'font-bold' : 'font-semibold'">
-                  {{ c.visitor.name }}
-                </p>
-                <span class="shrink-0 font-mono text-[9.5px] text-gray-400">
-                  {{ c.last_message ? timeAgo(c.last_message.created_at) : '' }}
-                </span>
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left"
+              @click="openThread(c)"
+            >
+              <img class="h-9 w-9 shrink-0 rounded-full bg-gray-100" :src="avatarUrl(c.visitor.name)" :alt="`${c.visitor.name} avatar`" loading="lazy" />
+              <div class="min-w-0 flex-1">
+                <div class="flex items-baseline justify-between gap-2">
+                  <p class="truncate font-mono text-[12px] text-ink" :class="c.unread > 0 ? 'font-bold' : 'font-semibold'">
+                    {{ c.visitor.name }}
+                  </p>
+                  <span class="shrink-0 font-mono text-[9.5px] text-gray-400">
+                    {{ c.last_message ? timeAgo(c.last_message.created_at) : '' }}
+                  </span>
+                </div>
+                <p class="truncate font-mono text-[10px] text-gray-400">{{ c.visitor.email }}</p>
+                <div class="mt-0.5 flex items-center justify-between gap-2">
+                  <p class="truncate font-mono text-[11px] text-gray-500">
+                    <template v-if="c.last_message">
+                      <span v-if="c.last_message.sender_id !== c.visitor.id" class="text-gray-400">you: </span>
+                      <template v-if="c.last_message.attachment">
+                        {{ c.last_message.attachment.kind === 'image' ? '[image] ' : '[file] ' }}
+                      </template>{{ c.last_message.message }}
+                    </template>
+                    <template v-else>No messages yet</template>
+                  </p>
+                  <span
+                    v-if="c.unread > 0"
+                    class="flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 font-mono text-[10px] font-bold leading-none text-white"
+                  >
+                    {{ c.unread > 99 ? '99+' : c.unread }}
+                  </span>
+                </div>
               </div>
-              <p class="truncate font-mono text-[10px] text-gray-400">{{ c.visitor.email }}</p>
-              <div class="mt-0.5 flex items-center justify-between gap-2">
-                <p class="truncate font-mono text-[11px]" :class="c.unread > 0 ? 'font-bold text-red-600' : 'text-gray-500'">
-                  <template v-if="c.last_message">
-                    <span v-if="c.last_message.sender_id !== c.visitor.id" class="text-gray-400">you: </span>
-                    <template v-if="c.last_message.attachment">
-                      {{ c.last_message.attachment.kind === 'image' ? '[image] ' : '[file] ' }}
-                    </template>{{ c.last_message.message }}
-                  </template>
-                  <template v-else>no messages yet</template>
-                </p>
-                <span
-                  v-if="c.unread > 0"
-                  class="flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 font-mono text-[10px] font-bold leading-none text-white"
-                >
-                  {{ c.unread > 99 ? '99+' : c.unread }}
-                </span>
-              </div>
+            </button>
+            <div class="flex shrink-0 flex-col items-center justify-center gap-0.5 border-l border-gray-100 px-1.5 dark:border-gray-200/50">
+              <button
+                v-if="showArchived"
+                type="button"
+                class="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink dark:hover:bg-gray-200"
+                :aria-label="`Restore conversation with ${c.visitor.name}`"
+                title="Restore"
+                @click.stop="restoreConv(c)"
+              >
+                <ArchiveRestore class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+              <button
+                v-else
+                type="button"
+                class="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink dark:hover:bg-gray-200"
+                :aria-label="`Archive conversation with ${c.visitor.name}`"
+                title="Archive"
+                @click.stop="archiveConv(c)"
+              >
+                <Archive class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
+              <button
+                type="button"
+                class="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-200"
+                :aria-label="`Delete conversation with ${c.visitor.name}`"
+                title="Delete chat"
+                @click.stop="askDeleteConv(c)"
+              >
+                <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
+              </button>
             </div>
-          </button>
+          </div>
         </div>
       </aside>
 
@@ -454,9 +659,9 @@ onBeforeUnmount(() => {
           <div class="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 text-gray-300 dark:border-gray-300">
             <Send class="h-5 w-5" :stroke-width="1.5" />
           </div>
-          <p class="font-pixel text-[15px] text-gray-400">pick a conversation</p>
+          <p class="font-pixel text-[15px] text-gray-400">Pick a conversation</p>
           <p class="max-w-[260px] font-mono text-[11px] leading-relaxed text-gray-400">
-            choose a visitor thread on the left to read and reply.
+            Choose a visitor thread on the left to read and reply.
           </p>
         </div>
 
@@ -473,7 +678,15 @@ onBeforeUnmount(() => {
             </button>
             <img class="h-9 w-9 shrink-0 rounded-full bg-gray-100" :src="avatarUrl(active.visitor.name)" :alt="`${active.visitor.name} avatar`" loading="lazy" />
             <div class="min-w-0 flex-1">
-              <p class="truncate font-mono text-[13px] font-semibold text-ink">{{ active.visitor.name }}</p>
+              <div class="flex items-center gap-2">
+                <p class="truncate font-mono text-[13px] font-semibold text-ink">{{ active.visitor.name }}</p>
+                <span
+                  v-if="active.archived_at"
+                  class="shrink-0 rounded-full border border-gray-300 px-1.5 py-0.5 font-mono text-[9px] text-gray-500 dark:border-gray-300"
+                >
+                  archived
+                </span>
+              </div>
               <p class="truncate font-mono text-[10px]">
                 <span v-if="typingNow" class="text-red-600">{{ typingUsers.map((u) => u.name).join(', ') }} is typing…</span>
                 <span v-else class="text-gray-400">{{ active.visitor.email }}</span>
@@ -500,8 +713,8 @@ onBeforeUnmount(() => {
               </button>
             </div>
             <div v-else-if="messages.length === 0" class="m-auto text-center">
-              <p class="font-pixel text-[15px] text-gray-400">no messages yet</p>
-              <p class="mt-1 font-mono text-[11px] text-gray-400">say hi back — start the conversation</p>
+              <p class="font-pixel text-[15px] text-gray-400">No messages yet</p>
+              <p class="mt-1 font-mono text-[11px] text-gray-400">Say hi back — start the conversation</p>
             </div>
 
             <!-- visitor messages LEFT (unread = red + bold), admin RIGHT -->
@@ -514,16 +727,13 @@ onBeforeUnmount(() => {
               </div>
               <div class="flex w-full" :class="m.sender_id === active.visitor.id ? 'justify-start' : 'justify-end'">
                 <div
-                  class="flex max-w-[78%] flex-col sm:max-w-[68%]"
+                  class="group flex max-w-[78%] flex-col sm:max-w-[68%]"
                   :class="m.sender_id === active.visitor.id ? 'items-start' : 'items-end'"
                 >
                   <div
                     class="flex max-w-full flex-col gap-1.5 px-3.5 py-2 font-sans text-[13.5px] leading-relaxed"
                     :class="m.sender_id === active.visitor.id
-                      ? [
-                          'rounded-2xl rounded-bl-md border border-gray-200 bg-white text-ink dark:border-gray-300 dark:bg-gray-200',
-                          !m.read_at ? 'font-bold text-red-600' : '',
-                        ]
+                      ? 'rounded-2xl rounded-bl-md border border-gray-200 bg-white text-ink dark:border-gray-300 dark:bg-gray-200'
                       : 'rounded-2xl rounded-br-md bg-ink text-bg'"
                   >
                     <ChatAttachment
@@ -535,9 +745,22 @@ onBeforeUnmount(() => {
                       {{ m.message }}
                     </p>
                   </div>
-                  <span class="mt-1 px-1 font-mono text-[9.5px] text-gray-400">
-                    {{ clock(m.created_at) }}<template v-if="m.sender_id === active.visitor.id && !m.read_at"> · <span class="text-red-500">unread</span></template>
-                  </span>
+                  <div class="mt-1 flex items-center gap-1.5 px-1">
+                    <span class="font-mono text-[9.5px] text-gray-400">
+                      {{ clock(m.created_at) }}<template v-if="m.sender_id === active.visitor.id && !m.read_at"> · <span class="text-gray-400">unread</span></template>
+                    </span>
+                    <button
+                      type="button"
+                      class="rounded-md p-1 text-gray-300 opacity-0 transition-all hover:bg-gray-200/70 hover:text-red-500 focus-visible:opacity-100 group-hover:opacity-100 dark:text-gray-500 dark:hover:bg-gray-300/50"
+                      :aria-label="m.sender_id === active.visitor.id
+                        ? `Delete message from ${active.visitor.name}`
+                        : `Delete your message from ${active.visitor.name}`"
+                      title="Delete message"
+                      @click="askDeleteMessage(m)"
+                    >
+                      <Trash2 class="h-3 w-3" :stroke-width="1.7" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </template>
@@ -606,7 +829,7 @@ onBeforeUnmount(() => {
                 type="text"
                 maxlength="2000"
                 autocomplete="off"
-                placeholder="reply as the admin…"
+                placeholder="Reply as the admin…"
                 class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
                 @input="onReplyInput"
                 @blur="stopTyping"
@@ -624,6 +847,18 @@ onBeforeUnmount(() => {
         </template>
       </section>
     </div>
+
+    <!-- ── Themed confirm dialog (delete chat / delete message) ── -->
+    <ConfirmModal
+      :open="confirm !== null"
+      :title="confirm?.title ?? ''"
+      :message="confirm?.message ?? ''"
+      :confirm-label="confirm?.confirmLabel ?? 'confirm'"
+      :danger="confirm?.danger ?? false"
+      :busy="confirmBusy"
+      @confirm="confirm?.action()"
+      @cancel="confirm = null"
+    />
   </AdminLayout>
 </template>
 

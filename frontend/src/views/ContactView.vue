@@ -48,10 +48,12 @@ const contactInfo = [
   { label: '// location', value: profile.location, href: null, icon: MapPin },
 ]
 
-// text-[16px] on inputs — iOS Safari auto-zooms the page when a focused
-// input's font-size is below 16px; this keeps mobile forms zoom-free.
+// 16px on MOBILE only — iOS Safari auto-zooms the page when a focused
+// input's font-size is below 16px. On desktop the fields align to the
+// site's body-text size (13.5px) so the form doesn't look oversized next
+// to the rest of the page (labels 11.5px, buttons 13px, info 13.5px).
 const fieldClass =
-  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[16px] text-ink placeholder:text-gray-500 focus:border-gray-400 focus:outline-none'
+  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-mono text-[16px] text-ink placeholder:text-gray-500 focus:border-gray-400 focus:outline-none sm:text-[13.5px]'
 </script>
 
 <template>
@@ -218,18 +220,34 @@ const fieldClass =
     </div>
 
     <!-- ── Map (Google Maps embed — current location) ─────────── -->
+    <!-- Themed with the site (the classic invert()+hue-rotate() map
+         trick): light mode shows the native light map, dark mode shows
+         a dark/black map. -->
     <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <iframe
-        title="Victoria Sports Tower, Quezon City"
-        src="https://www.google.com/maps?q=14.6359509,121.0424823&z=17&output=embed"
-        class="block h-[320px] w-full border-0"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        allowfullscreen
-      ></iframe>
+      <div class="map-theme">
+        <iframe
+          title="Victoria Sports Tower, Quezon City"
+          src="https://www.google.com/maps?q=14.6359509,121.0424823&z=17&output=embed"
+          class="block h-[320px] w-full border-0"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+      </div>
     </Reveal>
   </div>
 
   <!-- Email "say hello" modal (bryllim-style, same as home) -->
   <EmailModal ref="emailModalRef" />
 </template>
+
+<style scoped>
+/* Native light map in light mode; dark/black map in dark mode — the map
+   follows the site theme (dark map at night, light map by day). */
+.map-theme iframe {
+  filter: none;
+}
+html.dark .map-theme iframe {
+  filter: invert(92%) hue-rotate(180deg);
+}
+</style>

@@ -90,8 +90,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     )
     .bind(id, admin.id, message, attachment, now, now)
     .run()
+  // Bump the session so it floats to the top, clear the admin's typing row,
+  // and un-archive the thread: fresh activity re-opens a resolved chat.
   await env.blog_db
-    .prepare('UPDATE private_chat_sessions SET updated_at = ? WHERE id = ?')
+    .prepare('UPDATE private_chat_sessions SET updated_at = ?, archived_at = NULL WHERE id = ?')
     .bind(now, id)
     .run()
   await env.blog_db

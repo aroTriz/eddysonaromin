@@ -1,6 +1,6 @@
 /**
  * Private chat — admin side (visitor DMs).
- *   GET /api/v1/admin/private/conversations → { conversations }
+ *   GET /api/v1/admin/private/conversations?archived=1 → { conversations }
  * Each conversation: visitor { id, name, email } + last message + unread.
  * Mirrors the Laravel AdminPrivateChatController.
  */
@@ -15,6 +15,7 @@ interface SessionRow {
   id: number
   user_a_id: number
   user_b_id: number
+  archived_at: string | null
   updated_at: string
 }
 
@@ -49,6 +50,7 @@ async function conversationJson(
     visitor: { id: visitor.id, name: visitor.name, email: visitor.email },
     last_message: last ?? null,
     unread: unreadRow?.n ?? 0,
+    archived_at: session.archived_at ?? null,
     updated_at: session.updated_at,
   }
 }
@@ -59,10 +61,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     return jsonNoStore({ error: 'Unauthorized' }, 401)
   }
 
+  const url = new URL(request.url)
+  const archived = url.searchParams.get('archived') === '1'
+
   const rows = await env.blog_db
     .prepare(
-      `SELECT id, user_a_id, user_b_id, updated_at FROM private_chat_sessions
-       WHERE user_a_id = ? OR user_b_id = ? ORDER BY updated_at DESC`,
+      `SELECT id, user_a_id, user_b_id, archived_at, updated_at FROM private_chat_sessions
+       WHERE (user_a_id = ? OR user_b_id = ?)
+         AND archived_at ${archived ? 'IS NOT NULL' : 'IS NULL'}
+       ORDER BY updated_at DESC`,
     )
     .bind(admin.id, admin.id)
     .all<SessionRow>()

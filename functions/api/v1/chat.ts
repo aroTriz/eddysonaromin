@@ -133,6 +133,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (containsLink(name) || containsLink(message)) return json({ reason: 'link' }, 422)
     if (isOffensive(name) || isOffensive(message)) return json({ reason: 'blocked' }, 422)
 
+    // Community chat turned off from /aromin preferences — reject sends.
+    const setting = await env.blog_db
+      .prepare('SELECT value FROM site_settings WHERE key = ?')
+      .bind('community_chat_enabled')
+      .first<{ value: string }>()
+    if ((setting?.value ?? '1') === '0') return json({ reason: 'disabled' }, 423)
+
     if (clientId) {
       const last = await env.blog_db
         .prepare('SELECT created_at FROM chat_messages WHERE client_id = ? ORDER BY id DESC LIMIT 1')

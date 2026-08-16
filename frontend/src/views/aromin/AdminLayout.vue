@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { FolderKanban, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -33,13 +33,33 @@ async function refreshUnread(): Promise<void> {
   unreadPrivate.value = await fetchAdminPrivateUnread()
 }
 
-onMounted(() => {
+function startUnreadPoll(): void {
+  if (unreadTimer) return
   void refreshUnread()
   unreadTimer = setInterval(() => void refreshUnread(), 15_000)
+}
+
+function stopUnreadPoll(): void {
+  if (unreadTimer) {
+    clearInterval(unreadTimer)
+    unreadTimer = null
+  }
+}
+
+/** Pause the poll while the tab is hidden — no wasted requests in the background. */
+function onVisibility(): void {
+  if (document.visibilityState === 'hidden') stopUnreadPoll()
+  else startUnreadPoll()
+}
+
+onMounted(() => {
+  startUnreadPoll()
+  document.addEventListener('visibilitychange', onVisibility)
 })
 
 onBeforeUnmount(() => {
-  if (unreadTimer) clearInterval(unreadTimer)
+  stopUnreadPoll()
+  document.removeEventListener('visibilitychange', onVisibility)
 })
 
 // Refresh the badge right after opening the private chat (read → dot gone).
@@ -69,6 +89,7 @@ const navGroups = [
     label: 'g2',
     links: [
       { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Rss },
+      { label: 'Projects', to: '/aromin/projects', name: 'aromin-projects', icon: FolderKanban },
       { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
     ],
   },
@@ -129,18 +150,17 @@ async function handleLogout(): Promise<void> {
               v-for="link in group.links"
               :key="link.name"
               :to="link.to"
-              class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+              class="relative inline-flex w-fit items-center gap-2.5 whitespace-nowrap text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
               :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
             >
               <component :is="link.icon" class="h-[1.15em] w-[1.15em] shrink-0" :stroke-width="1.7" />
               {{ link.label }}
               <span
                 v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
-                class="ml-1 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-bold leading-none text-white"
+                class="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
                 :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
-              >
-                {{ unreadPrivate > 99 ? '99+' : unreadPrivate }}
-              </span>
+                aria-label="Unread private messages"
+              />
               <svg
                 v-if="active === link.name"
                 class="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2"
@@ -224,7 +244,7 @@ async function handleLogout(): Promise<void> {
                 v-for="link in group.links"
                 :key="link.name"
                 :to="link.to"
-                class="relative inline-flex w-fit items-center gap-3 py-2 text-gray-700 hover:text-ink"
+                class="relative inline-flex w-fit items-center gap-3 whitespace-nowrap py-2 text-gray-700 hover:text-ink"
                 :class="{ 'pl-6 text-ink': active === link.name }"
                 @click="closeMobileMenu"
               >
@@ -232,11 +252,10 @@ async function handleLogout(): Promise<void> {
               {{ link.label }}
               <span
                 v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
-                class="ml-1 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-bold leading-none text-white"
+                class="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
                 :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
-              >
-                {{ unreadPrivate > 99 ? '99+' : unreadPrivate }}
-              </span>
+                aria-label="Unread private messages"
+              />
                 <svg
                   v-if="active === link.name"
                   class="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2"

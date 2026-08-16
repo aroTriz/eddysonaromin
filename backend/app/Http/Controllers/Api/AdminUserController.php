@@ -21,6 +21,11 @@ use Illuminate\Support\Facades\DB;
  *   PUT    /api/v1/admin/users/{id}  → edit an account (optional password reset)
  *   DELETE /api/v1/admin/users/{id}  → delete an account
  *   DELETE /api/v1/admin/users/bulk  → bulk delete (ids array)
+ *   POST   /api/v1/admin/users/{id}/ban   → blacklist an account
+ *   POST   /api/v1/admin/users/{id}/unban → remove from the blacklist
+ *
+ * Banned accounts (users.banned_at) are locked out of private chat — set
+ * automatically when they send vulgar language, or manually from here.
  *
  * The users row linked to an admin (admins.user_id — the admin's private-chat
  * persona) cannot be deleted; it is the account visitors DM.
@@ -33,11 +38,13 @@ class AdminUserController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Which user ids are linked to admin accounts (protected from deletion).
+        // Admin accounts live in their own table (admins) — never here. Their
+        // private-chat persona rows (admins.user_id → users) are excluded so
+        // this page lists ONLY the web chat accounts.
         $adminUserIds = DB::table('admins')
             ->whereNotNull('user_id')
             ->pluck('user_id')
-            ->flip(); // id → true
+            ->all();
 
         $conversationCounts = DB::table('private_chat_sessions')
             ->selectRaw('user_a_id as user_id, count(*) as c')
@@ -52,15 +59,17 @@ class AdminUserController extends Controller
             ->map(fn ($rows) => $rows->sum('c'));
 
         $users = DB::table('users')
+            ->whereNotIn('id', $adminUserIds)
             ->orderBy('id')
             ->get()
-            ->map(function ($u) use ($adminUserIds, $conversationCounts) {
+            ->map(function ($u) use ($conversationCounts) {
                 return [
                     'id' => (int) $u->id,
                     'name' => (string) $u->name,
                     'email' => (string) $u->email,
                     'password' => (string) $u->password,
-                    'is_admin' => $adminUserIds->has($u->id),
+                    'is_admin' => false, // admin accounts are never listed here
+                    'banned_at' => $u->banned_at ?? null,
                     'conversations' => (int) ($conversationCounts->get($u->id) ?? 0),
                     'created_at' => (string) ($u->created_at ?? ''),
                 ];
@@ -178,6 +187,54 @@ class AdminUserController extends Controller
         ]);
     }
 
+    /**
+     * Blacklist an account — locks it out of private chat.
+     *   POST /api/v1/admin/users/{id}/ban
+     */
+    public function ban(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if ($this->isAdminLinked($id)) {
+            return response()->json([
+                'error' => 'This account is linked to an admin and cannot be blacklisted.',
+            ], 422);
+        }
+
+        $updated = DB::table('users')->where('id', $id)->update([
+            'banned_at' => now(),
+            'updated_at' => now(),
+        ]);
+        if (! $updated) {
+            return response()->json(['error' => 'Account not found.'], 404);
+        }
+
+        return response()->json(['data' => $this->row($id)]);
+    }
+
+    /**
+     * Remove an account from the blacklist.
+     *   POST /api/v1/admin/users/{id}/unban
+     */
+    public function unban(Request $request, int $id): JsonResponse
+    {
+        if (! $this->guard($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $updated = DB::table('users')->where('id', $id)->update([
+            'banned_at' => null,
+            'updated_at' => now(),
+        ]);
+        if (! $updated) {
+            return response()->json(['error' => 'Account not found.'], 404);
+        }
+
+        return response()->json(['data' => $this->row($id)]);
+    }
+
     /** Shape a single users row (with admin/protection flags). */
     private function row(int $id): array
     {
@@ -189,6 +246,7 @@ class AdminUserController extends Controller
             'email' => (string) $u->email,
             'password' => (string) $u->password,
             'is_admin' => $this->isAdminLinked($id),
+            'banned_at' => $u->banned_at ?? null,
             'conversations' => 0,
             'created_at' => (string) ($u->created_at ?? ''),
         ];

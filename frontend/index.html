@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#ffffff" />
 
     <title>Eddyson Aromin — IT Portfolio</title>
     <meta
@@ -16,14 +16,15 @@
 
     <!-- Pre-paint theme: runs in <head> before any paint. Applies the
          persisted preference to <html> AND sets the background inline so a
-         refresh never flashes white in dark mode. Matches --bg in main.css
-         (light #fff / dark rgb(12 12 15)). The app clears the inline bg
-         once it mounts (useTheme), letting the CSS variables take over. -->
+         refresh never flashes the wrong color. Defaults to LIGHT on first
+         visit (matches --bg in main.css: light #fff / dark rgb(12 12 15)).
+         The app clears the inline bg once it mounts (useTheme), letting the
+         CSS variables take over. -->
     <script>
       ;(function () {
         try {
           var stored = localStorage.getItem('theme')
-          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'dark'
+          var pref = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'light'
           var hour = new Date().getHours()
           var dark =
             pref === 'dark' || (pref === 'system' && !(hour >= 7 && hour < 18))

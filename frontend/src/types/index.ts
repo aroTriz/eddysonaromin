@@ -27,10 +27,25 @@ export interface Project {
   source_url: string | null
   image_url: string | null
   favicon_url: string | null
+  /** Device-screenshot config: laptop & phone screen URLs for the showcase. */
+  showcase: ProjectShowcase | null
+  archived_at: string | null
   sort_order: number
   created_at: string | null
   updated_at: string | null
 }
+
+/** DeviceShowcase config — which laptop / phone media a project renders. */
+export interface ProjectShowcase {
+  laptops: ShowcaseMedia[]
+  phones: ShowcaseMedia[]
+}
+
+/**
+ * One device-showcase media entry: either a legacy URL string (an image) or
+ * an uploaded media object tagged with its kind ("image" | "video").
+ */
+export type ShowcaseMedia = string | { src: string; kind: 'image' | 'video' }
 
 export interface BlogPost {
   id: number

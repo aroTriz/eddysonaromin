@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * BarList — horizontal labelled bars (top pages, devices, browsers, referrers).
+ * BarList — horizontal labelled bars (top pages, countries, cities, OSes).
  * Each row: label + value + proportional bar, all theme-aware.
  */
 import { computed } from 'vue'

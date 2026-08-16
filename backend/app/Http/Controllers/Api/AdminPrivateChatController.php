@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * (seeded by AdminSeeder as "Eddyson Aromin"). All routes are guarded by the
  * /aromin admin session (same Bearer token as the rest of the admin API).
  *
- *   GET    /api/v1/admin/private/conversations
+ *   GET    /api/v1/admin/private/conversations?archived=1
  *   GET    /api/v1/admin/private/unread
  *   GET    /api/v1/admin/private/conversations/{id}/messages?after=
  *   POST   /api/v1/admin/private/conversations/{id}/messages   { message, attachment? }
@@ -23,6 +23,10 @@ use Illuminate\Support\Facades\DB;
  *   GET    /api/v1/admin/private/conversations/{id}/typing     who is typing
  *   POST   /api/v1/admin/private/conversations/{id}/read
  *   GET    /api/v1/admin/private/conversations/{id}/stream?after=   SSE
+ *   POST   /api/v1/admin/private/conversations/{id}/archive    archive (hide from active)
+ *   POST   /api/v1/admin/private/conversations/{id}/restore    un-archive
+ *   DELETE /api/v1/admin/private/conversations/{id}            delete the whole chat
+ *   DELETE /api/v1/admin/private/conversations/{id}/messages/{messageId}  delete one message
  */
 class AdminPrivateChatController extends Controller
 {
@@ -40,9 +44,12 @@ class AdminPrivateChatController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $archived = $request->boolean('archived', false);
+
         $sessions = DB::table('private_chat_sessions')
-            ->where('user_a_id', $admin->id)
-            ->orWhere('user_b_id', $admin->id)
+            ->where(fn ($q) => $q->where('user_a_id', $admin->id)->orWhere('user_b_id', $admin->id))
+            ->when($archived, fn ($q) => $q->whereNotNull('archived_at'))
+            ->unless($archived, fn ($q) => $q->whereNull('archived_at'))
             ->orderByDesc('updated_at')
             ->get();
 
@@ -70,6 +77,7 @@ class AdminPrivateChatController extends Controller
             ->where(fn ($q) => $q->where('s.user_a_id', $admin->id)->orWhere('s.user_b_id', $admin->id))
             ->where('m.sender_id', '!=', $admin->id)
             ->whereNull('m.read_at')
+            ->whereNull('s.archived_at')
             ->count();
 
         return response()->json(['unread' => $total]);
@@ -136,7 +144,12 @@ class AdminPrivateChatController extends Controller
             'updated_at' => now(),
         ]);
 
-        DB::table('private_chat_sessions')->where('id', $id)->update(['updated_at' => now()]);
+        // Bump the session so it floats to the top of the conversation list,
+        // clear the sender's typing row — they just sent — and un-archive the
+        // thread: a conversation with fresh activity is by definition open.
+        DB::table('private_chat_sessions')
+            ->where('id', $id)
+            ->update(['updated_at' => now(), 'archived_at' => null]);
         DB::table('private_chat_typing')->where('conversation_id', $id)->where('user_id', $admin->id)->delete();
 
         $row = DB::table('private_chat_messages')->where('id', $msgId)->first();
@@ -206,6 +219,79 @@ class AdminPrivateChatController extends Controller
             ->where('sender_id', '!=', $admin->id)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Archive a conversation — hides it from the active thread list. */
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        DB::table('private_chat_sessions')->where('id', $id)->update([
+            'archived_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Un-archive a conversation (back to the active thread list). */
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        DB::table('private_chat_sessions')->where('id', $id)->update([
+            'archived_at' => null,
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Delete a conversation permanently (messages cascade). */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        DB::table('private_chat_sessions')->where('id', $id)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Delete a single message from a conversation (permanent). */
+    public function destroyMessage(Request $request, int $id, int $messageId): JsonResponse
+    {
+        $admin = $this->adminFromRequest($request);
+        if (! $admin) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        if (! $this->sessionForAdmin($id, $admin->id)) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        DB::table('private_chat_messages')
+            ->where('session_id', $id)
+            ->where('id', $messageId)
+            ->delete();
 
         return response()->json(['success' => true]);
     }
@@ -341,6 +427,7 @@ class AdminPrivateChatController extends Controller
                 'created_at' => $last->created_at,
             ] : null,
             'unread' => $unread,
+            'archived_at' => $session->archived_at,
             'updated_at' => $session->updated_at,
         ];
     }

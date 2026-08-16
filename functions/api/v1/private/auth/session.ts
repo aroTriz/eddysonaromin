@@ -2,7 +2,7 @@
  * GET /api/v1/private/auth/session — validate the Bearer token → { authenticated, user }.
  */
 
-import { jsonNoStore, privateUserFromRequest } from '../../../../_lib'
+import { jsonNoStore, isBannedUser, privateUserFromRequest } from '../../../../_lib'
 
 interface Env {
   blog_db: D1Database
@@ -13,5 +13,5 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (!user) {
     return jsonNoStore({ authenticated: false }, 401)
   }
-  return jsonNoStore({ authenticated: true, user })
+  return jsonNoStore({ authenticated: true, banned: isBannedUser(user), user })
 }

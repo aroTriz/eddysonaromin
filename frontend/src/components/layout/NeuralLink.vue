@@ -36,7 +36,11 @@ function readInk(): void {
 }
 
 function buildNodes(width: number, height: number): LinkNode[] {
-  const count = Math.round(Math.min(110, Math.max(45, (width * height) / 24000)))
+  // Balanced visibility: enough nodes to read as a real backdrop (not a white
+  // void), but subtle enough that cards and text stay dominant. area/8000 →
+  // ~260 nodes @1080p, ~460 @1440p, cap 500 for 4K (the spatial grid keeps
+  // the per-frame cost ~O(n) regardless of density).
+  const count = Math.round(Math.min(500, Math.max(100, (width * height) / 8000)))
   const arr: LinkNode[] = []
   for (let i = 0; i < count; i++) {
     arr.push({
@@ -44,7 +48,7 @@ function buildNodes(width: number, height: number): LinkNode[] {
       y: Math.random() * height,
       vx: (Math.random() - 0.5) * 0.32,
       vy: (Math.random() - 0.5) * 0.32,
-      r: Math.random() * 1.5 + 0.7,
+      r: Math.random() * 1.8 + 0.9,
     })
   }
   return arr
@@ -125,7 +129,7 @@ function draw(): void {
           const d2 = dx2 * dx2 + dy2 * dy2
           if (d2 < LINK_DIST * LINK_DIST) {
             const t = 1 - Math.sqrt(d2) / LINK_DIST
-            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t * 0.08})`
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t * 0.18})`
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(a.x, a.y)
@@ -167,8 +171,14 @@ onMounted(() => {
   resize()
   resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(document.body)
+  // Draw the FIRST frame synchronously — do NOT wait for the rAF loop.
+  // During a View-Transition theme switch the browser freezes rAF until the
+  // transition finishes, so waiting would leave the canvas blank (pure white)
+  // until a manual refresh. Drawing here guarantees the backdrop is visible
+  // the instant the component mounts, even mid-transition.
+  draw()
   if (reduced) {
-    draw()
+    // Static frame — no animation loop.
   } else {
     raf = requestAnimationFrame(tick)
   }

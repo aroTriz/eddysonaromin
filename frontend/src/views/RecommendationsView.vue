@@ -7,20 +7,39 @@
 import { ArrowLeft } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
+import { recommendations as staticRecommendations } from '@/data/profile'
 import { fetchRecommendations } from '@/services/api'
 import type { Recommendation } from '@/types'
 
-const items = ref<Recommendation[]>([])
-const loading = ref(true)
-const error = ref('')
+/**
+ * Seed with the static profile testimonials so the page renders instantly
+ * (blur transition only — same as every other page). The API (managed in
+ * /aromin admin) silently overrides the seed when it responds, so CMS edits
+ * still show up — but a slow/offline API can never blank the page.
+ */
+const fallbackItems: Recommendation[] = staticRecommendations.map((rec, i) => ({
+  id: i + 1,
+  initials: rec.initials,
+  quote: rec.quote,
+  author: rec.author,
+  role: rec.role,
+  email: rec.email ?? null,
+  sort_order: i,
+  archived_at: null,
+  created_at: null,
+  updated_at: null,
+}))
+
+const items = ref<Recommendation[]>(fallbackItems)
 
 onMounted(async () => {
   try {
-    items.value = await fetchRecommendations()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load recommendations'
-  } finally {
-    loading.value = false
+    const data = await fetchRecommendations()
+    if (data && data.length > 0) {
+      items.value = data
+    }
+  } catch {
+    // Keep the static seed — a failed fetch must never blank the page.
   }
 })
 </script>
@@ -43,21 +62,9 @@ onMounted(async () => {
       What leaders, teammates, and mentors say about working with me — straight from my network.
     </p>
 
-    <!-- loading skeleton -->
-    <div v-if="loading" class="columns-1 gap-4 sm:columns-2 lg:columns-3">
-      <div
-        v-for="i in 6"
-        :key="i"
-        class="mb-4 h-44 skeleton break-inside-avoid rounded-xl border border-gray-200 bg-gray-50"
-      ></div>
-    </div>
-
-    <div v-else-if="error" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
-      <p class="font-mono text-[12px] text-gray-500">// {{ error }}</p>
-    </div>
-
-    <!-- testimonial wall (masonry via CSS columns) -->
-    <div v-else-if="items.length > 0" class="columns-1 gap-4 sm:columns-2 lg:columns-3">
+    <!-- testimonial wall (masonry via CSS columns) — always seeded, so it
+         renders instantly; the API silently refreshes it when available -->
+    <div class="columns-1 gap-4 sm:columns-2 lg:columns-3">
       <figure
         v-for="rec in items"
         :key="rec.id"
@@ -81,10 +88,6 @@ onMounted(async () => {
           </div>
         </figcaption>
       </figure>
-    </div>
-
-    <div v-else class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
-      <p class="font-mono text-[12px] text-gray-500">No recommendations yet.</p>
     </div>
   </div>
 </template>

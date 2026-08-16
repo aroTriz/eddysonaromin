@@ -9,6 +9,7 @@
  * Bubbles: the visitor's messages on the right, the admin's on the left.
  */
 import {
+  Ban,
   Eye,
   EyeOff,
   FileImage,
@@ -44,6 +45,7 @@ import { fileToAttachment } from '@/utils/attachments'
 
 const MESSAGE_MAX = 2000
 const TYPING_BEAT_MS = 2500
+const TYPING_IDLE_MS = 3000
 
 // â”€â”€ Session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const user = ref<PrivateUser | null>(null)
@@ -79,11 +81,15 @@ const showConfirm = ref(false)
 // gate and NEVER clear the stored token (that only happens on a real 401).
 const sessionError = ref(false)
 
+// True when the account is on the blacklist (auto-banned for vulgar
+// language, or blacklisted by the admin) — shows the banned panel.
+const bannedState = ref(false)
+
 // â”€â”€ Typing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const typingUsers = ref<{ id: number; name: string }[]>([])
 let typingInputActive = false
 let typingBeatAt = 0
-let lastInputAt = 0
+let typingIdleTimer: ReturnType<typeof setTimeout> | null = null
 
 const typingNow = computed(() => typingUsers.value.length > 0)
 const typingLabel = computed(() => {
@@ -119,10 +125,14 @@ function dayLabel(iso: string): string {
 async function boot(): Promise<void> {
   if (privateToken()) {
     try {
-      const u = await privateSession()
-      if (u) {
+      const s = await privateSession()
+      if (s) {
         sessionError.value = false
-        user.value = u
+        if (s.banned) {
+          bannedState.value = true
+          return
+        }
+        user.value = s.user
         await initThread()
         return
       }
@@ -225,14 +235,12 @@ function startPoll(): void {
 
 /** Keep the "typing" heartbeat alive while text sits in the box. */
 function maybeKeepTypingAlive(): void {
-  const hasText = input.value.trim().length > 0
-  if (hasText && Date.now() - lastInputAt < 60_000) {
-    if (Date.now() - typingBeatAt >= TYPING_BEAT_MS) {
-      typingBeatAt = Date.now()
-      void sendTyping(true)
-    }
-  } else if (!hasText && typingInputActive) {
-    stopTyping()
+  // Refresh the server heartbeat only while genuinely typing — the idle
+  // timer in onInput() clears the indicator ~3s after the last keystroke,
+  // so "typing…" never lingers once the visitor actually stops.
+  if (typingInputActive && Date.now() - typingBeatAt >= TYPING_BEAT_MS) {
+    typingBeatAt = Date.now()
+    void sendTyping(true)
   }
 }
 
@@ -289,15 +297,15 @@ async function submitAuth(): Promise<void> {
   const confirm = authConfirm.value
 
   const fieldErrors: Record<string, string> = {}
-  if (!email) fieldErrors.email = 'please enter your email address'
+  if (!email) fieldErrors.email = 'Please enter your email address'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    fieldErrors.email = "please include an '@' in the email address"
+    fieldErrors.email = "Please include an '@' in the email address"
   }
-  if (!pass) fieldErrors.password = 'please enter your password'
+  if (!pass) fieldErrors.password = 'Please enter your password'
   if (mode.value === 'register') {
-    if (!name) fieldErrors.name = 'pick a name to be known by'
-    if (pass && pass.length < 8) fieldErrors.password = 'password needs at least 8 characters'
-    if (pass && confirm && pass !== confirm) fieldErrors.confirm = "passwords don't match"
+    if (!name) fieldErrors.name = 'Pick a name to be known by'
+    if (pass && pass.length < 8) fieldErrors.password = 'Password needs at least 8 characters'
+    if (pass && confirm && pass !== confirm) fieldErrors.confirm = "Passwords don't match"
   }
   if (Object.keys(fieldErrors).length > 0) {
     authFieldErrors.value = fieldErrors
@@ -326,7 +334,7 @@ async function submitAuth(): Promise<void> {
       authFieldErrors.value = mapped
       authError.value = ''
     } else {
-      authError.value = e instanceof Error ? e.message : 'something went wrong'
+      authError.value = e instanceof Error ? e.message : 'Something went wrong'
     }
   } finally {
     authBusy.value = false
@@ -351,21 +359,36 @@ async function doLogout(): Promise<void> {
 
 // â”€â”€ Typing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function onInput(): void {
-  lastInputAt = Date.now()
   const hasText = input.value.trim().length > 0
-  if (hasText && !typingInputActive) {
+  if (!hasText) {
+    stopTyping()
+    return
+  }
+  // Restart the idle countdown — TYPING_IDLE_MS without a keystroke clears
+  // the indicator, so "typing…" shows if and only if the visitor is really
+  // typing right now.
+  if (typingIdleTimer) clearTimeout(typingIdleTimer)
+  typingIdleTimer = setTimeout(() => {
+    typingIdleTimer = null
+    stopTyping()
+  }, TYPING_IDLE_MS)
+  if (!typingInputActive) {
     typingInputActive = true
     typingBeatAt = Date.now()
     void sendTyping(true)
     return
   }
-  if (hasText && Date.now() - typingBeatAt > TYPING_BEAT_MS) {
+  if (Date.now() - typingBeatAt > TYPING_BEAT_MS) {
     typingBeatAt = Date.now()
     void sendTyping(true)
   }
 }
 
 function stopTyping(): void {
+  if (typingIdleTimer) {
+    clearTimeout(typingIdleTimer)
+    typingIdleTimer = null
+  }
   if (typingInputActive) {
     typingInputActive = false
     void sendTyping(false)
@@ -430,6 +453,13 @@ async function onSubmit(e: Event): Promise<void> {
   } catch (err) {
     input.value = val
     pendingFile.value = attachment
+    if ((err as Error & { reason?: string }).reason === 'banned') {
+      // The account got blacklisted (e.g. an earlier vulgar message) while
+      // the chat was open — flip to the banned panel.
+      bannedState.value = true
+      stopTimers()
+      return
+    }
     chatError.value = err instanceof Error ? err.message : "couldn't send â€” try again"
   } finally {
     sending.value = false
@@ -454,7 +484,7 @@ onBeforeUnmount(() => {
   stopTimers()
   if (readTimer) clearTimeout(readTimer)
   if (slowTimer) clearTimeout(slowTimer)
-  void sendTyping(false)
+  stopTyping()
   document.documentElement.style.overflow = ''
 })
 </script>
@@ -466,9 +496,31 @@ onBeforeUnmount(() => {
   <div
     class="mx-auto flex h-[calc(100dvh-3rem)] w-full max-w-5xl flex-col overflow-hidden px-6 py-4 lg:h-dvh lg:px-10 lg:py-8"
   >
+    <!-- â”€â”€ Banned — account is on the blacklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <div
+      v-if="bannedState"
+      class="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto"
+    >
+      <div
+        class="mx-auto my-auto w-full max-w-[390px] rounded-2xl border border-red-100 bg-white p-6 text-center shadow-sm sm:p-8"
+      >
+        <Ban class="mx-auto h-7 w-7 text-red-500" :stroke-width="1.5" />
+        <p class="mt-3 font-pixel text-[clamp(1.2rem,3vw,1.5rem)] leading-tight text-ink">
+          This account has been banned<span class="text-gray-400">.</span>
+        </p>
+        <p class="mt-2 font-mono text-[11px] leading-relaxed text-gray-500">
+          // vulgar language isn&rsquo;t allowed here —<br />
+          // you&rsquo;ve been added to the blacklist.
+        </p>
+        <p class="mt-2 font-mono text-[10.5px] leading-relaxed text-gray-400">
+          // contact the admin if you think this is a mistake
+        </p>
+      </div>
+    </div>
+
     <!-- â”€â”€ Session check failed (transient) â€” token kept, offer retry â”€â”€ -->
     <div
-      v-if="sessionError"
+      v-else-if="sessionError"
       class="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto"
     >
       <div
@@ -486,7 +538,7 @@ onBeforeUnmount(() => {
           class="mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-ink px-5 py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80"
           @click="retrySession"
         >
-          try again
+          Try again
         </button>
       </div>
     </div>
@@ -541,7 +593,7 @@ onBeforeUnmount(() => {
             autocomplete="nickname"
             class="w-full rounded-md border border-gray-200 bg-white px-3 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
             :class="authFieldErrors.name ? 'border-red-400 focus:border-red-500' : ''"
-            placeholder="what should we call you?"
+            placeholder="What should we call you?"
             @input="authFieldErrors.name = ''"
           />
           <p v-if="authFieldErrors.name" class="font-mono text-[10.5px] text-red-500">// {{ authFieldErrors.name }}</p>
@@ -573,7 +625,7 @@ onBeforeUnmount(() => {
               :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
               class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-3 pr-10 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
               :class="authFieldErrors.password ? 'border-red-400 focus:border-red-500' : ''"
-              :placeholder="mode === 'register' ? 'min. 8 characters' : 'your password'"
+              :placeholder="mode === 'register' ? 'Min. 8 characters' : 'Your password'"
               @input="authFieldErrors.password = ''"
             />
             <button
@@ -599,7 +651,7 @@ onBeforeUnmount(() => {
               autocomplete="new-password"
               class="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-3 pr-10 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
               :class="authFieldErrors.confirm ? 'border-red-400 focus:border-red-500' : ''"
-              placeholder="repeat your password"
+              placeholder="Repeat your password"
               @input="authFieldErrors.confirm = ''"
             />
             <button
@@ -624,12 +676,12 @@ onBeforeUnmount(() => {
         >
           <LogIn v-if="mode === 'login'" class="h-4 w-4" :stroke-width="1.7" />
           <UserPlus v-else class="h-4 w-4" :stroke-width="1.7" />
-          {{ authBusy ? 'one momentâ€¦' : mode === 'login' ? 'log in' : 'create account' }}
+          {{ authBusy ? 'One moment…' : mode === 'login' ? 'Log in' : 'Create account' }}
         </button>
       </form>
 
       <p class="mt-5 text-center font-mono text-[10.5px] leading-relaxed text-gray-400">
-        your messages go straight to the admin â€”<br />
+        Your messages go straight to the admin —<br />
         only the two of you can read them.
       </p>
       </div>
@@ -687,7 +739,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div v-else-if="messages.length === 0" class="m-auto text-center">
-          <p class="font-pixel text-[15px] text-gray-400">no messages yet</p>
+          <p class="font-pixel text-[15px] text-gray-400">No messages yet</p>
           <p class="mt-1 font-mono text-[11px] text-gray-400">say hi â€” the admin will get back to you</p>
         </div>
 
@@ -789,7 +841,7 @@ onBeforeUnmount(() => {
             :maxlength="MESSAGE_MAX"
             autocomplete="off"
             autocorrect="off"
-            placeholder="message the adminâ€¦"
+            placeholder="Message the admin…"
             class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
             @input="onInput"
             @blur="stopTyping"

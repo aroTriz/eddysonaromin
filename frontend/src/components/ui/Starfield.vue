@@ -16,7 +16,6 @@ let stars: Star[] = []
 let milkyDust: Dust[] = []
 let shootingStars: ShootingStar[] = []
 let mouse = { x: 0.5, y: 0.5 }
-let observer: MutationObserver | null = null
 let w = 0
 let h = 0
 let dpr = 1
@@ -125,8 +124,9 @@ function generateStars(cw: number, ch: number): { stars: Star[]; dust: Dust[] } 
     })
   }
 
-  // Nebula dust
-  const dustCount = Math.floor((area / 2000) * density)
+  // Nebula dust — every gradient per frame costs, so keep the field modest
+  // and skip the near-invisible ones entirely (alpha range is 0.01–0.05).
+  const dustCount = Math.floor((area / 2600) * density)
   for (let i = 0; i < dustCount; i++) {
     let x: number
     let y: number
@@ -139,13 +139,15 @@ function generateStars(cw: number, ch: number): { stars: Star[]; dust: Dust[] } 
       att++
     } while (mDist > 0.18 && att < 30)
     if (mDist > 0.18) continue
+    const alpha = 0.012 + Math.random() * 0.04
+    if (alpha < 0.02) continue
     dustList.push({
       x,
       y,
       baseX: x,
       baseY: y,
       r: (8 + Math.random() * 25) * (isMobile ? 1.2 : 1),
-      alpha: 0.01 + Math.random() * 0.04,
+      alpha,
       hue: Math.random() < 0.5 ? 1 : 2,
     })
   }
@@ -191,10 +193,17 @@ function draw(ctx: CanvasRenderingContext2D, time: number, scrollY: number): voi
     else if (star.hue === 2) color = `rgba(200, 220, 255, ${alpha})`
     else color = `rgba(255, 255, 255, ${alpha})`
 
-    ctx.beginPath()
-    ctx.arc(sx, sy, star.r, 0, Math.PI * 2)
     ctx.fillStyle = color
-    ctx.fill()
+    if (star.r <= 1) {
+      // Sub-pixel dots — a rect is pixel-identical to an arc at this size but
+      // far cheaper to rasterize (thousands of arcs per frame were the main
+      // canvas cost; ~80% of the star field is r <= 1).
+      ctx.fillRect(sx - star.r, sy - star.r, star.r * 2, star.r * 2)
+    } else {
+      ctx.beginPath()
+      ctx.arc(sx, sy, star.r, 0, Math.PI * 2)
+      ctx.fill()
+    }
 
     if (star.r > 1.5 && twinkle > 0.6) {
       ctx.beginPath()
@@ -264,7 +273,9 @@ onMounted(() => {
 
   function loop(time: number): void {
     frameCount++
-    if (frameCount % frameSkip === 0) {
+    // Dark mode only — in light mode skip ALL canvas work (the canvas is
+    // blank anyway; not even a clearRect is needed since nothing was drawn).
+    if (isDark() && frameCount % frameSkip === 0) {
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
       draw(ctx!, time / 1000, scrollY)
     }
@@ -286,17 +297,13 @@ onMounted(() => {
   }
   window.addEventListener('mousemove', onMouse, { passive: true })
 
-  // Re-render when theme toggles between dark/light
-  observer = new MutationObserver(() => resize())
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class'],
-  })
+  // NOTE: no MutationObserver on <html> — the draw loop reads the `dark`
+  // class live every frame, so a theme flip needs zero regeneration of the
+  // star field (the old observer re-built ~10k stars mid-transition).
 
   onUnmounted(() => {
     clearTimeout(startDelay)
     if (animId) cancelAnimationFrame(animId)
-    if (observer) observer.disconnect()
     window.removeEventListener('resize', resize)
     window.removeEventListener('mousemove', onMouse)
     window.removeEventListener('scroll', onScroll)

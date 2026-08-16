@@ -196,7 +196,7 @@ function otpRef(el: unknown, i: number): void {
               :stroke-width="1.7"
             />
             <LogIn v-else class="h-4 w-4" :stroke-width="1.7" />
-            {{ busy ? 'signing in...' : 'sign in' }}
+            {{ busy ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
       </div>
@@ -271,7 +271,7 @@ function otpRef(el: unknown, i: number): void {
               class="mr-1.5 inline-block h-4 w-4 animate-spin align-middle"
               :stroke-width="1.7"
             />
-            {{ verifying ? 'verifying...' : 'verify' }}
+            {{ verifying ? 'Verifying...' : 'Verify' }}
             </button>
           </div>
         </div>

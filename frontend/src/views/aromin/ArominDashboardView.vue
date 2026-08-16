@@ -7,18 +7,19 @@
  *  - Unique Visitors are counted by IP — the same IP refreshing or opening
  *    the site any number of times is ONE visitor (Page Views counts each
  *    view separately).
- *  - Trend, hourly activity, top pages, country map heat, devices,
- *    browsers, OSes, referrers and recent visits.
+ *  - Trend, hourly activity, country map heat, cities and recent visits.
+ *    Countries + cities rank top 5; both the cities list and
+ *    the map can be filtered to one country (searchable dropdowns).
  *  - "clear data" wipes everything; recording restarts from that moment.
  */
 import {
   CalendarClock,
   Eye,
-  Monitor,
   MousePointerClick,
   RefreshCw,
   Trash2,
   UserCheck,
+  X,
 } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -26,8 +27,17 @@ import AreaChart from '@/components/analytics/AreaChart.vue'
 import BarList from '@/components/analytics/BarList.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import HourStrip from '@/components/analytics/HourStrip.vue'
+import SearchableSelect from '@/components/ui/SearchableSelect.vue'
 import WorldHeatMap from '@/components/analytics/WorldHeatMap.vue'
-import { clearAdminStats, fetchAdminStats, type AdminStats, type Analytics } from '@/services/adminApi'
+import {
+  clearAdminStats,
+  fetchAdminStats,
+  fetchVisitHistory,
+  type AdminStats,
+  type Analytics,
+  type RecentVisit,
+  type VisitHistoryEntry,
+} from '@/services/adminApi'
 import { profile } from '@/data/profile'
 import AdminLayout from './AdminLayout.vue'
 
@@ -41,6 +51,10 @@ const error = ref('')
 const clearOpen = ref(false)
 const clearing = ref(false)
 
+// Country filters — '' = all / world map.
+const mapCountry = ref('')
+const cityCountry = ref('')
+
 /** Analytics slice (defensive default — old cached payloads lack it). */
 const a = computed<Analytics>(() => stats.value?.analytics ?? {
   totals: { visitors: 0, views: 0, visitors_today: 0, views_today: 0 },
@@ -50,10 +64,7 @@ const a = computed<Analytics>(() => stats.value?.analytics ?? {
   countries: [],
   cities: [],
   geo: [],
-  devices: [],
-  browsers: [],
   os: [],
-  referrers: [],
   recent: [],
 })
 
@@ -87,14 +98,34 @@ async function handleClear(): Promise<void> {
 
 onMounted(() => {
   void load()
-  timer = window.setInterval(() => void load(true), AUTO_REFRESH_MS)
+  startAutoRefresh()
+  document.addEventListener('visibilitychange', onVisibility)
 })
 
 onBeforeUnmount(() => {
-  if (timer) window.clearInterval(timer)
+  stopAutoRefresh()
+  document.removeEventListener('visibilitychange', onVisibility)
 })
 
 let timer: number | undefined
+
+/** Auto-refresh — paused while the tab is hidden (no wasted polls in the background). */
+function startAutoRefresh(): void {
+  if (timer !== undefined) return
+  timer = window.setInterval(() => void load(true), AUTO_REFRESH_MS)
+}
+
+function stopAutoRefresh(): void {
+  if (timer !== undefined) {
+    window.clearInterval(timer)
+    timer = undefined
+  }
+}
+
+function onVisibility(): void {
+  if (document.visibilityState === 'hidden') stopAutoRefresh()
+  else startAutoRefresh()
+}
 
 /* ── KPI cards ─────────────────────────────────────────────── */
 
@@ -113,21 +144,110 @@ function flag(code: string): string {
   return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)))
 }
 
-const countryRows = computed(() =>
+/** All countries as dropdown options (flag + name). */
+const countryOptions = computed(() =>
   a.value.countries.map((c) => ({
+    value: c.country,
+    label: `${flag(c.country)} ${c.country_name || c.country}`,
+  })),
+)
+
+/** Top 5 countries, ranked by visits. */
+const countryRows = computed(() =>
+  a.value.countries.slice(0, 5).map((c) => ({
     label: `${flag(c.country)} ${c.country_name || c.country}`,
     count: c.visits,
   })),
 )
 
+/** Top 5 cities — filtered to one country when the dropdown is set. */
 const cityRows = computed(() =>
-  a.value.cities.map((c) => ({
-    label: c.country_name ? `${c.city}, ${c.country_name}` : c.city,
-    count: c.visits,
-  })),
+  a.value.cities
+    .filter((c) => !cityCountry.value || c.country === cityCountry.value)
+    .slice(0, 5)
+    .map((c) => ({
+      label: c.country_name ? `${c.city}, ${c.country_name}` : c.city,
+      count: c.visits,
+    })),
 )
 
-const osRows = computed(() => a.value.os.map((o) => ({ label: o.label, count: o.count })))
+/** Map dots — whole world, or just the selected country. */
+const mapPoints = computed(() =>
+  mapCountry.value
+    ? a.value.geo.filter((p) => p.country === mapCountry.value)
+    : a.value.geo,
+)
+
+// ── Per-IP detail modal (eye icon) ─────────────────────────────────
+const historyOpen = ref(false)
+const historyLoading = ref(false)
+const historyError = ref('')
+const historyTarget = ref<RecentVisit | null>(null)
+const historyRows = ref<VisitHistoryEntry[]>([])
+
+/** Open the modal for one IP and fetch its full visit history. */
+async function openVisitHistory(v: RecentVisit): Promise<void> {
+  historyTarget.value = v
+  historyRows.value = []
+  historyError.value = ''
+  historyOpen.value = true
+  if (!v.raw_ip) return
+  historyLoading.value = true
+  try {
+    historyRows.value = await fetchVisitHistory(v.raw_ip)
+  } catch (e) {
+    historyError.value = e instanceof Error ? e.message : "couldn't load visit history"
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+function closeVisitHistory(): void {
+  historyOpen.value = false
+  historyTarget.value = null
+  historyRows.value = []
+  historyError.value = ''
+}
+
+/** Full date + time (e.g. "Aug 16, 2026 · 11:23 PM"). */
+function fullDateTime(iso: string): string {
+  const d = new Date(iso.replace(' ', 'T'))
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+/** Oldest recorded visit for the modal's "first seen". */
+const firstSeen = computed(() => {
+  const last = historyRows.value[historyRows.value.length - 1]
+  return last ? fullDateTime(last.created_at) : ''
+})
+
+/** Pages this IP visited, aggregated with per-page counts (most used first). */
+const pageBreakdown = computed(() => {
+  const counts = new Map<string, number>()
+  for (const r of historyRows.value) {
+    const p = r.path?.trim() || '/'
+    counts.set(p, (counts.get(p) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([path, count]) => ({ path, count }))
+    .sort((a, b) => b.count - a.count)
+})
+
+/** Show a specific device label, or infer it from OS for legacy rows. */
+function deviceLabel(v: { device?: string | null; os?: string | null }): string {
+  const d = v.device?.trim()
+  if (d && d !== 'Desktop' && d !== 'Unknown') return d
+  const os = v.os?.trim()
+  if (os && os !== 'Unknown' && os !== '') return `${os} desktop`
+  return d || '—'
+}
 
 function timeAgo(iso: string): string {
   if (!iso) return ''
@@ -159,7 +279,7 @@ function timeAgo(iso: string): string {
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-md border border-red-200 px-3 py-2 font-mono text-[12px] text-red-500 transition-colors hover:border-red-300 hover:bg-red-50"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 font-mono text-[12px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
           @click="clearOpen = true"
         >
           <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -237,76 +357,54 @@ function timeAgo(iso: string): string {
       <!-- ── Map heat + countries ─────────────────────────── -->
       <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Visitor locations">
         <div class="rounded-xl border border-gray-200 bg-white p-6 lg:col-span-2">
-          <p class="mb-4 font-mono text-[11px] text-gray-500">// where visitors come from — map heat</p>
-          <WorldHeatMap :points="a.geo" />
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="font-mono text-[11px] text-gray-500">// where visitors come from — map heat</p>
+            <SearchableSelect
+              v-model="mapCountry"
+              :options="countryOptions"
+              all-label="world map"
+              placeholder="Search countries…"
+              label="Map filter — world or one country"
+            />
+          </div>
+          <WorldHeatMap :points="mapPoints" :country="mapCountry" />
         </div>
         <div class="rounded-xl border border-gray-200 bg-white p-6">
           <p class="mb-4 font-mono text-[11px] text-gray-500">// top countries</p>
           <BarList :items="countryRows" :percent="true" empty="// no locations recorded yet" />
           <div class="border-t border-gray-200 pt-4 dark:border-gray-300">
-            <p class="mb-3 font-mono text-[11px] text-gray-500">// top cities / towns</p>
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p class="font-mono text-[11px] text-gray-500">// top cities / towns</p>
+              <SearchableSelect
+                v-model="cityCountry"
+                :options="countryOptions"
+                all-label="all"
+                placeholder="Search countries…"
+                label="Cities filter — all or one country"
+              />
+            </div>
             <BarList :items="cityRows" :percent="true" empty="// no cities recorded yet" />
           </div>
         </div>
       </section>
 
-      <!-- ── Pages + devices + browsers/os ────────────────── -->
-      <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Breakdowns">
-        <div class="rounded-xl border border-gray-200 bg-white p-6">
-          <p class="mb-4 font-mono text-[11px] text-gray-500">// top pages</p>
-          <BarList
-            :items="a.top_pages.map((p) => ({ label: p.path, count: p.views }))"
-            empty="// no page views yet"
-          />
-        </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-6">
-          <p class="mb-4 font-mono text-[11px] text-gray-500">// devices</p>
-          <BarList
-            :items="a.devices.map((d) => ({ label: d.label, count: d.count }))"
-            empty="// no devices recorded yet"
-          />
-        </div>
-        <div class="flex flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6">
-          <div>
-            <p class="mb-4 font-mono text-[11px] text-gray-500">// browsers</p>
-            <BarList
-              :items="a.browsers.map((b) => ({ label: b.label, count: b.count }))"
-              empty="// no browsers recorded yet"
-            />
-          </div>
-          <div class="border-t border-gray-200 pt-5 dark:border-gray-300">
-            <p class="mb-4 flex items-center gap-1.5 font-mono text-[11px] text-gray-500">
-              <Monitor class="h-3.5 w-3.5" :stroke-width="1.7" />
-              // operating systems
-            </p>
-            <BarList :items="osRows" empty="// no OSes recorded yet" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Referrers + recent visits ────────────────────── -->
-      <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Referrers and recent activity">
-        <div class="rounded-xl border border-gray-200 bg-white p-6">
-          <p class="mb-4 font-mono text-[11px] text-gray-500">// top referrers</p>
-          <BarList
-            :items="a.referrers.map((r) => ({ label: r.domain, count: r.count }))"
-            empty="// no external referrers yet"
-          />
-        </div>
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white lg:col-span-2">
+      <!-- ── Recent visits ────────────────────────────────── -->
+      <section class="mt-4 grid grid-cols-1 gap-4" aria-label="Recent activity">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <p class="border-b border-gray-200 px-6 py-4 font-mono text-[11px] text-gray-500 dark:border-gray-300">
-            // recent visits <span class="text-gray-400">(latest 5 — IPs masked)</span>
+            // recent visits <span class="text-gray-400">(latest 10 IPs — IPs masked)</span>
           </p>
           <div class="overflow-x-auto">
             <table class="w-full min-w-[560px] text-left font-mono text-[11.5px]">
               <thead>
                 <tr class="border-b border-gray-200 text-[10px] uppercase tracking-wide text-gray-400 dark:border-gray-300">
-                  <th class="px-6 py-2.5 font-normal">when</th>
+                  <th class="px-6 py-2.5 font-normal">ip</th>
+                  <th class="px-3 py-2.5 font-normal">visits</th>
                   <th class="px-3 py-2.5 font-normal">location</th>
-                  <th class="px-3 py-2.5 font-normal">page</th>
                   <th class="px-3 py-2.5 font-normal">device</th>
                   <th class="px-3 py-2.5 font-normal">browser / os</th>
-                  <th class="px-6 py-2.5 text-right font-normal">ip</th>
+                  <th class="px-3 py-2.5 font-normal">last seen</th>
+                  <th class="px-6 py-2.5 text-right font-normal">detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -315,21 +413,32 @@ function timeAgo(iso: string): string {
                   :key="i"
                   class="border-b border-gray-100 last:border-0 dark:border-gray-200"
                 >
-                  <td class="whitespace-nowrap px-6 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
+                  <td class="whitespace-nowrap px-6 py-3 text-gray-500">{{ v.ip || '—' }}</td>
+                  <td class="whitespace-nowrap px-3 py-3 text-ink">{{ v.visits ?? 0 }}</td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-600 dark:text-gray-400">
                     {{ flag(v.country) }}
                     <span v-if="v.country" class="text-gray-500">{{ v.country }}</span>
                     <span v-if="v.city"> · {{ v.city }}</span>
                   </td>
-                  <td class="max-w-[140px] truncate px-3 py-3 text-ink">{{ v.path || '/' }}</td>
-                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ v.device || '—' }}</td>
+                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ deviceLabel(v) }}</td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-500">
                     {{ [v.browser, v.os].filter(Boolean).join(' · ') || '—' }}
                   </td>
-                  <td class="whitespace-nowrap px-6 py-3 text-right text-gray-400">{{ v.ip || '—' }}</td>
+                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
+                  <td class="whitespace-nowrap px-6 py-3 text-right">
+                    <button
+                      type="button"
+                      class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+                      :aria-label="`View visit history for ${v.ip}`"
+                      title="View visit history"
+                      @click="openVisitHistory(v)"
+                    >
+                      <Eye class="h-3.5 w-3.5" :stroke-width="1.7" />
+                    </button>
+                  </td>
                 </tr>
                 <tr v-if="a.recent.length === 0">
-                  <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                  <td colspan="7" class="px-6 py-8 text-center text-gray-400">
                     // no visits recorded yet
                   </td>
                 </tr>
@@ -351,5 +460,107 @@ function timeAgo(iso: string): string {
       @confirm="handleClear"
       @cancel="clearOpen = false"
     />
+
+    <!-- ── Per-IP detail modal (eye icon) ───────────────────── -->
+    <Teleport to="body">
+      <div
+        v-if="historyOpen"
+        class="fixed inset-0 z-[120] flex items-center justify-center p-6"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`Details for ${historyTarget?.ip ?? 'this IP'}`"
+      >
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="closeVisitHistory"></div>
+        <div
+          class="relative z-10 flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-300 dark:bg-gray-100"
+        >
+          <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-300">
+            <div class="min-w-0">
+              <p class="font-mono text-[13px] font-semibold text-ink">
+                {{ historyTarget?.ip || 'IP' }}
+              </p>
+              <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
+                visitor profile — everything recorded about this IP
+              </p>
+            </div>
+            <button
+              type="button"
+              class="shrink-0 rounded p-1 text-gray-400 transition-colors hover:text-ink"
+              aria-label="Close visitor details"
+              @click="closeVisitHistory"
+            >
+              <X class="h-4 w-4" :stroke-width="1.7" />
+            </button>
+          </div>
+
+          <div class="min-h-0 flex-1 overflow-y-auto">
+            <div v-if="historyLoading" class="space-y-2 p-6">
+              <div v-for="i in 4" :key="i" class="h-12 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
+            </div>
+            <p v-else-if="historyError" class="p-6 font-mono text-[11.5px] text-red-500">
+              // {{ historyError }}
+            </p>
+            <template v-else>
+              <!-- Summary grid — everything about this IP -->
+              <div class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-gray-200 bg-gray-200 dark:border-gray-300 sm:grid-cols-3">
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">total visits</p>
+                  <p class="mt-1 font-pixel text-[1.35rem] leading-none text-ink">{{ historyTarget?.visits ?? historyRows.length }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">first seen</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ firstSeen || '—' }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">last seen</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ fullDateTime(historyTarget?.created_at ?? '') || '—' }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">location</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
+                    {{ flag(historyTarget?.country ?? '') }}
+                    <template v-if="historyTarget?.country || historyTarget?.city">
+                      {{ [historyTarget?.city, historyTarget?.country].filter(Boolean).join(', ') }}
+                    </template>
+                    <template v-else>—</template>
+                  </p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">device</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ deviceLabel(historyTarget ?? {}) }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">browser / os</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
+                    {{ [historyTarget?.browser, historyTarget?.os].filter(Boolean).join(' · ') || '—' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Pages this IP visited, aggregated -->
+              <div v-if="pageBreakdown.length" class="mt-5">
+                <p class="mb-2 font-mono text-[11px] text-gray-500">// pages visited</p>
+                <ul class="divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-200 dark:border-gray-300">
+                  <li
+                    v-for="(row, i) in pageBreakdown"
+                    :key="row.path"
+                    class="flex items-center gap-3 bg-white px-4 py-2.5 dark:bg-gray-100"
+                  >
+                    <span class="w-6 shrink-0 font-mono text-[10px] text-gray-300">{{ i + 1 }}</span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[12px] text-ink">{{ row.path }}</span>
+                    <span class="shrink-0 font-mono text-[10.5px] text-gray-400">
+                      {{ row.count }}×
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <p v-else class="p-6 text-center font-mono text-[11.5px] text-gray-400">
+                no visits recorded for this IP
+              </p>
+            </template>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </AdminLayout>
 </template>

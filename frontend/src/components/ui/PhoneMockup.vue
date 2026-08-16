@@ -11,6 +11,8 @@ import { Smartphone } from 'lucide-vue-next'
 defineProps<{
   src?: string | null
   alt?: string
+  /** Render a <video> instead of an <img> (uploaded showcase clips). */
+  video?: boolean
 }>()
 </script>
 
@@ -28,7 +30,19 @@ defineProps<{
         ></div>
         <!-- Screen -->
         <div v-if="src" class="aspect-[9/19] w-full bg-gray-100">
+          <video
+            v-if="video"
+            :src="src"
+            class="h-full w-full object-cover"
+            muted
+            loop
+            playsinline
+            controls
+            preload="metadata"
+            :aria-label="alt"
+          ></video>
           <img
+            v-else
             :src="src"
             :alt="alt"
             class="h-full w-full object-cover"

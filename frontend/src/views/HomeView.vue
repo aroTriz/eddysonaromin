@@ -21,14 +21,32 @@ import {
   certifications,
   experiences,
   profile,
+  recommendations as staticRecommendations,
   stats,
 } from '@/data/profile'
 
 const emailModalRef = ref<InstanceType<typeof EmailModal> | null>(null)
 
-/** Recommendations — fetched from the CMS (managed in /aromin admin). */
-const recs = ref<Recommendation[]>([])
-const recsLoading = ref(true)
+/**
+ * Recommendations — fetched from the CMS (managed in /aromin admin).
+ * Seeded with the static profile testimonials so the section renders
+ * instantly (no skeleton); the API silently overrides the seed when
+ * it responds.
+ */
+const fallbackRecs: Recommendation[] = staticRecommendations.map((rec, i) => ({
+  id: i + 1,
+  initials: rec.initials,
+  quote: rec.quote,
+  author: rec.author,
+  role: rec.role,
+  email: rec.email ?? null,
+  sort_order: i,
+  archived_at: null,
+  created_at: null,
+  updated_at: null,
+}))
+
+const recs = ref<Recommendation[]>(fallbackRecs)
 
 /**
  * Tech marquee — driven by the CMS stack groups (/aromin admin).
@@ -112,11 +130,12 @@ onMounted(async () => {
   }
 
   try {
-    recs.value = await fetchRecommendations()
+    const data = await fetchRecommendations()
+    if (data && data.length > 0) {
+      recs.value = data
+    }
   } catch {
-    // Non-blocking — the section simply renders empty on failure.
-  } finally {
-    recsLoading.value = false
+    // Keep the static seed — a failed fetch must never blank the section.
   }
 })
 
@@ -392,15 +411,11 @@ const socials = [
         </RouterLink>
       </div>
 
-      <div v-if="recsLoading" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div v-for="i in 3" :key="i" class="h-44 skeleton rounded-xl bg-gray-100"></div>
-      </div>
-
-      <div v-else-if="recs.length > 0" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <a
+      <div v-if="recs.length > 0" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <RouterLink
           v-for="rec in recs.slice(0, 3)"
           :key="rec.id"
-          href="/recommendations"
+          to="/recommendations"
           class="group flex flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
         >
           <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -422,7 +437,7 @@ const socials = [
               </div>
             </div>
           </div>
-        </a>
+        </RouterLink>
       </div>
     </section>
 
