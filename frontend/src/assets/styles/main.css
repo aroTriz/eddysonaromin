@@ -189,13 +189,17 @@ html.dark {
    captures a screenshot of the old theme, applies the new one, then
    cross-fades the two snapshots on the GPU compositor — one atomic paint,
    no per-element `transition-colors` firing (that burst was the source of
-   the old jank). The new theme reveals in a circle growing from the click
-   origin (--theme-origin-x/y set by useTheme; defaults to center). */
+   the old jank). The circular reveal from the click point is animated via
+   the Web Animations API directly on ::view-transition-new(root)
+   (bryllim.com's technique — exact pixel radius computed in JS). The old
+   snapshot just fades out underneath. */
 ::view-transition-old(root) {
   animation: theme-fade-out 0.28s ease;
 }
 ::view-transition-new(root) {
-  animation: theme-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  /* No CSS animation here — useTheme animates clip-path on this pseudo via
+     root.animate() so the wipe radius always covers the actual viewport. */
+  animation: none;
 }
 @keyframes theme-fade-out {
   from {
@@ -203,14 +207,6 @@ html.dark {
   }
   to {
     opacity: 0;
-  }
-}
-@keyframes theme-reveal {
-  from {
-    clip-path: circle(0% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
-  }
-  to {
-    clip-path: circle(150% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
   }
 }
 @media (prefers-reduced-motion: reduce) {

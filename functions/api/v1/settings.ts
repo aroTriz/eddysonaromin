@@ -2,10 +2,10 @@
  * Public site settings (production, D1-backed).
  * Mirrors the Laravel SiteSettingsController::show.
  *
- *   GET /api/v1/settings → { community_chat_enabled: boolean }
+ *   GET /api/v1/settings → { community_chat_enabled, backdrop_enabled }
  *
- * Fail-open: a missing row or a DB hiccup reports the chat as enabled, so
- * a settings failure never silently locks the community chat.
+ * Fail-open: a missing row or a DB hiccup reports the flags as enabled, so
+ * a settings failure never silently locks the chat or blanks the backdrop.
  */
 
 interface Env {
@@ -19,14 +19,22 @@ function json(data: unknown, status = 200): Response {
   })
 }
 
+async function flag(env: Env, key: string): Promise<boolean> {
+  const row = await env.blog_db
+    .prepare('SELECT value FROM site_settings WHERE key = ?')
+    .bind(key)
+    .first<{ value: string }>()
+  return (row?.value ?? '1') !== '0'
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   try {
-    const row = await env.blog_db
-      .prepare('SELECT value FROM site_settings WHERE key = ?')
-      .bind('community_chat_enabled')
-      .first<{ value: string }>()
-    return json({ community_chat_enabled: (row?.value ?? '1') !== '0' })
+    const [community_chat_enabled, backdrop_enabled] = await Promise.all([
+      flag(env, 'community_chat_enabled'),
+      flag(env, 'backdrop_enabled'),
+    ])
+    return json({ community_chat_enabled, backdrop_enabled })
   } catch {
-    return json({ community_chat_enabled: true }, 500)
+    return json({ community_chat_enabled: true, backdrop_enabled: true }, 500)
   }
 }

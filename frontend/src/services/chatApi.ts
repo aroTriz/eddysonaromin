@@ -95,3 +95,18 @@ export async function fetchCommunityChatEnabled(): Promise<boolean> {
     return true
   }
 }
+
+/** Whether the animated backdrops are on. Fail-open (default: on). */
+export async function fetchBackdropEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return true
+    const data = (await res.json()) as { backdrop_enabled?: boolean }
+    return data.backdrop_enabled !== false
+  } catch {
+    return true
+  }
+}

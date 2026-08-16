@@ -16,3 +16,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
 -- Default: community chat ON. '0' = off (visitors see the notice).
 INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
 VALUES ('community_chat_enabled', '1', datetime('now'), datetime('now'));
+
+-- Default: animated backdrops ON. '0' = off (pure white / pure black).
+INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
+VALUES ('backdrop_enabled', '1', datetime('now'), datetime('now'));

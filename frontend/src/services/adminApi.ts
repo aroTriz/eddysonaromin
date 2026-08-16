@@ -90,6 +90,8 @@ export interface CityStat {
   country_name: string
   visits: number
   visitors: number
+  lat: number | null
+  lon: number | null
 }
 
 /** Aggregated geo point for the map dots. */
@@ -837,11 +839,25 @@ export function adminPrivateStreamUrl(convId: number, after: number): string {
   return `${API_BASE}/admin/private/conversations/${convId}/stream?after=${after}`
 }
 
-// ── Site settings (community chat on/off) ────────────────────────────
+// ── Site settings (community chat on/off + backdrop on/off) ──────────
 
 /** Turn the community chat on/off site-wide (admin only). */
 export async function setCommunityChatEnabled(enabled: boolean): Promise<void> {
   const res = await fetch(`${API_BASE}/admin/settings/community-chat`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ enabled }),
+  })
+  await handle<void>(res)
+}
+
+/**
+ * Turn the animated backdrops on/off site-wide (admin only).
+ * ON (default) → neural link in light mode + star sphere in dark mode.
+ * OFF → pure backgrounds (plain white / plain near-black).
+ */
+export async function setBackdropEnabled(enabled: boolean): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/settings/backdrop`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ enabled }),

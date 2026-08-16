@@ -260,3 +260,6 @@ CREATE TABLE site_settings (
 
 INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
 VALUES ('community_chat_enabled', '1', NULL, NULL);
+
+INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
+VALUES ('backdrop_enabled', '1', NULL, NULL);

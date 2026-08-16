@@ -64,9 +64,12 @@ function applyClass(pref: ThemePreference): void {
    abrupt + janky), we let the browser capture a screenshot of the OLD
    theme, apply the new one, and cross-fade the two snapshots on the GPU
    compositor. One atomic paint, zero per-element transitions = smooth AND
-   cheap. The circular reveal grows from the click origin (set via
-   --theme-origin-x/y, consumed by the CSS in main.css). Falls back to an
-   instant swap when the API is missing or the user prefers reduced motion.
+   cheap. The circular reveal grows from the click origin — animated via
+   the Web Animations API directly on the `::view-transition-new(root)`
+   pseudo-element (bryllim.com's exact technique): an exact pixel radius
+   computed from the click point, so the wipe always covers the viewport.
+   Falls back to an instant swap when the API is missing or the user
+   prefers reduced motion.
    ───────────────────────────────────────────────────────────────────── */
 interface ViewTransitionLike {
   finished: Promise<void>
@@ -83,12 +86,51 @@ function prefersReducedMotion(): boolean {
     : false
 }
 
+/** Keep the last click point — the circle reveal must grow from here. */
+let revealX = 0
+let revealY = 0
+
 /** Anchor the circular reveal at the click position (defaults to center). */
 function setRevealOrigin(event?: MouseEvent): void {
   if (!event) return
+  revealX = event.clientX
+  revealY = event.clientY
   const root = document.documentElement
-  root.style.setProperty('--theme-origin-x', `${event.clientX}px`)
-  root.style.setProperty('--theme-origin-y', `${event.clientY}px`)
+  root.style.setProperty('--theme-origin-x', `${revealX}px`)
+  root.style.setProperty('--theme-origin-y', `${revealY}px`)
+}
+
+/**
+ * Animate the circular wipe on the NEW root snapshot — the exact bryllim
+ * technique. Runs after `vt.ready` (when the pseudo-element exists), so the
+ * browser's own snapshot cross-fade is replaced by a clip-path circle that
+ * grows from the click point until it covers the whole viewport.
+ */
+function animateCircleReveal(vt: ViewTransitionLike): void {
+  const root = document.documentElement
+  // Distance from the click point to the FARTHEST corner of the viewport —
+  // the radius that guarantees the circle fully covers the screen.
+  const r = Math.hypot(
+    Math.max(revealX, window.innerWidth - revealX),
+    Math.max(revealY, window.innerHeight - revealY),
+  )
+  vt.ready
+    .then(() => {
+      root.animate(
+        {
+          clipPath: [
+            `circle(0px at ${revealX}px ${revealY}px)`,
+            `circle(${r}px at ${revealX}px ${revealY}px)`,
+          ],
+        },
+        {
+          duration: 540,
+          easing: 'cubic-bezier(0.32, 0.08, 0.24, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        },
+      )
+    })
+    .catch(() => {})
 }
 
 /** Guard — never stack two flips on top of each other (system timer + click). */
@@ -127,6 +169,9 @@ async function applyThemeTransition(pref: ThemePreference, event?: MouseEvent): 
     transitioning = true
     try {
       const vt = doc.startViewTransition(flip)
+      // Circular wipe from the click point (bryllim technique) — animate the
+      // `::view-transition-new(root)` pseudo-element via the Web Animations API.
+      animateCircleReveal(vt)
       // Race with a timeout so a stalled transition (e.g. the tab hid
       // mid-flip) can NEVER wedge the guard — worst case we lose the
       // animation, never the theme application.
