@@ -8,10 +8,16 @@
  * The choice is persisted in localStorage and read live by useSiteBehavior,
  * so it applies across the whole site immediately.
  */
-import { Check, MessageCircle, MousePointerClick, Sparkles } from 'lucide-vue-next'
+import { Check, MessageCircle, MousePointerClick, PawPrint, Sparkles } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import {
+  PET_SCALE_OPTIONS,
+  PET_SPEED_OPTIONS,
+  petConfig,
+  updatePetConfig,
+} from '@/composables/usePetConfig'
 import { isRightClickAllowed, RIGHT_CLICK_KEY } from '@/composables/useSiteBehavior'
 import { setBackdropEnabled, setCommunityChatEnabled } from '@/services/adminApi'
 import { fetchBackdropEnabled, fetchCommunityChatEnabled } from '@/services/chatApi'
@@ -43,12 +49,6 @@ const chatStatusLabel = computed(() =>
     : 'off — visitors see “Community Chat has been turned off”',
 )
 
-onMounted(() => {
-  void fetchCommunityChatEnabled().then((ok) => {
-    chatEnabled.value = ok
-  })
-})
-
 async function toggleCommunityChat(): Promise<void> {
   if (chatBusy.value) return
   const next = !chatEnabled.value
@@ -79,15 +79,6 @@ const backdropStatusLabel = computed(() =>
     : 'off — pure white / pure black backgrounds',
 )
 
-onMounted(() => {
-  void fetchCommunityChatEnabled().then((ok) => {
-    chatEnabled.value = ok
-  })
-  void fetchBackdropEnabled().then((ok) => {
-    backdropEnabled.value = ok
-  })
-})
-
 async function toggleBackdrop(): Promise<void> {
   if (backdropBusy.value) return
   const next = !backdropEnabled.value
@@ -103,6 +94,37 @@ async function toggleBackdrop(): Promise<void> {
     backdropBusy.value = false
   }
 }
+
+// ── Salary Cat config (pet) ────────────────────────────────────────
+const petStatusLabel = computed(() =>
+  petConfig.enabled
+    ? 'on — the cat roams the site (drag it, click to wave)'
+    : 'off — visitors don\'t see the cat',
+)
+
+const petScale = computed({
+  get: () => petConfig.scale,
+  set: (v: number) => updatePetConfig({ scale: v }),
+})
+
+const petSpeed = computed({
+  get: () => petConfig.speed,
+  set: (v: number) => updatePetConfig({ speed: v }),
+})
+
+const petAnimate = computed({
+  get: () => petConfig.animate,
+  set: (v: boolean) => updatePetConfig({ animate: v }),
+})
+
+onMounted(() => {
+  void fetchCommunityChatEnabled().then((ok) => {
+    chatEnabled.value = ok
+  })
+  void fetchBackdropEnabled().then((ok) => {
+    backdropEnabled.value = ok
+  })
+})
 </script>
 
 <template>
@@ -263,6 +285,100 @@ async function toggleBackdrop(): Promise<void> {
             />
           </span>
         </button>
+      </div>
+    </section>
+
+    <!-- ── Salary Cat (pet) ──────────────────────────────────── -->
+    <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <PawPrint class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
+            <h2 class="font-mono text-[13px] font-semibold text-ink">Salary Cat</h2>
+            <!-- tiny sprite preview -->
+            <img
+              src="/pets/salary-cat.webp"
+              alt=""
+              class="ml-1 h-8 w-auto object-cover"
+              style="object-position: 0 0; image-rendering: pixelated"
+              aria-hidden="true"
+            />
+          </div>
+          <p class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500">
+            The little cat that roams the site&rsquo;s public pages. Visitors can
+            drag it around (it falls back down with gravity) and click it to wave.
+            Configure its size, speed and animations here.
+          </p>
+          <p class="mt-3 font-mono text-[11px] text-gray-400">
+            // {{ petStatusLabel }}
+          </p>
+        </div>
+
+        <!-- Enable switch (same outlined switch as the other settings) -->
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="petConfig.enabled"
+          :aria-label="petConfig.enabled ? 'Hide salary cat' : 'Show salary cat'"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+          :class="[
+            petConfig.enabled
+              ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
+              : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
+          ]"
+          @click="updatePetConfig({ enabled: !petConfig.enabled })"
+        >
+          <span
+            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200 dark:bg-white"
+            :class="petConfig.enabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
+          >
+            <Check
+              v-if="petConfig.enabled"
+              class="h-3 w-3 text-white dark:text-black"
+              :stroke-width="3"
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      </div>
+
+      <!-- Size / speed / animations -->
+      <div class="mt-6 grid grid-cols-1 gap-4 border-t border-gray-100 pt-5 sm:grid-cols-3">
+        <div class="flex flex-col gap-1.5">
+          <label class="font-mono text-[11px] text-gray-500" for="pet-scale">size</label>
+          <select
+            id="pet-scale"
+            v-model="petScale"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+          >
+            <option v-for="o in PET_SCALE_OPTIONS" :key="o.value" :value="o.value">
+              {{ o.label }}
+            </option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="font-mono text-[11px] text-gray-500" for="pet-speed">walk speed</label>
+          <select
+            id="pet-speed"
+            v-model="petSpeed"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+          >
+            <option v-for="o in PET_SPEED_OPTIONS" :key="o.value" :value="o.value">
+              {{ o.label }}
+            </option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="font-mono text-[11px] text-gray-500" for="pet-animate">animations</label>
+          <select
+            id="pet-animate"
+            v-model="petAnimate"
+            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+          >
+            <option :value="true">on</option>
+            <option :value="false">off</option>
+          </select>
+        </div>
       </div>
     </section>
 
