@@ -9,7 +9,7 @@
  *   POST   /api/v1/admin/users/{id}/unban    → remove from the blacklist
  */
 
-import { json, sha256Hex } from '../../../../../_lib'
+import { json, sha256Hex } from '../../../../_lib'
 
 interface Env {
   blog_db: D1Database
