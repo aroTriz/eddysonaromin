@@ -5,8 +5,13 @@
  * same neural-link node animation and every dark-mode page shows the 3D star
  * sphere. Decorative, pointer-events disabled, fixed behind the content (z-0).
  *
- * No transition — the layer swaps instantly with the theme, matching the
- * instant light/dark switch (greyfolio-style).
+ * BOTH canvases stay mounted permanently (wrapped in v-show, not v-if). A
+ * theme switch only toggles CSS visibility — no mount/unmount mid-View-
+ * Transition. That is what makes the neural link appear INSTANTLY on the
+ * dark→light switch: its canvas is already painted (mounted at page load),
+ * so the browser never has to construct a fresh canvas inside the frozen
+ * transition frame. Each component receives `active` so the hidden one
+ * pauses its rAF loop (no double animation cost = no lag).
  */
 import { computed } from 'vue'
 
@@ -21,10 +26,15 @@ const isDark = computed(() => resolveIsDark(preference.value))
 
 <template>
   <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-0">
-    <!-- Light mode: neural link node animation (greyfolio look) -->
-    <NeuralLink v-if="!isDark" key="light" class="h-full w-full" />
+    <!-- Light mode: neural link node animation (greyfolio look) —
+         kept mounted + painted, only visibility toggles -->
+    <div v-show="!isDark" class="absolute inset-0">
+      <NeuralLink :active="!isDark" class="h-full w-full" />
+    </div>
 
     <!-- Dark mode: 3D rotating star sphere (resume site look) -->
-    <StarsThree v-else key="dark" />
+    <div v-show="isDark" class="absolute inset-0">
+      <StarsThree :active="isDark" />
+    </div>
   </div>
 </template>

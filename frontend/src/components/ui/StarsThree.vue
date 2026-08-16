@@ -11,9 +11,16 @@
  * behind overlays. Pauses when the tab is hidden and respects
  * prefers-reduced-motion (renders a single static frame).
  */
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+
+/**
+ * Whether this layer is the visible theme backdrop. When false the rotation
+ * loop is stopped so the hidden canvas costs nothing (only one backdrop
+ * animates at a time — no double rAF = no lag).
+ */
+const props = defineProps<{ active?: boolean }>()
 
 let animId: number | null = null
 let resizeHandler: (() => void) | null = null
@@ -153,7 +160,7 @@ onMounted(() => {
     if (reduced) {
       // Static frame — no animation loop.
       draw(ctx, canvas.width, canvas.height)
-    } else {
+    } else if (props.active !== false) {
       start()
     }
   }
@@ -169,6 +176,16 @@ onMounted(() => {
   visibilityHandler = onVisibility
   document.addEventListener('visibilitychange', onVisibility)
 })
+
+// Theme flip — this layer becomes (or stops being) the visible backdrop.
+// Start/stop the rotation loop; the sphere is always rendered from mount.
+watch(
+  () => props.active,
+  (active) => {
+    if (active && !reduced) start()
+    else stop()
+  },
+)
 
 onBeforeUnmount(() => {
   stop()

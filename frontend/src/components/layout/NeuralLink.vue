@@ -7,9 +7,16 @@
  * (renders a single static frame). Reads the --ink token for color so it stays
  * on-theme. Used for light mode; dark mode keeps the 3D star sphere.
  */
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+
+/**
+ * Whether this layer is the visible theme backdrop. When false (the other
+ * theme is showing) the rAF loop is stopped so the hidden canvas costs
+ * nothing — no wasted per-frame draws while only the stars run.
+ */
+const props = defineProps<{ active?: boolean }>()
 
 interface LinkNode {
   x: number
@@ -177,13 +184,29 @@ onMounted(() => {
   // until a manual refresh. Drawing here guarantees the backdrop is visible
   // the instant the component mounts, even mid-transition.
   draw()
-  if (reduced) {
-    // Static frame — no animation loop.
-  } else {
+  // Start the loop only if this layer is the active backdrop (the other
+  // theme's canvas stays mounted but paused → zero animation cost).
+  if (props.active !== false && !reduced) {
     raf = requestAnimationFrame(tick)
   }
   document.addEventListener('visibilitychange', onVisibility)
 })
+
+// When the theme flips and this layer becomes (or stops being) the visible
+// backdrop, start/stop the loop accordingly. The canvas itself is already
+// painted from mount, so the switch is instant either way.
+watch(
+  () => props.active,
+  (active) => {
+    if (active && !reduced && !raf) {
+      draw()
+      raf = requestAnimationFrame(tick)
+    } else if (!active && raf) {
+      cancelAnimationFrame(raf)
+      raf = 0
+    }
+  },
+)
 
 onBeforeUnmount(() => {
   if (raf) cancelAnimationFrame(raf)
