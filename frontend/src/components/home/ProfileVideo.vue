@@ -18,15 +18,12 @@
       </div>
       <div class="face-body">
         <div class="video-container">
-          <video
-            ref="videoRef"
+          <img
+            :src="frames[currentFrame]"
+            alt="Eddyson Aromin"
             class="theme-video"
-            muted
-            playsinline
-            preload="metadata"
-            :poster="posterSrc"
-            @ended="onVideoEnded"
-          ></video>
+            draggable="false"
+          />
         </div>
         <div class="face-footer">
           <span class="fp">$</span>
@@ -129,101 +126,83 @@ function onPointerUp(): void {
   }, 600)
 }
 
-/* ── Theme-triggered video ──────────────────────────────── */
-const videoRef = ref<HTMLVideoElement | null>(null)
+/* ── Image frame sequence (ping-pong) ──────────────────── */
+const TOTAL_FRAMES = 151
+const frames: string[] = []
+for (let i = 1; i <= TOTAL_FRAMES; i++) {
+  const pad = String(i).padStart(3, '0')
+  frames.push(`/images/profile-frames/ezgif-frame-${pad}.jpg`)
+}
 
-/** Tiny poster stills — shown instantly instead of downloading the video. */
-const posterForLight = '/videos/profile-forward-poster.webp'
-const posterForDark = '/videos/profile-reverse-poster.webp'
+const currentFrame = ref(0)
+let animFrame = 0
+let lastTime = 0
+let direction = 1
+let animating = false
+const FPS = 45
+const FRAME_INTERVAL = 1000 / FPS
 
-const posterSrc = ref(posterForLight)
+function tick(now: number): void {
+  if (!animating) return
+  const elapsed = now - lastTime
+  if (elapsed >= FRAME_INTERVAL) {
+    lastTime = now - (elapsed % FRAME_INTERVAL)
+    const next = currentFrame.value + direction
+    if (next < 0 || next >= TOTAL_FRAMES) {
+      animating = false
+      currentFrame.value = Math.max(0, Math.min(TOTAL_FRAMES - 1, next))
+      return
+    }
+    currentFrame.value = next
+    if (direction === 1 && currentFrame.value >= TOTAL_FRAMES - 1) animating = false
+    else if (direction === -1 && currentFrame.value <= 0) animating = false
+  }
+  if (animating) animFrame = requestAnimationFrame(tick)
+}
 
-let activeVideoLoad: (() => void) | null = null
+function animateTo(toEnd: boolean): void {
+  direction = toEnd ? 1 : -1
+  if (!animating) {
+    animating = true
+    lastTime = performance.now()
+    animFrame = requestAnimationFrame(tick)
+  }
+}
+
+function preloadAll(): Promise<void> {
+  return new Promise((resolve) => {
+    let loaded = 0
+    for (const src of frames) {
+      const img = new Image()
+      img.onload = img.onerror = () => { if (++loaded >= frames.length) resolve() }
+      img.src = src
+    }
+  })
+}
+
 let themeListener: ((e: Event) => void) | null = null
-
-function onVideoEnded(): void {
-  // Video finished — stays at last frame
-}
-
-/**
- * Swap the theme video INSTANTLY — not part of the theme transition.
- * The new theme's poster shows immediately (no blank frame, no fade), the new
- * MP4 loads in the background, and takes over when a frame is ready. The video
- * area never blinks or waits for the network during a light↔dark switch.
- */
-function playVideo(src: string, poster: string): void {
-  const v = videoRef.value
-  if (!v) return
-
-  if (activeVideoLoad) {
-    activeVideoLoad()
-    activeVideoLoad = null
-  }
-
-  // Show the incoming theme's poster right away — no opacity flicker.
-  posterSrc.value = poster
-  v.style.opacity = '1'
-
-  v.pause()
-  v.src = src
-  v.load()
-
-  let cancelled = false
-  activeVideoLoad = () => {
-    cancelled = true
-  }
-
-  const onReady = (): void => {
-    v.removeEventListener('canplay', onReady)
-    activeVideoLoad = null
-    if (cancelled) return
-    // A real frame is available — drop the poster and play.
-    posterSrc.value = ''
-    v.play().catch(() => {})
-  }
-
-  v.addEventListener('canplay', onReady, { once: true })
-}
-
-function playForward(): void {
-  playVideo('/videos/profile-forward.mp4', posterForLight)
-}
-function playReverse(): void {
-  playVideo('/videos/profile-reverse.mp4', posterForDark)
-}
-
-function handleThemeChange(dark: boolean): void {
-  // Reversed mapping: dark theme shows the forward (light-colored) clip,
-  // light theme shows the reverse (dark-colored) clip.
-  if (dark) playForward()
-  else playReverse()
-}
 
 function currentThemeIsDark(): boolean {
   const stored = (localStorage.getItem('theme') ?? 'light') as ThemePreference
   return resolveIsDark(stored)
 }
 
-onMounted(() => {
-  const v = videoRef.value
-  if (!v) return
+onMounted(async () => {
+  await preloadAll()
   const dark = currentThemeIsDark()
-
-  // Show the correct theme's poster instantly — the video itself only
-  // downloads when the theme flips (rare), so the page stays fast.
-  // Reversed mapping: dark → forward poster, light → reverse poster.
-  posterSrc.value = dark ? posterForLight : posterForDark
-  v.style.opacity = '1'
+  currentFrame.value = dark ? TOTAL_FRAMES - 1 : 0
 
   const onThemeChange = (e: Event): void => {
-    const dark = (e as CustomEvent).detail?.dark
-    if (typeof dark === 'boolean') handleThemeChange(dark)
+    const isDark = (e as CustomEvent).detail?.dark
+    if (typeof isDark !== 'boolean') return
+    animateTo(isDark)
   }
   themeListener = onThemeChange
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
 })
 
 onUnmounted(() => {
+  if (animFrame) cancelAnimationFrame(animFrame)
   if (themeListener) {
     window.removeEventListener(THEME_CHANGE_EVENT, themeListener)
     themeListener = null
@@ -309,9 +288,8 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
   pointer-events: none;
-  transform: scale(1.15);
+  transform: scale(1.15) translateY(6%);
 }
 .face-footer {
   display: flex;

@@ -5,12 +5,17 @@ import { getToken } from './useAuth'
 /**
  * Pet configuration — the GLOBAL config lives in the backend API
  * (site_settings.pet_settings, edited from the /aromin/pet admin page).
- * The navbar toggle is a per-browser override of `enabled` only. Every
- * consumer (SalaryCat, AppShell, the pet admin page) reads the same
- * reactive singleton, so changes apply instantly.
+ *
+ * Two flags:
+ *   - `globalEnabled` — what the admin set via API. Controls whether
+ *     the navbar "Toggle pet" button is visible.
+ *   - `enabled` — the effective state (globalEnabled × per-browser override).
+ *     Controls the v-if that renders SalaryCat.
  */
 export interface PetConfig {
-  /** Show the pet on public pages (global default). */
+  /** Admin's global on/off — controls navbar "Toggle pet" visibility. */
+  globalEnabled: boolean
+  /** Effective state — controls SalaryCat v-if. */
   enabled: boolean
   /** Sprite scale multiplier (0.35 small → 0.65 large). */
   scale: number
@@ -22,6 +27,7 @@ export interface PetConfig {
 }
 
 export const DEFAULT_PET_CONFIG: PetConfig = {
+  globalEnabled: true,
   enabled: true,
   scale: 0.5,
   speed: 1,
@@ -85,6 +91,12 @@ function clearLocalEnabled(): void {
   }
 }
 
+/** Recompute `enabled` from `globalEnabled` × per-browser local override. */
+function recomputeEnabled(): void {
+  const local = readLocalEnabled()
+  petConfig.enabled = petConfig.globalEnabled && (local ?? true)
+}
+
 /**
  * Boot — load the GLOBAL config from the API, then apply this browser's
  * local enabled override (from the navbar toggle). Call once at app start;
@@ -100,12 +112,13 @@ export async function bootPetConfig(): Promise<void> {
   }
 
   const base = { ...DEFAULT_PET_CONFIG, ...(api ?? readCache() ?? {}) }
-  const local = readLocalEnabled()
 
-  petConfig.enabled = local ?? base.enabled ?? DEFAULT_PET_CONFIG.enabled
+  // API returns `{ enabled }` — that's the admin's global setting.
+  petConfig.globalEnabled = base.enabled ?? DEFAULT_PET_CONFIG.globalEnabled
   petConfig.scale = base.scale ?? DEFAULT_PET_CONFIG.scale
   petConfig.speed = base.speed ?? DEFAULT_PET_CONFIG.speed
   petConfig.animate = base.animate ?? DEFAULT_PET_CONFIG.animate
+  recomputeEnabled()
   writeCache()
 }
 
@@ -120,7 +133,12 @@ export async function savePetConfigToApi(): Promise<void> {
   const res = await fetch(`${API_BASE}/admin/settings/pet`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ ...petConfig }),
+    body: JSON.stringify({
+      enabled: petConfig.globalEnabled,
+      scale: petConfig.scale,
+      speed: petConfig.speed,
+      animate: petConfig.animate,
+    }),
   })
   if (!res.ok) {
     const j = (await res.json().catch(() => ({}))) as { error?: string }
@@ -128,14 +146,18 @@ export async function savePetConfigToApi(): Promise<void> {
   }
 
   const saved = (await res.json()) as PetConfig
-  Object.assign(petConfig, saved)
+  // API returns old shape: { enabled, scale, speed, animate }.
+  petConfig.globalEnabled = saved.enabled
+  petConfig.scale = saved.scale
+  petConfig.speed = saved.speed
+  petConfig.animate = saved.animate
   clearLocalEnabled()
+  recomputeEnabled()
   writeCache()
 }
 
 /**
- * Navbar toggle — a per-browser on/off for the CURRENT visitor. It never
- * touches the global API config (the admin pet page owns that).
+ * Navbar toggle — per-browser on/off for the CURRENT visitor.
  */
 export function togglePetLocal(): void {
   const next = !petConfig.enabled

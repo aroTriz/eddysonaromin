@@ -263,3 +263,34 @@ VALUES ('community_chat_enabled', '1', NULL, NULL);
 
 INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
 VALUES ('backdrop_enabled', '1', NULL, NULL);
+
+-- ─────────────────────────────────────────────────────────────────
+-- Experiences & Education CMS — replaces the static profile.ts data.
+-- Both types share the same table; `type` = 'experience' | 'education'.
+-- Images (logo, albums, certificates) are uploaded as base64 data-URLs
+-- and stored directly in JSON columns — no external file host needed.
+-- ─────────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS experiences;
+CREATE TABLE experiences (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  type         TEXT    NOT NULL DEFAULT 'experience',  -- experience | education
+  period       TEXT    NOT NULL,                        -- e.g. "Nov 2025 — Jun 2026"
+  year         TEXT    NOT NULL,                        -- short year label e.g. "2025 — 2026"
+  tag          TEXT    NOT NULL,                        -- Professional | Internship | Graduated
+  title        TEXT    NOT NULL,                        -- job title or degree
+  company      TEXT    NOT NULL,                        -- company or school name
+  logo_url     TEXT,                                   -- uploaded logo data-URL
+  website_url  TEXT,                                   -- company/school website
+  tooltip_desc TEXT,                                   -- short description for hover tooltip
+  albums       TEXT    NOT NULL DEFAULT '[]',           -- JSON array of image data-URLs (gallery)
+  certificates TEXT    NOT NULL DEFAULT '[]',           -- JSON array of image data-URLs (certs)
+  description  TEXT    NOT NULL DEFAULT '',             -- full description
+  highlights   TEXT    NOT NULL DEFAULT '[]',           -- JSON array of bullet strings
+  sort_order   INTEGER NOT NULL DEFAULT 0,
+  archived_at  TEXT,
+  created_at   TEXT,
+  updated_at   TEXT
+);
+CREATE INDEX idx_experiences_type ON experiences(type, sort_order);
+CREATE INDEX idx_experiences_archived ON experiences(archived_at);

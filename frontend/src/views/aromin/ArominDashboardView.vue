@@ -228,7 +228,7 @@ const firstSeen = computed(() => {
   return last ? fullDateTime(last.created_at) : ''
 })
 
-/** Pages this IP visited, aggregated with per-page counts (most used first). */
+/** Pages this IP visited, aggregated with per-page counts (most used first, top 5). */
 const pageBreakdown = computed(() => {
   const counts = new Map<string, number>()
   for (const r of historyRows.value) {
@@ -238,6 +238,7 @@ const pageBreakdown = computed(() => {
   return [...counts.entries()]
     .map(([path, count]) => ({ path, count }))
     .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
 })
 
 /** Show a specific device label, or infer it from OS for legacy rows. */
@@ -417,7 +418,7 @@ function timeAgo(iso: string): string {
                   <td class="whitespace-nowrap px-3 py-3 text-ink">{{ v.visits ?? 0 }}</td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-600 dark:text-gray-400">
                     {{ flag(v.country) }}
-                    <span v-if="v.country" class="text-gray-500">{{ v.country }}</span>
+                    <span v-if="v.country_name || v.country" class="text-gray-500">{{ v.country_name || v.country }}</span>
                     <span v-if="v.city"> · {{ v.city }}</span>
                   </td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ deviceLabel(v) }}</td>
@@ -477,7 +478,7 @@ function timeAgo(iso: string): string {
           <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-300">
             <div class="min-w-0">
               <p class="font-mono text-[13px] font-semibold text-ink">
-                {{ historyTarget?.ip || 'IP' }}
+                {{ historyTarget?.raw_ip || historyTarget?.ip || 'IP' }}
               </p>
               <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
                 visitor profile — everything recorded about this IP
@@ -519,20 +520,32 @@ function timeAgo(iso: string): string {
                   <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">location</p>
                   <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
                     {{ flag(historyTarget?.country ?? '') }}
-                    <template v-if="historyTarget?.country || historyTarget?.city">
-                      {{ [historyTarget?.city, historyTarget?.country].filter(Boolean).join(', ') }}
+                    <template v-if="historyTarget?.country_name || historyTarget?.city">
+                      {{ [historyTarget?.city, historyTarget?.region, historyTarget?.country_name || historyTarget?.country].filter(Boolean).join(', ') }}
                     </template>
                     <template v-else>—</template>
                   </p>
                 </div>
                 <div class="bg-white px-4 py-3 dark:bg-gray-100">
                   <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">device</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ deviceLabel(historyTarget ?? {}) }}</p>
+                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.device || '—' }}</p>
                 </div>
                 <div class="bg-white px-4 py-3 dark:bg-gray-100">
                   <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">browser / os</p>
                   <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
                     {{ [historyTarget?.browser, historyTarget?.os].filter(Boolean).join(' · ') || '—' }}
+                  </p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100 sm:col-span-2">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">referrer</p>
+                  <p class="mt-1 min-w-0 truncate font-mono text-[11px] leading-snug text-ink">
+                    {{ historyTarget?.referrer || '—' }}
+                  </p>
+                </div>
+                <div class="bg-white px-4 py-3 dark:bg-gray-100">
+                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">last page</p>
+                  <p class="mt-1 min-w-0 truncate font-mono text-[11px] leading-snug text-ink">
+                    {{ historyTarget?.path || '—' }}
                   </p>
                 </div>
               </div>

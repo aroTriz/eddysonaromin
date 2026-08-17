@@ -18,7 +18,7 @@ import SalaryCat from '@/components/ui/SalaryCat.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
-import { bootPetConfig } from '@/composables/usePetConfig'
+import { bootPetConfig, petConfig } from '@/composables/usePetConfig'
 import { trackVisit } from '@/utils/analytics'
 
 // Boot theme handling (applies the persisted preference immediately).
@@ -106,7 +106,7 @@ onMounted(async () => {
 
       <AppShell :active="activeRoute" />
 
-      <!-- SalaryCat desktop pet — walks along the bottom of public pages -->
+      <!-- SalaryCat desktop pet — always mounted, visibility toggled via CSS -->
       <SalaryCat />
 
       <!-- Routed content — offset by the fixed sidebar width on lg+.

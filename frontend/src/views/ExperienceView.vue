@@ -4,11 +4,30 @@
  * new tab), a floating hover tooltip to the left of each logo (logo on top +
  * short description), and album / certificate buttons that open a centered
  * modal with a swiper of photos or certificates.
+ *
+ * Data is fetched from the CMS API (D1 database) instead of static profile.ts.
  */
 import { ArrowLeft, ArrowRight, Award, Images, X } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-import { education, experiences } from '@/data/profile'
+import { fetchExperiences } from '@/services/api'
+import type { ExperienceEntry } from '@/types'
+
+const experiences = ref<ExperienceEntry[]>([])
+const education = ref<ExperienceEntry[]>([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const all = await fetchExperiences()
+    experiences.value = all.filter((e) => e.type === 'experience')
+    education.value = all.filter((e) => e.type === 'education')
+  } catch {
+    // Silently fail — the page just shows empty state
+  } finally {
+    loading.value = false
+  }
+})
 
 const hovered = ref<string | null>(null)
 
@@ -80,7 +99,7 @@ function onKeydown(e: KeyboardEvent): void {
     <div class="space-y-0">
       <div
         v-for="(job, i) in experiences"
-        :key="job.company"
+        :key="job.id"
         class="reveal relative flex gap-4 sm:gap-5"
       >
         <!-- logo rail -->
@@ -88,17 +107,17 @@ function onKeydown(e: KeyboardEvent): void {
           <div class="relative">
             <!-- clickable logo → company site -->
             <a
-              v-if="job.logo"
-              :href="job.url ?? '#'"
+              v-if="job.logo_url"
+              :href="job.website_url ?? '#'"
               target="_blank"
               rel="noopener noreferrer"
               class="block h-12 w-12 rounded-lg border border-gray-200 bg-[#ffffff] p-1.5 transition-transform hover:scale-105"
               :aria-label="`Open ${job.company} website`"
-              @mouseenter="show(job.company)"
+              @mouseenter="show(String(job.id))"
               @mouseleave="hide"
             >
               <img
-                :src="job.logo"
+                :src="job.logo_url"
                 :alt="`${job.company} logo`"
                 class="h-full w-full object-contain"
               />
@@ -113,9 +132,9 @@ function onKeydown(e: KeyboardEvent): void {
             <!-- floating tooltip (left of logo) -->
             <Transition name="float">
               <div
-                v-if="hovered === job.company && job.tooltipDesc"
+                v-if="hovered === String(job.id) && job.tooltip_desc"
                 class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
-                @mouseenter="show(job.company)"
+                @mouseenter="show(String(job.id))"
                 @mouseleave="hide"
               >
                 <!-- company logo -->
@@ -123,8 +142,8 @@ function onKeydown(e: KeyboardEvent): void {
                   class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
                 >
                   <img
-                    v-if="job.logo"
-                    :src="job.logo"
+                    v-if="job.logo_url"
+                    :src="job.logo_url"
                     :alt="`${job.company} logo`"
                     class="max-h-full max-w-full object-contain"
                     loading="lazy"
@@ -139,7 +158,7 @@ function onKeydown(e: KeyboardEvent): void {
                     {{ job.company }}
                   </p>
                   <p class="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-gray-600">
-                    {{ job.tooltipDesc }}
+                    {{ job.tooltip_desc }}
                   </p>
                 </div>
               </div>
@@ -153,24 +172,24 @@ function onKeydown(e: KeyboardEvent): void {
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ job.company }}</h2>
             <!-- album + certificate buttons -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex shrink-0 items-center gap-1.5">
               <button
-                v-if="true"
+                v-if="job.albums.length > 0"
                 type="button"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} photos`"
                 :aria-label="`Open ${job.company} album`"
-                @click="openModal(`${job.company} — photos`, job.albums, job.logo)"
+                @click="openModal(`${job.company} — photos`, job.albums, job.logo_url)"
               >
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="true"
+                v-if="job.certificates.length > 0"
                 type="button"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} certificates`"
                 :aria-label="`Open ${job.company} certificates`"
-                @click="openModal(`${job.company} — certificates`, job.certificates, job.logo)"
+                @click="openModal(`${job.company} — certificates`, job.certificates, job.logo_url)"
               >
                 <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -188,10 +207,10 @@ function onKeydown(e: KeyboardEvent): void {
               <p>{{ job.description }}</p>
             </div>
 
-            <div v-if="job.highlights.length" class="mt-4 space-y-2">
+            <div v-if="job.highlights?.length" class="mt-4 space-y-2">
               <p
-                v-for="highlight in job.highlights"
-                :key="highlight"
+                v-for="(highlight, hi) in job.highlights"
+                :key="hi"
                 class="flex items-start gap-2 text-[13.5px] leading-relaxed text-gray-600"
               >
                 <span class="mt-0.5 font-mono text-gray-400" aria-hidden="true">&gt;</span>
@@ -207,25 +226,25 @@ function onKeydown(e: KeyboardEvent): void {
     <div class="mt-10">
       <div
         v-for="edu in education"
-        :key="edu.school"
+        :key="edu.id"
         class="reveal relative flex gap-4 sm:gap-5"
       >
         <div class="flex flex-col items-center">
           <div class="relative">
             <!-- clickable logo → school site -->
             <a
-              v-if="edu.logo"
-              :href="edu.url ?? '#'"
+              v-if="edu.logo_url"
+              :href="edu.website_url ?? '#'"
               target="_blank"
               rel="noopener noreferrer"
               class="block h-12 w-12 rounded-lg border border-gray-200 bg-[#ffffff] p-1.5 transition-transform hover:scale-105"
-              :aria-label="`Open ${edu.school} website`"
-              @mouseenter="show(edu.school)"
+              :aria-label="`Open ${edu.company} website`"
+              @mouseenter="show(String(edu.id))"
               @mouseleave="hide"
             >
               <img
-                :src="edu.logo"
-                :alt="`${edu.school} logo`"
+                :src="edu.logo_url"
+                :alt="`${edu.company} logo`"
                 class="h-full w-full object-contain"
               />
             </a>
@@ -233,15 +252,15 @@ function onKeydown(e: KeyboardEvent): void {
               v-else
               class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white"
             >
-              <span class="font-pixel text-[12px] text-ink">{{ edu.school.charAt(0) }}</span>
+              <span class="font-pixel text-[12px] text-ink">{{ edu.company.charAt(0) }}</span>
             </div>
 
             <!-- floating tooltip (left of logo) -->
             <Transition name="float">
               <div
-                v-if="hovered === edu.school && edu.tooltipDesc"
+                v-if="hovered === String(edu.id) && edu.tooltip_desc"
                 class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
-                @mouseenter="show(edu.school)"
+                @mouseenter="show(String(edu.id))"
                 @mouseleave="hide"
               >
                 <!-- school logo -->
@@ -249,9 +268,9 @@ function onKeydown(e: KeyboardEvent): void {
                   class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
                 >
                   <img
-                    v-if="edu.logo"
-                    :src="edu.logo"
-                    :alt="`${edu.school} logo`"
+                    v-if="edu.logo_url"
+                    :src="edu.logo_url"
+                    :alt="`${edu.company} logo`"
                     class="max-h-full max-w-full object-contain"
                     loading="lazy"
                   />
@@ -262,10 +281,10 @@ function onKeydown(e: KeyboardEvent): void {
                 </div>
                 <div class="p-3.5">
                   <p class="text-[13px] font-semibold leading-snug text-ink">
-                    {{ edu.school }}
+                    {{ edu.company }}
                   </p>
                   <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
-                    {{ edu.tooltipDesc }}
+                    {{ edu.tooltip_desc }}
                   </p>
                 </div>
               </div>
@@ -275,26 +294,26 @@ function onKeydown(e: KeyboardEvent): void {
 
         <div class="flex-1">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.school }}</h2>
+            <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.company }}</h2>
             <!-- album + certificate buttons -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex shrink-0 items-center gap-1.5">
               <button
-                v-if="true"
+                v-if="edu.albums.length > 0"
                 type="button"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
-                :title="`${edu.school} photos`"
-                :aria-label="`Open ${edu.school} album`"
-                @click="openModal(`${edu.school} — photos`, edu.albums)"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                :title="`${edu.company} photos`"
+                :aria-label="`Open ${edu.company} album`"
+                @click="openModal(`${edu.company} — photos`, edu.albums)"
               >
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="true"
+                v-if="edu.certificates.length > 0"
                 type="button"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink"
-                :title="`${edu.school} certificates`"
-                :aria-label="`Open ${edu.school} certificates`"
-                @click="openModal(`${edu.school} — certificates`, edu.certificates)"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                :title="`${edu.company} certificates`"
+                :aria-label="`Open ${edu.company} certificates`"
+                @click="openModal(`${edu.company} — certificates`, edu.certificates)"
               >
                 <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -308,7 +327,7 @@ function onKeydown(e: KeyboardEvent): void {
               {{ edu.period }}
             </p>
             <div class="mt-3 space-y-3 text-[14px] leading-relaxed text-gray-600">
-              <p>{{ edu.detail }}</p>
+              <p>{{ edu.description }}</p>
             </div>
           </div>
         </div>

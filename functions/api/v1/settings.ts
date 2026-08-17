@@ -29,12 +29,14 @@ async function flag(env: Env, key: string): Promise<boolean> {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   try {
-    const [community_chat_enabled, backdrop_enabled] = await Promise.all([
+    const [community_chat_enabled, backdrop_enabled, click_me_enabled, ask_triz_enabled] = await Promise.all([
       flag(env, 'community_chat_enabled'),
       flag(env, 'backdrop_enabled'),
+      flag(env, 'click_me_enabled'),
+      flag(env, 'ask_triz_enabled'),
     ])
-    return json({ community_chat_enabled, backdrop_enabled })
+    return json({ community_chat_enabled, backdrop_enabled, click_me_enabled, ask_triz_enabled })
   } catch {
-    return json({ community_chat_enabled: true, backdrop_enabled: true }, 500)
+    return json({ community_chat_enabled: true, backdrop_enabled: true, click_me_enabled: true, ask_triz_enabled: true }, 500)
   }
 }

@@ -238,6 +238,12 @@ class AdminController extends Controller
                 (select v3.country from visits v3
                    where v3.site = visits.site and v3.ip = visits.ip
                    order by v3.created_at desc limit 1) as country,
+                (select v3b.country_name from visits v3b
+                   where v3b.site = visits.site and v3b.ip = visits.ip
+                   and v3b.country_name != '' order by v3b.created_at desc limit 1) as country_name,
+                (select v3c.region from visits v3c
+                   where v3c.site = visits.site and v3c.ip = visits.ip
+                   and v3c.region != '' order by v3c.created_at desc limit 1) as region,
                 (select v4.city from visits v4
                    where v4.site = visits.site and v4.ip = visits.ip
                    order by v4.created_at desc limit 1) as city,
@@ -249,7 +255,10 @@ class AdminController extends Controller
                    order by v6.created_at desc limit 1) as browser,
                 (select v7.os from visits v7
                    where v7.site = visits.site and v7.ip = visits.ip
-                   order by v7.created_at desc limit 1) as os")
+                   order by v7.created_at desc limit 1) as os,
+                (select v8.referrer from visits v8
+                   where v8.site = visits.site and v8.ip = visits.ip
+                   and v8.referrer != '' order by v8.created_at desc limit 1) as referrer")
             ->groupBy('ip')
             ->orderByDesc('created_at')
             ->limit(10)
@@ -259,11 +268,14 @@ class AdminController extends Controller
                 'ip' => $this->maskIp((string) ($r->ip ?? '')),
                 'raw_ip' => (string) ($r->ip ?? ''),
                 'country' => (string) ($r->country ?? ''),
+                'country_name' => (string) ($r->country_name ?? ''),
+                'region' => (string) ($r->region ?? ''),
                 'city' => (string) ($r->city ?? ''),
                 'path' => (string) ($r->path ?? ''),
                 'device' => (string) ($r->device ?? ''),
                 'browser' => (string) ($r->browser ?? ''),
                 'os' => (string) ($r->os ?? ''),
+                'referrer' => (string) ($r->referrer ?? ''),
                 'visits' => (int) ($r->visits ?? 0),
                 'created_at' => (string) ($r->created_at ?? ''),
             ])
@@ -311,7 +323,10 @@ class AdminController extends Controller
                 'browser' => (string) ($r->browser ?? ''),
                 'os' => (string) ($r->os ?? ''),
                 'country' => (string) ($r->country ?? ''),
+                'country_name' => (string) ($r->country_name ?? ''),
+                'region' => (string) ($r->region ?? ''),
                 'city' => (string) ($r->city ?? ''),
+                'referrer' => (string) ($r->referrer ?? ''),
                 'created_at' => (string) ($r->created_at ?? ''),
             ])
             ->all();

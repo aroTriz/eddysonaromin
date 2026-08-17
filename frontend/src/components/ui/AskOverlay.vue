@@ -20,7 +20,7 @@ const input = ref('')
 const busy = ref(false)
 const caretVisible = ref(true)
 const fieldVisible = ref(true)
-const titleText = ref('what do you want to ask?')
+const titleText = ref('What do you want me to do?')
 const isShimmer = ref(false)
 const bubbleOn = ref(false)
 const bubbleText = ref('')
@@ -175,7 +175,7 @@ async function submit(): Promise<void> {
 
   await setTitle('as for your question')
   await sleep(2000)
-  await setTitle("i don't want to waste tokens on that, search for it yourself :)")
+  await setTitle("Do it yourself")
   await sleep(2200)
 
   window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank', 'noopener')
@@ -191,7 +191,7 @@ function openAsk(): void {
   bubbleOn.value = false
   bubbleText.value = ''
   isShimmer.value = false
-  titleText.value = 'what do you want to ask?'
+  titleText.value = 'What do you want me to do?'
   document.documentElement.style.overflow = 'hidden'
   requestAnimationFrame(() => {
     isOpen.value = true
@@ -214,7 +214,7 @@ function onKeydown(e: KeyboardEvent): void {
 }
 
 function onGlobalKeydown(e: KeyboardEvent): void {
-  if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'k') {
+  if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'j') {
     e.preventDefault()
     openAsk()
   }

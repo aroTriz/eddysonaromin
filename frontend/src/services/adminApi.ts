@@ -1,5 +1,5 @@
 ﻿import { getToken } from '@/composables/useAuth'
-import type { BlogPost, Project, ProjectShowcase, Recommendation } from '@/types'
+import type { BlogPost, ExperienceEntry, Project, ProjectShowcase, Recommendation } from '@/types'
 /**
  * Authenticated API client for the /aromin admin area.
  * Every call attaches the admin Bearer token.
@@ -891,4 +891,124 @@ export async function setAskTrizEnabled(enabled: boolean): Promise<void> {
     body: JSON.stringify({ enabled }),
   })
   await handle<void>(res)
+}
+
+// ── Experience / Education CMS ────────────────────────────────────
+
+/** Fields the admin can edit on an experience entry. */
+export interface ExperienceInput {
+  type: 'experience' | 'education'
+  period: string
+  year: string
+  tag: string
+  title: string
+  company: string
+  logo_url?: string | null
+  website_url?: string | null
+  tooltip_desc?: string | null
+  albums?: string[]
+  certificates?: string[]
+  description?: string
+  highlights?: string[]
+  sort_order?: number
+}
+
+/** All experience entries (active by default). Pass archived=true for archived ones. */
+export function fetchAdminExperiences(archived = false): Promise<ExperienceEntry[]> {
+  const key = `admin:experiences:${archived ? 'archived' : 'active'}`
+  return cachedAdmin(key, async () => {
+    const res = await fetch(`${API_BASE}/admin/experiences${archived ? '?archived=1' : ''}`, {
+      headers: authHeaders(),
+    })
+    return handle<ExperienceEntry[]>(res)
+  })
+}
+
+/** Upload an image for experience entries (logo, album photo, or certificate). */
+export async function uploadExperienceImage(
+  file: File,
+): Promise<{ url: string }> {
+  const token = getToken()
+  // Convert file to base64 data-URL
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+  const res = await fetch(`${API_BASE}/admin/experiences/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ image: dataUrl }),
+  })
+  return handle<{ url: string }>(res)
+}
+
+/** Create an experience entry. */
+export async function createAdminExperience(input: ExperienceInput): Promise<ExperienceEntry> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<ExperienceEntry>(res)
+}
+
+/** Update an experience entry by id. */
+export async function updateAdminExperience(
+  id: number,
+  input: Partial<ExperienceInput>,
+): Promise<ExperienceEntry> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<ExperienceEntry>(res)
+}
+
+/** Delete an experience entry permanently. */
+export async function deleteAdminExperience(id: number): Promise<void> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
+}
+
+/** Bulk delete experience entries by ids. */
+export async function deleteAdminExperiences(ids: number[]): Promise<{ deleted: number }> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  })
+  return handle<{ deleted: number }>(res)
+}
+
+/** Archive an experience entry (hides from the site; restorable). */
+export async function archiveAdminExperience(id: number): Promise<ExperienceEntry> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences/${id}/archive`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<ExperienceEntry>(res)
+}
+
+/** Restore an archived experience entry. */
+export async function restoreAdminExperience(id: number): Promise<ExperienceEntry> {
+  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/experiences/${id}/restore`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<ExperienceEntry>(res)
 }
