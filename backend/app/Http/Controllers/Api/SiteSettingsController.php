@@ -30,10 +30,12 @@ class SiteSettingsController extends Controller
     public const COMMUNITY_CHAT_KEY = 'community_chat_enabled';
     public const BACKDROP_KEY = 'backdrop_enabled';
     public const PET_SETTINGS_KEY = 'pet_settings';
+    public const CLICK_ME_KEY = 'click_me_enabled';
+    public const ASK_TRIZ_KEY = 'ask_triz_enabled';
 
-    /** Default pet config — used until the admin saves their own. */
+    /** Default pet config — off until the visitor toggles it / admin enables it. */
     private const DEFAULT_PET = [
-        'enabled' => true,
+        'enabled' => false,
         'scale' => 0.5,
         'speed' => 1,
         'animate' => true,
@@ -45,6 +47,8 @@ class SiteSettingsController extends Controller
         return response()->json([
             'community_chat_enabled' => $this->communityChatEnabled(),
             'backdrop_enabled' => $this->backdropEnabled(),
+            'click_me_enabled' => $this->clickMeEnabled(),
+            'ask_triz_enabled' => $this->askTrizEnabled(),
             'pet' => $this->petSettings(),
         ]);
     }
@@ -79,6 +83,32 @@ class SiteSettingsController extends Controller
         $this->set(self::BACKDROP_KEY, $enabled ? '1' : '0');
 
         return response()->json(['backdrop_enabled' => $enabled]);
+    }
+
+    /** Turn the "click me..." sidebar button on/off. Body: { enabled: bool }. */
+    public function updateClickMe(Request $request): JsonResponse
+    {
+        if (app(AuthController::class)->adminFromRequest($request) === null) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $enabled = (bool) $request->input('enabled', false);
+        $this->set(self::CLICK_ME_KEY, $enabled ? '1' : '0');
+
+        return response()->json(['click_me_enabled' => $enabled]);
+    }
+
+    /** Enable/disable the "Ask Triz.ai" sidebar button. Body: { enabled: bool }. */
+    public function updateAskTriz(Request $request): JsonResponse
+    {
+        if (app(AuthController::class)->adminFromRequest($request) === null) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $enabled = (bool) $request->input('enabled', false);
+        $this->set(self::ASK_TRIZ_KEY, $enabled ? '1' : '0');
+
+        return response()->json(['ask_triz_enabled' => $enabled]);
     }
 
     /** Save the pet config. Body: { enabled, scale, speed, animate }. */
@@ -123,6 +153,26 @@ class SiteSettingsController extends Controller
     {
         $value = DB::table('site_settings')
             ->where('key', self::BACKDROP_KEY)
+            ->value('value');
+
+        return $value !== '0';
+    }
+
+    /** Whether the "click me..." sidebar button is shown. Missing row → enabled. */
+    public function clickMeEnabled(): bool
+    {
+        $value = DB::table('site_settings')
+            ->where('key', self::CLICK_ME_KEY)
+            ->value('value');
+
+        return $value !== '0';
+    }
+
+    /** Whether the "Ask Triz.ai" sidebar button is enabled. Missing row → enabled. */
+    public function askTrizEnabled(): bool
+    {
+        $value = DB::table('site_settings')
+            ->where('key', self::ASK_TRIZ_KEY)
             ->value('value');
 
         return $value !== '0';

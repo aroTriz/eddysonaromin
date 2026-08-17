@@ -374,7 +374,7 @@ export async function deleteAdminChatMessages(ids: number[]): Promise<void> {
 /** Fields the admin can edit on a project (mirrors the backend rules). */
 export interface ProjectInput {
   title: string
-  category: 'personal' | 'academic'
+  category: 'personal' | 'academic' | 'professional'
   type: Project['type']
   summary: string
   tagline?: string | null
@@ -858,6 +858,34 @@ export async function setCommunityChatEnabled(enabled: boolean): Promise<void> {
  */
 export async function setBackdropEnabled(enabled: boolean): Promise<void> {
   const res = await fetch(`${API_BASE}/admin/settings/backdrop`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ enabled }),
+  })
+  await handle<void>(res)
+}
+
+/**
+ * Turn the "click me..." sidebar button on/off site-wide (admin only).
+ * ON (default) → the button shows in the sidebar, opening Ask Triz.ai.
+ * OFF → the button is hidden from the sidebar.
+ */
+export async function setClickMeEnabled(enabled: boolean): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/settings/click-me`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ enabled }),
+  })
+  await handle<void>(res)
+}
+
+/**
+ * Enable/disable the "Ask Triz.ai" sidebar button site-wide (admin only).
+ * ON (default) → the button shows "Ask Triz.ai" in the sidebar, opening the AI chat.
+ * OFF → the button shows "Eddyson Disabled Trizai" and the chat is disabled.
+ */
+export async function setAskTrizEnabled(enabled: boolean): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/settings/ask-triz`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ enabled }),

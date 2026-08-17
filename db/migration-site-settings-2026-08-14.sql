@@ -20,3 +20,11 @@ VALUES ('community_chat_enabled', '1', datetime('now'), datetime('now'));
 -- Default: animated backdrops ON. '0' = off (pure white / pure black).
 INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
 VALUES ('backdrop_enabled', '1', datetime('now'), datetime('now'));
+
+-- Default: "click me..." sidebar button ON. '0' = off (button hidden).
+INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
+VALUES ('click_me_enabled', '1', datetime('now'), datetime('now'));
+
+-- Default: "Ask Triz.ai" sidebar button ON. '0' = off (shows "Eddyson Disabled Trizai", chat disabled).
+INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
+VALUES ('ask_triz_enabled', '1', datetime('now'), datetime('now'));

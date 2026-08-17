@@ -3,11 +3,12 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Github, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { Bot, Command, Github, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import EmailModal from '@/components/home/EmailModal.vue'
 import AskOverlay from '@/components/ui/AskOverlay.vue'
+import AskTrizOverlay from '@/components/ui/AskTrizOverlay.vue'
 import ChatOverlay from '@/components/ui/ChatOverlay.vue'
 import PrivateChatOverlay from '@/components/ui/PrivateChatOverlay.vue'
 import { petConfig, togglePetLocal } from '@/composables/usePetConfig'
@@ -21,11 +22,18 @@ defineProps<{
 
 const emailRef = ref<InstanceType<typeof EmailModal> | null>(null)
 const askRef = ref<InstanceType<typeof AskOverlay> | null>(null)
+const askTrizRef = ref<InstanceType<typeof AskTrizOverlay> | null>(null)
 const chatRef = ref<InstanceType<typeof ChatOverlay> | null>(null)
 const privateChatRef = ref<InstanceType<typeof PrivateChatOverlay> | null>(null)
 const isMac =  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const mobileOpen = ref(false)
+
+/** Whether the "click me..." (Ask Anything) button shows in the sidebar (admin toggle). */
+const clickMeEnabled = ref(true)
+
+/** Whether the "Ask Triz.ai" button shows in the sidebar (admin toggle). */
+const askTrizEnabled = ref(true)
 
 function openMobileMenu(): void {
   mobileOpen.value = true
@@ -37,9 +45,13 @@ function closeMobileMenu(): void {
   document.documentElement.style.overflow = ''
 }
 
-/** ⌘K / Alt+K — open the "ask anything" overlay. ⌘P / Alt+P — toggle pet. */
+/** ⌘K / Alt+K — open the "Ask Triz.ai" overlay. ⌘J / Alt+J — open Command. ⌘P / Alt+P — toggle pet. */
 function onGlobalKeydown(e: KeyboardEvent): void {
   if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    if (askTrizEnabled.value) askTrizRef.value?.openAsk()
+  }
+  if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'j') {
     e.preventDefault()
     askRef.value?.openAsk()
   }
@@ -49,7 +61,18 @@ function onGlobalKeydown(e: KeyboardEvent): void {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onGlobalKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onGlobalKeydown)
+  // Fetch sidebar button visibility settings
+  fetch('/api/v1/settings', { cache: 'no-store' })
+    .then((r) => r.ok ? r.json() : null)
+    .then((d) => {
+      if (!d) return
+      if (typeof d.click_me_enabled === 'boolean') clickMeEnabled.value = d.click_me_enabled
+      if (typeof d.ask_triz_enabled === 'boolean') askTrizEnabled.value = d.ask_triz_enabled
+    })
+    .catch(() => { /* fail-open: show by default */ })
+})
 onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown))
 
 /**
@@ -141,11 +164,18 @@ const navGroups = [
 
     <button
       type="button"
-      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
-      @click="askRef?.openAsk()"
+      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px]"
+      :class="askTrizEnabled
+        ? 'text-gray-400 hover:text-ink dark:hover:text-gray-950'
+        : 'cursor-not-allowed text-gray-300 dark:text-gray-600'"
+      :disabled="!askTrizEnabled"
+      :aria-disabled="!askTrizEnabled"
+      :aria-label="askTrizEnabled ? 'Ask Triz.ai — AI chat assistant' : 'Triz.ai is disabled by Eddyson'"
+      @click="askTrizEnabled && askTrizRef?.openAsk()"
     >
-      <span>ask anything</span>
-      <span class="inline-flex items-center gap-1">
+      <Bot class="h-3.5 w-3.5" :stroke-width="1.8" />
+      <span>{{ askTrizEnabled ? 'Ask Triz.ai' : 'Eddyson Disabled Trizai' }}</span>
+      <span v-if="askTrizEnabled" class="inline-flex items-center gap-1">
         <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
@@ -154,7 +184,23 @@ const navGroups = [
       </span>
     </button>
 
-    <!-- Pet toggle — right next to "ask anything", one line, ⌘P / Alt+P -->
+    <button
+      v-if="clickMeEnabled"
+      type="button"
+      class="mt-3 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
+      @click="askRef?.openAsk()"
+    >
+      <Command class="h-3.5 w-3.5" :stroke-width="1.8" />
+      <span>Command</span>
+      <span class="inline-flex items-center gap-1">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
+          {{ isMac ? '⌘' : 'Alt' }}
+        </kbd>
+        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">J</kbd>
+      </span>
+    </button>
+
     <button
       type="button"
       class="mt-3 inline-flex w-fit items-center gap-2 whitespace-nowrap text-[12px] transition-colors"
@@ -249,31 +295,14 @@ const navGroups = [
       <RouterLink to="/" class="font-pixel text-[14px]">
         &lt; Aromin /&gt;
       </RouterLink>
-      <div class="flex items-center gap-1.5">
-        <!-- Pet toggle (mobile) -->
-        <button
-          type="button"
-          :aria-pressed="petConfig.enabled"
-          :aria-label="petConfig.enabled ? 'Hide pet' : 'Show pet'"
-          title="Toggle pet (Alt+P)"
-          class="p-1 text-gray-700 hover:text-ink"
-          @click="togglePetLocal"
-        >
-          <PawPrint
-            class="h-5 w-5"
-            :stroke-width="1.6"
-            :class="petConfig.enabled ? 'text-ink' : 'text-gray-300'"
-          />
-        </button>
-        <button
-          type="button"
-          aria-label="Open menu"
-          class="-mr-1 p-1 text-gray-700 hover:text-ink"
-          @click="openMobileMenu"
-        >
-          <Menu class="h-5 w-5" />
-        </button>
-      </div>
+      <button
+        type="button"
+        aria-label="Open menu"
+        class="-mr-1 p-1 text-gray-700 hover:text-ink"
+        @click="openMobileMenu"
+      >
+        <Menu class="h-5 w-5" />
+      </button>
     </div>
   </header>
 
@@ -341,16 +370,38 @@ const navGroups = [
           <div>
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
-              @click="closeMobileMenu(); askRef?.openAsk()"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px]"
+              :class="askTrizEnabled
+                ? 'text-gray-500 hover:text-ink'
+                : 'cursor-not-allowed text-gray-300'"
+              :disabled="!askTrizEnabled"
+              :aria-disabled="!askTrizEnabled"
+              :aria-label="askTrizEnabled ? 'Ask Triz.ai — AI chat assistant' : 'Triz.ai is disabled by Eddyson'"
+              @click="askTrizEnabled && (closeMobileMenu(), askTrizRef?.openAsk())"
             >
-              <span>ask anything</span>
-              <span class="inline-flex items-center gap-1">
+              <span>{{ askTrizEnabled ? 'Ask Triz.ai' : 'Eddyson Disabled Trizai' }}</span>
+              <span v-if="askTrizEnabled" class="inline-flex items-center gap-1">
                 <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
                   {{ isMac ? '⌘' : 'Alt' }}
                 </kbd>
                 <span class="text-[10px] text-gray-400">+</span>
                 <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">K</kbd>
+              </span>
+            </button>
+            <button
+              v-if="clickMeEnabled"
+              type="button"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              @click="closeMobileMenu(); askRef?.openAsk()"
+            >
+              <Command class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              <span>Command</span>
+              <span class="inline-flex items-center gap-1">
+                <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
+                  {{ isMac ? '⌘' : 'Alt' }}
+                </kbd>
+                <span class="text-[10px] text-gray-400">+</span>
+                <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">J</kbd>
               </span>
             </button>
             <button
@@ -368,6 +419,19 @@ const navGroups = [
             >
               <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               private chat
+            </button>
+            <button
+              type="button"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] transition-colors"
+              :class="petConfig.enabled ? 'text-ink' : 'text-gray-600 hover:text-ink'"
+              @click="togglePetLocal"
+            >
+              <PawPrint class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              toggle pet
+              <span
+                class="rounded-full px-1.5 py-0.5 text-[10px] leading-none"
+                :class="petConfig.enabled ? 'bg-ink text-bg' : 'bg-gray-200 text-gray-500'"
+              >{{ petConfig.enabled ? 'on' : 'off' }}</span>
             </button>
             <div class="mb-4">
               <ThemeSwitch />
@@ -412,7 +476,10 @@ const navGroups = [
     </div>
   </Teleport>
 
-  <!-- Ask anything overlay (bryllim-style, ⌘K / Alt+K) -->
+  <!-- Ask Triz.ai overlay (⌘K / Alt+K) -->
+  <AskTrizOverlay ref="askTrizRef" />
+
+  <!-- "click me..." overlay (original Ask Anything) -->
   <AskOverlay ref="askRef" />
 
   <!-- Community chat (bryllim-style) -->

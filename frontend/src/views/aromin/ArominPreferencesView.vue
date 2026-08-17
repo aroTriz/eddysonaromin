@@ -16,8 +16,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
 import { isRightClickAllowed, RIGHT_CLICK_KEY } from '@/composables/useSiteBehavior'
-import { setBackdropEnabled, setCommunityChatEnabled } from '@/services/adminApi'
-import { fetchBackdropEnabled, fetchCommunityChatEnabled } from '@/services/chatApi'
+import { setAskTrizEnabled, setBackdropEnabled, setClickMeEnabled, setCommunityChatEnabled } from '@/services/adminApi'
+import { fetchAskTrizEnabled, fetchBackdropEnabled, fetchClickMeEnabled, fetchCommunityChatEnabled } from '@/services/chatApi'
 
 const rightClickAllowed = ref(isRightClickAllowed())
 
@@ -52,6 +52,12 @@ onMounted(() => {
   })
   void fetchBackdropEnabled().then((ok) => {
     backdropEnabled.value = ok
+  })
+  void fetchClickMeEnabled().then((ok) => {
+    clickMeEnabled.value = ok
+  })
+  void fetchAskTrizEnabled().then((ok) => {
+    askTrizEnabled.value = ok
   })
 })
 
@@ -105,6 +111,65 @@ async function toggleBackdrop(): Promise<void> {
     backdropError.value = err instanceof Error ? err.message : 'Failed to update setting.'
   } finally {
     backdropBusy.value = false
+  }
+}
+
+/** "Show Click me" toggle — persisted server-side (site_settings). When
+ *  ON (default), the sidebar shows "click me..." which opens the original
+ *  Ask Anything overlay. When OFF, the button is hidden from the sidebar. */
+const clickMeEnabled = ref(true)
+const clickMeBusy = ref(false)
+const clickMeError = ref('')
+
+const clickMeStatusLabel = computed(() =>
+  clickMeEnabled.value
+    ? 'on — "click me..." button is visible in the sidebar'
+    : 'off — "click me..." button is hidden from the sidebar',
+)
+
+async function toggleClickMe(): Promise<void> {
+  if (clickMeBusy.value) return
+  const next = !clickMeEnabled.value
+  clickMeBusy.value = true
+  clickMeError.value = ''
+  clickMeEnabled.value = next
+  try {
+    await setClickMeEnabled(next)
+  } catch (err) {
+    clickMeEnabled.value = !next
+    clickMeError.value = err instanceof Error ? err.message : 'Failed to update setting.'
+  } finally {
+    clickMeBusy.value = false
+  }
+}
+
+/** "Enable/Disable Triz.ai" toggle — persisted server-side (site_settings). When
+ *  ON (default), the sidebar shows "Ask Triz.ai" which opens the AI chat
+ *  overlay (ChatGPT-style). When OFF, the sidebar shows "Eddyson Disabled Trizai"
+ *  and the chat is disabled — visitors cannot open the overlay. */
+const askTrizEnabled = ref(true)
+const askTrizBusy = ref(false)
+const askTrizError = ref('')
+
+const askTrizStatusLabel = computed(() =>
+  askTrizEnabled.value
+    ? 'enabled — "Ask Triz.ai" is active in the sidebar'
+    : 'disabled — "Eddyson Disabled Trizai" shown, chat is off',
+)
+
+async function toggleAskTriz(): Promise<void> {
+  if (askTrizBusy.value) return
+  const next = !askTrizEnabled.value
+  askTrizBusy.value = true
+  askTrizError.value = ''
+  askTrizEnabled.value = next
+  try {
+    await setAskTrizEnabled(next)
+  } catch (err) {
+    askTrizEnabled.value = !next
+    askTrizError.value = err instanceof Error ? err.message : 'Failed to update setting.'
+  } finally {
+    askTrizBusy.value = false
   }
 }
 </script>
@@ -261,6 +326,109 @@ async function toggleBackdrop(): Promise<void> {
           >
             <Check
               v-if="backdropEnabled"
+              class="h-3 w-3 text-white"
+              :stroke-width="3"
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Enable/Disable "Ask Triz.ai" in sidebar ────────────── -->
+    <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <Sparkles class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
+            <h2 class="font-mono text-[13px] font-semibold text-ink">Enable/Disable Triz.ai</h2>
+          </div>
+          <p class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500">
+            When enabled, the sidebar shows &ldquo;Ask Triz.ai&rdquo; which opens
+            a ChatGPT-style AI chat overlay. When disabled, the sidebar shows
+            &ldquo;Eddyson Disabled Trizai&rdquo; and the chat is completely off
+            &mdash; visitors cannot open the overlay.
+          </p>
+          <p class="mt-3 font-mono text-[11px] text-gray-400">
+            // {{ askTrizStatusLabel }}
+          </p>
+          <p v-if="askTrizError" class="mt-2 font-mono text-[11px] text-red-500">
+            // {{ askTrizError }}
+          </p>
+        </div>
+
+        <!-- Same outlined switch as the other settings -->
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="askTrizEnabled"
+          :aria-label="askTrizEnabled ? 'Disable Triz.ai chat' : 'Enable Triz.ai chat'"
+          :disabled="askTrizBusy"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 disabled:opacity-50"
+          :class="[
+            askTrizEnabled
+              ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
+              : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
+          ]"
+          @click="toggleAskTriz"
+        >
+          <span
+            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+            :class="askTrizEnabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
+          >
+            <Check
+              v-if="askTrizEnabled"
+              class="h-3 w-3 text-white"
+              :stroke-width="3"
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Show "Click me..." in sidebar ─────────────────────── -->
+    <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <MousePointerClick class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
+            <h2 class="font-mono text-[13px] font-semibold text-ink">Show Command</h2>
+          </div>
+          <p class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500">
+            When on, the sidebar shows the &ldquo;Command&rdquo; button that
+            opens the original Ask Anything overlay. Turn it off to hide
+            the button from the sidebar.
+          </p>
+          <p class="mt-3 font-mono text-[11px] text-gray-400">
+            // {{ clickMeStatusLabel }}
+          </p>
+          <p v-if="clickMeError" class="mt-2 font-mono text-[11px] text-red-500">
+            // {{ clickMeError }}
+          </p>
+        </div>
+
+        <!-- Same outlined switch as the other settings -->
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="clickMeEnabled"
+          :aria-label="clickMeEnabled ? 'Hide click me button' : 'Show click me button'"
+          :disabled="clickMeBusy"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 disabled:opacity-50"
+          :class="[
+            clickMeEnabled
+              ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
+              : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
+          ]"
+          @click="toggleClickMe"
+        >
+          <span
+            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+            :class="clickMeEnabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
+          >
+            <Check
+              v-if="clickMeEnabled"
               class="h-3 w-3 text-white"
               :stroke-width="3"
               aria-hidden="true"

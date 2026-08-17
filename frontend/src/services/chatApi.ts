@@ -110,3 +110,33 @@ export async function fetchBackdropEnabled(): Promise<boolean> {
     return true
   }
 }
+
+/** Whether the "click me..." sidebar button is shown. Fail-open (default: on). */
+export async function fetchClickMeEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return true
+    const data = (await res.json()) as { click_me_enabled?: boolean }
+    return data.click_me_enabled !== false
+  } catch {
+    return true
+  }
+}
+
+/** Whether the "Ask Triz.ai" sidebar button is enabled. Fail-open (default: on). */
+export async function fetchAskTrizEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return true
+    const data = (await res.json()) as { ask_triz_enabled?: boolean }
+    return data.ask_triz_enabled !== false
+  } catch {
+    return true
+  }
+}
