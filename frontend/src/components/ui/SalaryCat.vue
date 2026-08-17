@@ -299,17 +299,16 @@ onBeforeUnmount(() => {
           <!-- QR -->
           <div class="flex flex-col items-center gap-3 px-5 py-5">
             <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <!-- Replace src with your actual QR code image (PNG/SVG) -->
               <img
-                src="/pets/buy-coffee-qr.svg"
-                alt="Buy Me a Coffee — QR Code"
+                src="https://aromin-resume.pages.dev/images/qr-tip.jpg"
+                alt="Buy me a Coffee QR — GCash, PayMaya, or Bank Transfer"
                 class="block h-44 w-44 rounded-md object-contain"
                 loading="lazy"
               />
             </div>
             <p class="text-center font-mono text-[11px] leading-relaxed text-gray-500">
               scan the qr to send a tip<br />
-              <span class="text-gray-400">every coffee fuels more code ☕</span>
+              <span class="text-gray-400">GCash · PayMaya · Bank Transfer</span>
             </p>
             <!-- Fallback link -->
             <a
