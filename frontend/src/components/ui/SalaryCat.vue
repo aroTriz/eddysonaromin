@@ -39,7 +39,6 @@ const dragging = ref(false)
 const waving = ref(false)
 
 // ── Physics ──────────────────────────────────────────────────────
-let vy = 0
 let grounded = true
 const FALL_SPEED = 1800 // px/s — single constant speed during drop
 
@@ -134,7 +133,6 @@ function spawnFromTop(): void {
   x.value = Math.round((window.innerWidth - catW.value) / 2)
   y.value = -catH.value - 4
   grounded = false
-  vy = 0
   dragging.value = false
   waving.value = false
   lastT = performance.now()
@@ -158,7 +156,6 @@ watch(() => petConfig.enabled, (on) => {
 function onPointerDown(e: PointerEvent): void {
   dragging.value = true
   grounded = false
-  vy = 0
   movedDuringPress = false
   downAt = performance.now()
   downX = e.clientX

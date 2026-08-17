@@ -18,7 +18,7 @@ import SalaryCat from '@/components/ui/SalaryCat.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
 import { useTheme } from '@/composables/useTheme'
-import { bootPetConfig, petConfig } from '@/composables/usePetConfig'
+import { bootPetConfig } from '@/composables/usePetConfig'
 import { trackVisit } from '@/utils/analytics'
 
 // Boot theme handling (applies the persisted preference immediately).

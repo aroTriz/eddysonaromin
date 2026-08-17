@@ -116,8 +116,11 @@ export interface RecentVisit {
   /** Raw IP — only used to fetch the per-IP visit history in the modal. */
   raw_ip: string
   country: string
+  country_name: string
+  region: string
   city: string
   path: string
+  referrer: string
   device: string
   browser: string
   os: string
