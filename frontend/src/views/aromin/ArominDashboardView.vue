@@ -428,7 +428,6 @@ function timeAgo(iso: string): string {
                   <th class="px-3 py-2.5 font-normal">device</th>
                   <th class="px-3 py-2.5 font-normal">browser / os</th>
                   <th class="px-3 py-2.5 font-normal">last seen</th>
-                  <th class="px-3 py-2.5 font-normal">status</th>
                   <th class="px-6 py-2.5 text-right font-normal">detail</th>
                 </tr>
               </thead>
@@ -450,15 +449,6 @@ function timeAgo(iso: string): string {
                     {{ [v.browser, v.os].filter(Boolean).join(' · ') || '—' }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
-                  <td class="whitespace-nowrap px-3 py-3">
-                    <span
-                      class="inline-flex items-center gap-1 font-mono text-[10px]"
-                      :class="isActive(v.created_at) ? 'text-green-600 dark:text-green-400' : 'text-gray-400'"
-                    >
-                      <span class="h-1.5 w-1.5 rounded-full" :class="isActive(v.created_at) ? 'bg-green-500' : 'bg-gray-300'" />
-                      {{ isActive(v.created_at) ? 'active' : 'offline' }}
-                    </span>
-                  </td>
                   <td class="whitespace-nowrap px-6 py-3 text-right">
                     <button
                       type="button"
@@ -472,7 +462,7 @@ function timeAgo(iso: string): string {
                   </td>
                 </tr>
                 <tr v-if="a.recent.length === 0">
-                  <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                  <td colspan="7" class="px-6 py-8 text-center text-gray-400">
                     // no visits recorded yet
                   </td>
                 </tr>
@@ -533,7 +523,7 @@ function timeAgo(iso: string): string {
                       : 'border border-gray-200 bg-gray-100 text-gray-400'"
                   >
                     <span class="h-1 w-1 rounded-full" :class="isVisitorActive ? 'bg-green-500' : 'bg-gray-300'" />
-                    {{ isVisitorActive ? 'active now' : 'offline' }}
+                    {{ isVisitorActive ? 'active now' : fullDateTime(historyTarget?.created_at ?? '') }}
                   </span>
                 </div>
                 <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
