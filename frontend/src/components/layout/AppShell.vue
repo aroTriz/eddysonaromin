@@ -49,7 +49,7 @@ function closeMobileMenu(): void {
 function onGlobalKeydown(e: KeyboardEvent): void {
   if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
-    if (askTrizEnabled.value) askTrizRef.value?.openAsk()
+    askTrizRef.value?.openAsk()
   }
   if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'j') {
     e.preventDefault()
@@ -57,7 +57,7 @@ function onGlobalKeydown(e: KeyboardEvent): void {
   }
   if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 'p') {
     e.preventDefault()
-    togglePetLocal()
+    if (petConfig.globalEnabled) togglePetLocal()
   }
 }
 
@@ -164,18 +164,13 @@ const navGroups = [
 
     <button
       type="button"
-      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px]"
-      :class="askTrizEnabled
-        ? 'text-gray-400 hover:text-ink dark:hover:text-gray-950'
-        : 'cursor-not-allowed text-gray-300 dark:text-gray-600'"
-      :disabled="!askTrizEnabled"
-      :aria-disabled="!askTrizEnabled"
-      :aria-label="askTrizEnabled ? 'Ask Triz.ai — AI chat assistant' : 'Triz.ai is disabled by Eddyson'"
-      @click="askTrizEnabled && askTrizRef?.openAsk()"
+      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
+      aria-label="Ask Triz.ai — AI chat assistant"
+      @click="askTrizRef?.openAsk()"
     >
       <Bot class="h-3.5 w-3.5" :stroke-width="1.8" />
-      <span>{{ askTrizEnabled ? 'Ask Triz.ai' : 'Eddyson Disabled Trizai' }}</span>
-      <span v-if="askTrizEnabled" class="inline-flex items-center gap-1">
+      <span>Ask Triz.ai</span>
+      <span class="inline-flex items-center gap-1">
         <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
@@ -202,6 +197,7 @@ const navGroups = [
     </button>
 
     <button
+      v-if="petConfig.globalEnabled"
       type="button"
       class="mt-3 inline-flex w-fit items-center gap-2 whitespace-nowrap text-[12px] transition-colors"
       :class="petConfig.enabled
@@ -370,17 +366,12 @@ const navGroups = [
           <div>
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px]"
-              :class="askTrizEnabled
-                ? 'text-gray-500 hover:text-ink'
-                : 'cursor-not-allowed text-gray-300'"
-              :disabled="!askTrizEnabled"
-              :aria-disabled="!askTrizEnabled"
-              :aria-label="askTrizEnabled ? 'Ask Triz.ai — AI chat assistant' : 'Triz.ai is disabled by Eddyson'"
-              @click="askTrizEnabled && (closeMobileMenu(), askTrizRef?.openAsk())"
+              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              aria-label="Ask Triz.ai — AI chat assistant"
+              @click="closeMobileMenu(); askTrizRef?.openAsk()"
             >
-              <span>{{ askTrizEnabled ? 'Ask Triz.ai' : 'Eddyson Disabled Trizai' }}</span>
-              <span v-if="askTrizEnabled" class="inline-flex items-center gap-1">
+              <span>Ask Triz.ai</span>
+              <span class="inline-flex items-center gap-1">
                 <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
                   {{ isMac ? '⌘' : 'Alt' }}
                 </kbd>
@@ -421,6 +412,7 @@ const navGroups = [
               private chat
             </button>
             <button
+              v-if="petConfig.globalEnabled"
               type="button"
               class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] transition-colors"
               :class="petConfig.enabled ? 'text-ink' : 'text-gray-600 hover:text-ink'"
@@ -477,7 +469,7 @@ const navGroups = [
   </Teleport>
 
   <!-- Ask Triz.ai overlay (⌘K / Alt+K) -->
-  <AskTrizOverlay ref="askTrizRef" />
+  <AskTrizOverlay ref="askTrizRef" :enabled="askTrizEnabled" />
 
   <!-- "click me..." overlay (original Ask Anything) -->
   <AskOverlay ref="askRef" />

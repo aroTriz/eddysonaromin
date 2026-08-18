@@ -12,6 +12,8 @@
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), { enabled: true })
+
 const open = ref(false)
 const isOpen = ref(false)
 const input = ref('')
@@ -43,7 +45,7 @@ async function setTitle(text: string, pulse = false): Promise<void> {
 
 async function submit(): Promise<void> {
   const query = input.value.trim()
-  if (!query || busy.value) return
+  if (!query || busy.value || !props.enabled) return
   busy.value = true
 
   // typed query becomes a chat bubble; hide the input field
@@ -96,11 +98,18 @@ function openAsk(): void {
   bubbleOn.value = false
   bubbleText.value = ''
   isShimmer.value = false
-  titleText.value = 'Ask me anything'
+
+  if (!props.enabled) {
+    titleText.value = 'Currently Disabled by Eddyson'
+    fieldVisible.value = false
+  } else {
+    titleText.value = 'Ask me anything'
+  }
+
   document.documentElement.style.overflow = 'hidden'
   requestAnimationFrame(() => {
     isOpen.value = true
-    setTimeout(() => textInput.value?.focus(), 60)
+    if (props.enabled) setTimeout(() => textInput.value?.focus(), 60)
   })
 }
 

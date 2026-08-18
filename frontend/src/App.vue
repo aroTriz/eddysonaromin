@@ -106,7 +106,7 @@ onMounted(async () => {
 
       <AppShell :active="activeRoute" />
 
-      <!-- SalaryCat desktop pet — walks along the bottom of public pages -->
+      <!-- SalaryCat desktop pet — always mounted, visibility toggled via CSS -->
       <SalaryCat />
 
       <!-- Routed content — offset by the fixed sidebar width on lg+.

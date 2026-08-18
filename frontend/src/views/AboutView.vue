@@ -63,7 +63,7 @@ const info = [
 
     <!-- ── Bio + info ───────────────────────────────────────── -->
     <div class="mt-10 grid gap-6 md:grid-cols-2">
-      <Reveal :delay="1" class="rounded-xl border border-gray-300 bg-white shadow-sm bg-white p-6">
+      <Reveal :delay="1" class="rounded-xl border border-gray-300 bg-white shadow-sm p-6">
         <p class="terminal-comment mb-4 text-[12px]">bio.sh</p>
         <div class="space-y-4 text-[14.5px] leading-relaxed text-gray-600">
           <p v-for="(paragraph, i) in profile.bio" :key="i">{{ paragraph }}</p>
@@ -89,7 +89,7 @@ const info = [
         </div>
       </Reveal>
 
-      <Reveal :delay="2" class="rounded-xl border border-gray-300 bg-white shadow-sm bg-white p-6">
+      <Reveal :delay="2" class="rounded-xl border border-gray-300 bg-white shadow-sm p-6">
         <p class="terminal-comment mb-4 text-[12px]">info.json</p>
         <dl class="space-y-3">
           <div

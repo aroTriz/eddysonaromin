@@ -842,7 +842,7 @@ onBeforeUnmount(() => {
             autocomplete="off"
             autocorrect="off"
             placeholder="Message the admin…"
-            class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
+            class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[14px] sm:text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
             @input="onInput"
             @blur="stopTyping"
           />

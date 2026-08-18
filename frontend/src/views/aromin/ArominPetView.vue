@@ -7,7 +7,7 @@
  * per-browser quick switch; this page is the global config.
  */
 import { Check, LoaderCircle, PawPrint, Save } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
 import {
@@ -18,15 +18,53 @@ import {
   savePetConfigToApi,
 } from '@/composables/usePetConfig'
 
+const FRAME_W = 192
+const FRAME_H = 208
+const COLS = 8
+const IDLE_FRAMES = [0, 1, 2, 3, 4, 5]
+const IDLE_FPS = 8
+
 const loading = ref(true)
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
+// ── Animated preview ────────────────────────────────────────────
+let animTimer: ReturnType<typeof setInterval> | null = null
+const previewFrame = ref(0)
+
+function previewBgPos(): string {
+  const col = IDLE_FRAMES[previewFrame.value] % COLS
+  const row = Math.floor(IDLE_FRAMES[previewFrame.value] / COLS)
+  const s = petConfig.scale
+  return `${-(col * FRAME_W * s)}px ${-(row * FRAME_H * s)}px`
+}
+
+function startPreviewAnim(): void {
+  stopPreviewAnim()
+  if (!petConfig.animate) return
+  animTimer = setInterval(() => {
+    previewFrame.value = (previewFrame.value + 1) % IDLE_FRAMES.length
+  }, 1000 / IDLE_FPS)
+}
+
+function stopPreviewAnim(): void {
+  if (animTimer) {
+    clearInterval(animTimer)
+    animTimer = null
+  }
+}
+
+// Restart preview animation when the animate toggle changes.
+watch(() => petConfig.animate, () => {
+  previewFrame.value = 0
+  startPreviewAnim()
+})
+
 const petStatusLabel = computed(() =>
-  petConfig.enabled
-    ? 'on — the cat roams the public pages (draggable, click to wave)'
-    : 'off — visitors don\'t see the cat',
+  petConfig.globalEnabled
+    ? 'on — the "toggle pet" button shows in the navbar for every visitor'
+    : 'off — "toggle pet" is hidden from the navbar',
 )
 
 // Editing mutates the shared reactive config (the site updates instantly);
@@ -53,15 +91,24 @@ const petAnimate = computed({
   },
 })
 
-function toggleEnabled(): void {
-  petConfig.enabled = !petConfig.enabled
+async function toggleEnabled(): Promise<void> {
+  petConfig.globalEnabled = !petConfig.globalEnabled
+  petConfig.enabled = petConfig.globalEnabled
   saved.value = false
+  // Auto-save so the navbar reacts on other tabs/pages.
+  await savePetConfigToApi()
+  saved.value = true
 }
 
 onMounted(async () => {
   // Fetch the latest global config from the API (another tab may have saved).
   await bootPetConfig()
   loading.value = false
+  startPreviewAnim()
+})
+
+onBeforeUnmount(() => {
+  stopPreviewAnim()
 })
 
 async function save(): Promise<void> {
@@ -105,15 +152,16 @@ async function save(): Promise<void> {
           <div class="flex items-center gap-3">
             <PawPrint class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
             <h2 class="font-mono text-[13px] font-semibold text-ink">Salary Cat</h2>
-            <!-- live sprite preview scaled to the chosen size -->
-            <img
-              src="/pets/salary-cat.webp"
-              alt="Salary Cat preview"
-              class="rounded-md border border-gray-200 bg-gray-50 object-cover"
+            <!-- live animated sprite preview cycling through idle frames -->
+            <div
+              class="rounded-md bg-gray-50"
               :style="{
                 width: `${192 * petConfig.scale}px`,
                 height: `${208 * petConfig.scale}px`,
-                objectPosition: '0 0',
+                backgroundImage: 'url(/pets/salary-cat.webp)',
+                backgroundSize: `${FRAME_W * COLS * petConfig.scale}px ${FRAME_H * 9 * petConfig.scale}px`,
+                backgroundPosition: previewBgPos(),
+                backgroundRepeat: 'no-repeat',
                 imageRendering: 'pixelated',
               }"
             />
@@ -135,11 +183,11 @@ async function save(): Promise<void> {
         <button
           type="button"
           role="switch"
-          :aria-checked="petConfig.enabled"
-          :aria-label="petConfig.enabled ? 'Hide salary cat' : 'Show salary cat'"
+          :aria-checked="petConfig.globalEnabled"
+          :aria-label="petConfig.globalEnabled ? 'Hide salary cat from navbar' : 'Show salary cat in navbar'"
           class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
           :class="[
-            petConfig.enabled
+            petConfig.globalEnabled
               ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
               : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
           ]"
@@ -147,10 +195,10 @@ async function save(): Promise<void> {
         >
           <span
             class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
-            :class="petConfig.enabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
+            :class="petConfig.globalEnabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
           >
             <Check
-              v-if="petConfig.enabled"
+              v-if="petConfig.globalEnabled"
               class="h-3 w-3 text-white"
               :stroke-width="3"
               aria-hidden="true"

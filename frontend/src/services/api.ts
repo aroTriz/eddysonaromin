@@ -2,6 +2,7 @@ import type {
   ApiError,
   BlogPost,
   ContactPayload,
+  ExperienceEntry,
   Project,
   Recommendation,
   StackGroup,
@@ -120,6 +121,14 @@ export function fetchRecommendations(): Promise<Recommendation[]> {
 export async function fetchBlogPost(slug: string): Promise<BlogPost> {
   const response = await fetch(`${API_BASE}/blog/posts/${encodeURIComponent(slug)}`)
   return parse<BlogPost>(response)
+}
+
+/** Fetch experience + education entries (public, non-archived). */
+export function fetchExperiences(): Promise<ExperienceEntry[]> {
+  return cached('experiences:', async () => {
+    const response = await fetch(`${API_BASE}/experiences`)
+    return parse<ExperienceEntry[]>(response)
+  })
 }
 
 /** Submit a contact message. Returns the created message id. */

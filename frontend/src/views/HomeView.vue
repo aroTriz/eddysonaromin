@@ -195,7 +195,7 @@ const socials = [
 
         <!-- Text column (right) — centered content -->
         <div class="flex flex-col items-center text-center">
-          <h1 class="reveal d2 font-pixel text-[1.9rem] leading-none sm:text-[2.4rem]">
+          <h1 class="reveal d2 font-pixel text-[1.5rem] leading-none sm:text-[2.4rem]">
             {{ profile.name }}
           </h1>
 

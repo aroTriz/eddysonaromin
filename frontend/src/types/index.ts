@@ -98,6 +98,28 @@ export interface Recommendation {
   updated_at: string | null
 }
 
+/** Experience / Education entry — stored in D1, managed via /aromin/experience. */
+export interface ExperienceEntry {
+  id: number
+  type: 'experience' | 'education'
+  period: string
+  year: string
+  tag: string
+  title: string
+  company: string
+  logo_url: string | null
+  website_url: string | null
+  tooltip_desc: string | null
+  albums: string[]
+  certificates: string[]
+  description: string
+  highlights: string[]
+  sort_order: number
+  archived_at: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 /** Profile — personal details shown across the site (static by design). */
 export interface Profile {
   name: string
