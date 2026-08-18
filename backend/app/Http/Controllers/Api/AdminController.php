@@ -256,6 +256,18 @@ class AdminController extends Controller
                 (select v7.os from visits v7
                    where v7.site = visits.site and v7.ip = visits.ip
                    order by v7.created_at desc limit 1) as os,
+                (select v7b.screen from visits v7b
+                   where v7b.site = visits.site and v7b.ip = visits.ip
+                   and v7b.screen != '' order by v7b.created_at desc limit 1) as screen,
+                (select v7c.cores from visits v7c
+                   where v7c.site = visits.site and v7c.ip = visits.ip
+                   and v7c.cores != '' order by v7c.created_at desc limit 1) as cores,
+                (select v7d.ram from visits v7d
+                   where v7d.site = visits.site and v7d.ip = visits.ip
+                   and v7d.ram != '' order by v7d.created_at desc limit 1) as ram,
+                (select v7e.conn from visits v7e
+                   where v7e.site = visits.site and v7e.ip = visits.ip
+                   and v7e.conn != '' order by v7e.created_at desc limit 1) as conn,
                 (select v8.referrer from visits v8
                    where v8.site = visits.site and v8.ip = visits.ip
                    and v8.referrer != '' order by v8.created_at desc limit 1) as referrer")
@@ -275,6 +287,10 @@ class AdminController extends Controller
                 'device' => (string) ($r->device ?? ''),
                 'browser' => (string) ($r->browser ?? ''),
                 'os' => (string) ($r->os ?? ''),
+                'screen' => (string) ($r->screen ?? ''),
+                'cores' => (string) ($r->cores ?? ''),
+                'ram' => (string) ($r->ram ?? ''),
+                'conn' => (string) ($r->conn ?? ''),
                 'referrer' => (string) ($r->referrer ?? ''),
                 'visits' => (int) ($r->visits ?? 0),
                 'created_at' => (string) ($r->created_at ?? ''),

@@ -598,7 +598,7 @@ function timeAgo(iso: string): string {
                 <!-- Connection & specs row -->
                 <div class="mt-3 grid grid-cols-3 gap-3">
                   <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
-                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">screen</p>
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">approx. screen</p>
                     <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.screen || '—' }}</p>
                   </div>
                   <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
