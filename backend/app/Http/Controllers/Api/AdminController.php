@@ -268,6 +268,12 @@ class AdminController extends Controller
                 (select v7e.conn from visits v7e
                    where v7e.site = visits.site and v7e.ip = visits.ip
                    and v7e.conn != '' order by v7e.created_at desc limit 1) as conn,
+                (select v7f.lat from visits v7f
+                   where v7f.site = visits.site and v7f.ip = visits.ip
+                   and v7f.lat is not null order by v7f.created_at desc limit 1) as lat,
+                (select v7g.lon from visits v7g
+                   where v7g.site = visits.site and v7g.ip = visits.ip
+                   and v7g.lon is not null order by v7g.created_at desc limit 1) as lon,
                 (select v8.referrer from visits v8
                    where v8.site = visits.site and v8.ip = visits.ip
                    and v8.referrer != '' order by v8.created_at desc limit 1) as referrer")
@@ -291,6 +297,8 @@ class AdminController extends Controller
                 'cores' => (string) ($r->cores ?? ''),
                 'ram' => (string) ($r->ram ?? ''),
                 'conn' => (string) ($r->conn ?? ''),
+                'lat' => $r->lat !== null ? (float) $r->lat : null,
+                'lon' => $r->lon !== null ? (float) $r->lon : null,
                 'referrer' => (string) ($r->referrer ?? ''),
                 'visits' => (int) ($r->visits ?? 0),
                 'created_at' => (string) ($r->created_at ?? ''),
@@ -350,6 +358,8 @@ class AdminController extends Controller
                 'region' => (string) ($r->region ?? ''),
                 'city' => (string) ($r->city ?? ''),
                 'referrer' => (string) ($r->referrer ?? ''),
+                'lat' => $r->lat !== null ? (float) $r->lat : null,
+                'lon' => $r->lon !== null ? (float) $r->lon : null,
                 'created_at' => (string) ($r->created_at ?? ''),
             ])
             ->all();

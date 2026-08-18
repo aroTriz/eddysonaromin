@@ -137,6 +137,8 @@ export interface RecentVisit {
   tz: string
   conn: string
   isp: string
+  lat: number | null
+  lon: number | null
   /** How many times this IP visited in the retention window. */
   visits: number
   created_at: string
@@ -161,6 +163,8 @@ export interface VisitHistoryEntry {
   region: string
   city: string
   referrer: string
+  lat: number | null
+  lon: number | null
   created_at: string
 }
 

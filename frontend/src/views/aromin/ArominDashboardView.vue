@@ -15,7 +15,6 @@
 import {
   CalendarClock,
   Eye,
-  MousePointerClick,
   RefreshCw,
   Trash2,
   UserCheck,
@@ -144,11 +143,10 @@ async function fetchActiveViewers(): Promise<void> {
 }
 
 const analyticsCards = computed(() => [
-  { label: 'unique visitors', value: a.value.totals.visitors, icon: Eye, hint: 'distinct IPs — last 12 months' },
-  { label: 'page views', value: a.value.totals.views, icon: MousePointerClick, hint: 'total pages opened — last 12 months' },
-  { label: 'visitors today', value: a.value.totals.visitors_today, icon: UserCheck, hint: 'distinct IPs — today' },
-  { label: 'views today', value: a.value.totals.views_today, icon: CalendarClock, hint: 'pages opened today' },
-  { label: 'currently viewing', value: activeViewersCount.value, icon: Users, hint: 'active right now — last 5 min' },
+  { label: 'visitors', value: a.value.totals.visitors, icon: Eye, hint: 'distinct IPs — last 12 months' },
+  { label: 'today', value: a.value.totals.visitors_today, icon: UserCheck, hint: 'distinct IPs — today' },
+  { label: 'views', value: a.value.totals.views_today, icon: CalendarClock, hint: 'pages opened today' },
+  { label: 'live', value: activeViewersCount.value, icon: Users, hint: 'active right now — last 5 min' },
 ])
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -286,6 +284,13 @@ function timeAgo(iso: string): string {
   const day = Math.floor(hr / 24)
   return `${day}d ago`
 }
+
+/** Cap visit counts for display: 100+ / 1000+ */
+function formatCount(n: number): string {
+  if (n >= 1000) return '1000+'
+  if (n >= 100) return '100+'
+  return String(n)
+}
 </script>
 
 <template>
@@ -330,9 +335,6 @@ function timeAgo(iso: string): string {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div v-for="i in 4" :key="i" class="h-28 skeleton rounded-xl border border-gray-200 bg-gray-50"></div>
       </div>
-      <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div v-for="i in 4" :key="`c${i}`" class="h-28 skeleton rounded-xl border border-gray-200 bg-gray-50"></div>
-      </div>
       <div class="h-64 skeleton rounded-xl border border-gray-200 bg-gray-50"></div>
       <div class="h-72 skeleton rounded-xl border border-gray-200 bg-gray-50"></div>
     </div>
@@ -341,7 +343,7 @@ function timeAgo(iso: string): string {
       <!-- ── KPI: analytics ───────────────────────────────── -->
       <section aria-label="Visitor metrics">
         <p class="mb-3 font-mono text-[11px] text-gray-500">// visitor metrics</p>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div
             v-for="card in analyticsCards"
             :key="card.label"
@@ -598,8 +600,13 @@ function timeAgo(iso: string): string {
                 <!-- Connection & specs row -->
                 <div class="mt-3 grid grid-cols-3 gap-3">
                   <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
-                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">approx. screen</p>
-                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.screen || '—' }}</p>
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">coordinates</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
+                      <template v-if="historyTarget?.lat != null && historyTarget?.lon != null">
+                        {{ historyTarget.lat.toFixed(4) }}°, {{ historyTarget.lon.toFixed(4) }}°
+                      </template>
+                      <template v-else>—</template>
+                    </p>
                   </div>
                   <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
                     <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">cpu cores / ram</p>
@@ -633,7 +640,7 @@ function timeAgo(iso: string): string {
                           <span class="w-4 shrink-0 text-[10px] text-gray-300">{{ i + 1 }}.</span>
                           <span class="truncate text-ink">{{ row.path }}</span>
                         </span>
-                        <span class="shrink-0 text-gray-400">{{ row.count }}×</span>
+                        <span class="shrink-0 text-gray-400">{{ formatCount(row.count) }}</span>
                       </div>
                       <div class="h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-300">
                         <div

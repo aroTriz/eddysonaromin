@@ -252,12 +252,12 @@ const navGroups = [
       <!-- active viewers list -->
       <div v-if="activeViewers.length > 0" class="mt-2 flex flex-wrap gap-1.5">
         <span
-          v-for="(v, i) in activeViewers.slice(0, 5)"
+          v-for="(_, i) in activeViewers.slice(0, 5)"
           :key="i"
           class="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 font-mono text-[9px] text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
         >
           <span class="inline-block h-1 w-1 rounded-full bg-green-500" />
-          {{ v.os || 'Unknown' }}
+          viewer
         </span>
         <span
           v-if="activeViewers.length > 5"
