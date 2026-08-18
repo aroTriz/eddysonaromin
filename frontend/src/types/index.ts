@@ -7,7 +7,7 @@ export interface Project {
   id: number
   title: string
   slug: string
-  category: 'personal' | 'academic'
+  category: 'personal' | 'academic' | 'professional'
   type:
     | 'documentation'
     | 'ai-tools'

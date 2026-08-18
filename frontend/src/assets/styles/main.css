@@ -158,11 +158,9 @@ html.dark {
 }
 
 /* Themed base — no flash before utilities compile.
-   html/body keep a gentle background/color fade as the FALLBACK for
-   browsers without the View Transitions API (with it, the composited
-   cross-fade covers the whole page and this fade is hidden behind the
-   opaque snapshots). Everything else switches instantly — smoothness
-   comes from the snapshot cross-fade, not from per-element transitions. */
+   The View Transitions API handles the smooth theme cross-fade on the GPU
+   compositor. NO per-element transitions here — they fight the compositor
+   and cause lag on every theme flip. */
 @layer base {
   html,
   body {
@@ -170,9 +168,6 @@ html.dark {
     color: rgb(var(--ink));
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease;
   }
 }
 
@@ -208,6 +203,13 @@ html.dark {
   to {
     opacity: 0;
   }
+}
+/* Exclude the profile video from the View Transition cross-fade — the
+   ping-pong video handles its own theme transition, so the circular reveal
+   should only affect the UI components, not the image/video. */
+::view-transition-old(profile-video),
+::view-transition-new(profile-video) {
+  animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
@@ -371,12 +373,8 @@ html.dark {
 
 a,
 button {
-  transition:
-    color 0.2s,
-    background-color 0.2s,
-    border-color 0.2s,
-    opacity 0.2s,
-    transform 0.2s;
+  /* NO global transition — the View Transition API handles the theme
+     cross-fade. Global transition-colors on 80+ elements causes lag. */
 }
 
 .rec-quote {

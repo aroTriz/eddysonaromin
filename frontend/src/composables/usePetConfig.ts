@@ -22,7 +22,9 @@ export interface PetConfig {
 }
 
 export const DEFAULT_PET_CONFIG: PetConfig = {
-  enabled: true,
+  // Off by default — the pet appears only after the visitor toggles it on
+  // from the navbar ("toggle pet", ⌘P / Alt+P) or the admin enables it.
+  enabled: false,
   scale: 0.5,
   speed: 1,
   animate: true,
@@ -43,8 +45,11 @@ export const PET_SPEED_OPTIONS = [
 ] as const
 
 const API_BASE = '/api/v1'
-const CACHE_KEY = 'aromin-pet-config'
-const LOCAL_ENABLED_KEY = 'aromin-pet-local-enabled' // '0' | '1' | unset
+// v2 keys — the v1 keys held "enabled: true" caches from the earlier
+// always-on default; bumping them makes EVERY browser start fresh with the
+// new default (off until toggled).
+const CACHE_KEY = 'aromin-pet-config-v2'
+const LOCAL_ENABLED_KEY = 'aromin-pet-local-enabled-v2' // '0' | '1' | unset
 
 /** Reactive singleton — every consumer reads the same instance. */
 export const petConfig = reactive<PetConfig>({ ...DEFAULT_PET_CONFIG })
@@ -91,6 +96,15 @@ function clearLocalEnabled(): void {
  * safe to run before the admin login (the endpoint is public).
  */
 export async function bootPetConfig(): Promise<void> {
+  // Drop the old v1 keys — their "enabled: true" caches would override the
+  // new off-by-default behavior for returning visitors.
+  try {
+    localStorage.removeItem('aromin-pet-config')
+    localStorage.removeItem('aromin-pet-local-enabled')
+  } catch {
+    /* storage unavailable */
+  }
+
   let api: Partial<PetConfig> | null = null
   try {
     const res = await fetch(`${API_BASE}/settings/pet`)
@@ -102,7 +116,9 @@ export async function bootPetConfig(): Promise<void> {
   const base = { ...DEFAULT_PET_CONFIG, ...(api ?? readCache() ?? {}) }
   const local = readLocalEnabled()
 
-  petConfig.enabled = local ?? base.enabled ?? DEFAULT_PET_CONFIG.enabled
+  // New visitors (no localStorage choice) always get pet OFF.
+  // Only returning visitors who explicitly toggled it on see the pet.
+  petConfig.enabled = local === true
   petConfig.scale = base.scale ?? DEFAULT_PET_CONFIG.scale
   petConfig.speed = base.speed ?? DEFAULT_PET_CONFIG.speed
   petConfig.animate = base.animate ?? DEFAULT_PET_CONFIG.animate

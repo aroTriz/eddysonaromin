@@ -13,6 +13,25 @@ class ProjectSeeder extends Seeder
     public function run(): void
     {
         $projects = [
+            // ── Professional projects ────────────────────────────────────────
+            [
+                'title' => 'inJoy',
+                'slug' => 'injoy',
+                'category' => 'professional',
+                'type' => 'web-app',
+                'summary' => 'A food and recipe discovery platform for Filipino entrepreneurs — explore recipes, discover products, browse blogs, and start your negosyo journey.',
+                'tagline' => 'Negosyo na! A Filipino food & recipe platform — discover recipes, products, and blogs to kickstart your food business.',
+                'description' => 'A full-featured web platform built for Filipino food entrepreneurs and home cooks. inJoy brings together recipe discovery, product browsing, blogs, and business resources in one place. Designed to inspire and empower aspiring negosyante with practical recipes and food business ideas.',
+                'role' => 'Full-Stack Developer',
+                'year' => '2026',
+                'featured' => true,
+                'technologies' => ['Laravel', 'Vue.js', 'MySQL', 'Tailwind CSS'],
+                'url' => 'https://injoy.com.ph',
+                'source_url' => null,
+                'image_url' => null,
+                'sort_order' => 0,
+            ],
+
             // ── Personal projects ────────────────────────────────────────────
             [
                 'title' => 'Triz AI',

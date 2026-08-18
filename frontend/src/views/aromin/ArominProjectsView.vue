@@ -52,8 +52,8 @@ const deleting = ref(false)
 const showArchived = ref(false)
 
 // List filter + arrangement
-const categoryFilter = ref<'all' | 'personal' | 'academic'>('all')
-const categoryOptions = ['all', 'personal', 'academic'] as const
+const categoryFilter = ref<'all' | 'professional' | 'personal' | 'academic'>('all')
+const categoryOptions = ['all', 'professional', 'personal', 'academic'] as const
 const sortKey = ref<'sort_order' | 'year' | 'title' | 'updated'>('sort_order')
 const sortDir = ref<'asc' | 'desc'>('asc')
 const sortOptions = [
@@ -570,6 +570,7 @@ onMounted(load)
               v-model="form.category"
               class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
             >
+              <option value="professional">professional</option>
               <option value="personal">personal</option>
               <option value="academic">academic</option>
             </select>

@@ -21,6 +21,7 @@ const PROJECTS_PER_PAGE = 8
 
 const filters = [
   { label: 'All', value: '' },
+  { label: 'Professional', value: 'professional' },
   { label: 'Personal', value: 'personal' },
   { label: 'Academic', value: 'academic' },
 ] as const
@@ -56,6 +57,11 @@ const page = computed(() => {
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1
 })
 
+/** All professional projects (unpaginated). */
+const professionalAll = computed(() =>
+  projects.value.filter((p) => p.category === 'professional'),
+)
+
 /** All personal projects (unpaginated). */
 const personalAll = computed(() =>
   projects.value.filter((p) => p.category === 'personal'),
@@ -65,6 +71,12 @@ const personalAll = computed(() =>
 const academicAll = computed(() =>
   projects.value.filter((p) => p.category === 'academic'),
 )
+
+/** Professional projects on the current page (8 per category per page). */
+const professionalProjects = computed(() => {
+  const start = (page.value - 1) * PROJECTS_PER_PAGE
+  return professionalAll.value.slice(start, start + PROJECTS_PER_PAGE)
+})
 
 /** Personal projects on the current page (8 per category per page). */
 const personalProjects = computed(() => {
@@ -88,7 +100,7 @@ const listedProjects = computed(() => {
 /** Total pages = the largest category's page count (keeps headers together). */
 const paginationTotal = computed(() => {
   if (activeFilter.value !== '') return projects.value.length
-  return Math.max(personalAll.value.length, academicAll.value.length)
+  return Math.max(professionalAll.value.length, personalAll.value.length, academicAll.value.length)
 })
 </script>
 
@@ -99,7 +111,7 @@ const paginationTotal = computed(() => {
       <p class="terminal-comment text-[13px]">$ ls ./projects/</p>
       <h1 class="mt-3 font-pixel text-2xl leading-none">projects</h1>
       <p class="mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
-        Academic and personal projects I've designed and built — spanning web apps,
+        Professional, personal, and academic projects I've designed and built — spanning web apps,
         mobile, games, AI tools, and more.
       </p>
     </Reveal>
@@ -132,6 +144,18 @@ const paginationTotal = computed(() => {
     >
       <!-- All → grouped with separator -->
       <template v-if="activeFilter === ''">
+        <div v-if="professionalProjects.length" class="mt-10">
+          <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
+            professional projects
+          </p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ProjectCard v-for="project in professionalProjects" :key="project.slug" :project="project" />
+          </div>
+        </div>
+
+        <!-- separator line between professional and personal -->
+        <div v-if="professionalProjects.length && personalProjects.length" class="my-10 h-px bg-gray-200" aria-hidden="true" />
+
         <div v-if="personalProjects.length" class="mt-10">
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             personal projects

@@ -143,6 +143,11 @@ function stop(): void {
 function start(): void {
   if (running || reduced) return
   running = true
+  // Draw one frame immediately so the canvas is visible the instant v-show
+  // makes the container visible (no blank frame while waiting for first rAF).
+  const canvas = canvasRef.value
+  const ctx = canvas?.getContext('2d')
+  if (canvas && ctx) draw(ctx, canvas.width, canvas.height)
   animId = requestAnimationFrame(tick)
 }
 

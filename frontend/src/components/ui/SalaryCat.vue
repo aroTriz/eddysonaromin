@@ -44,7 +44,6 @@ const dragging = ref(false)
 const waving = ref(false)
 
 // ── Buy Me a Coffee ──────────────────────────────────────────────
-const BUBBLE_GAP = 10   // px between bubble bottom and cat top
 const BUBBLE_W = 160
 const coffeeOpen = ref(false)
 const bubbleVisible = ref(false)
@@ -57,9 +56,26 @@ const bubbleX = computed(() => {
 })
 /** Position the bubble's bottom edge BUBBLE_GAP px above the cat's top. */
 const bubbleY = computed(() => {
-  const top = y.value - 52 - BUBBLE_GAP // 52 ≈ bubble height
+  const top = y.value - 36 - 4 // 36 ≈ compact bubble height, 4px gap
   return Math.max(8, top)
 })
+
+/** Cycle: 3 min visible, 5 min hidden, repeat. */
+const SHOW_MS = 3 * 60 * 1000  // 3 minutes
+const HIDE_MS = 5 * 60 * 1000  // 5 minutes
+
+function cycleBubble(): void {
+  if (coffeeOpen.value) {
+    // Don't cycle while the QR modal is open — retry after a bit
+    bubbleTimer = setTimeout(cycleBubble, 10_000)
+    return
+  }
+  bubbleVisible.value = true
+  bubbleTimer = setTimeout(() => {
+    bubbleVisible.value = false
+    bubbleTimer = setTimeout(cycleBubble, HIDE_MS)
+  }, SHOW_MS)
+}
 
 function openCoffee(): void {
   coffeeOpen.value = true
@@ -188,8 +204,8 @@ onMounted(() => {
   }
   scheduleNext(); lastT = performance.now(); physAccum = 0; physTimer = requestAnimationFrame(function rafLoop() { loop(); physTimer = requestAnimationFrame(rafLoop) })
 
-  // Show the "Buy Me a Coffee" bubble after the cat lands (2.5 s after spawn)
-  bubbleTimer = setTimeout(() => { bubbleVisible.value = true }, 2500)
+  // Start the "Buy Me a Coffee" bubble cycle: 3 min on, 5 min off, repeat
+  bubbleTimer = setTimeout(cycleBubble, 2500)
 })
 onBeforeUnmount(() => {
   if (physTimer) cancelAnimationFrame(physTimer)
@@ -203,29 +219,20 @@ onBeforeUnmount(() => {
 <template>
   <div v-if="petConfig.enabled" class="pointer-events-none fixed inset-0 z-[70]" aria-hidden="true">
     <!-- ── "Buy Me a Coffee" speech bubble ──────────────────── -->
-    <Transition
-      enter-active-class="transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)]"
-      enter-from-class="opacity-0 translate-y-2 scale-95"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 translate-y-2 scale-95"
+    <button
+      v-if="bubbleVisible && !coffeeOpen"
+      type="button"
+      class="coffee-bubble pointer-events-auto coffee-pop absolute z-[71]"
+      :style="{ left: `${bubbleX}px`, top: `${bubbleY}px`, width: `${BUBBLE_W}px` }"
+      @click.stop="openCoffee"
     >
-      <button
-        v-if="bubbleVisible && !coffeeOpen"
-        type="button"
-        class="coffee-bubble pointer-events-auto absolute z-[71]"
-        :style="{ left: `${bubbleX}px`, top: `${bubbleY}px`, width: `${BUBBLE_W}px` }"
-        @click.stop="openCoffee"
-      >
-        <span class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-[11.5px] font-medium text-ink shadow-md transition-all hover:shadow-lg hover:border-gray-300">
-          <span class="text-[14px]" aria-hidden="true">☕</span>
-          Buy Me a Coffee
-        </span>
-        <!-- Tail / triangle pointing down -->
-        <span class="coffee-tail absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full" />
-      </button>
-    </Transition>
+      <span class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-[11.5px] font-medium text-ink shadow-md transition-all hover:shadow-lg hover:border-gray-300">
+        <span class="text-[14px]" aria-hidden="true">☕</span>
+        Buy Me a Coffee
+      </span>
+      <!-- Tail / triangle pointing down -->
+      <span class="coffee-tail absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full" />
+    </button>
 
     <!-- ── SalaryCat sprite ──────────────────────────────── -->
     <button
@@ -239,97 +246,89 @@ onBeforeUnmount(() => {
         backgroundSize: `${FRAME_W * COLS * petConfig.scale}px ${FRAME_H * 9 * petConfig.scale}px`,
         backgroundPosition: bgPos, backgroundRepeat: 'no-repeat',
       }"
-      :aria-label="'Salary Cat — drag it around, click to wave'"
-      :title="'SalaryCat 月薪喵 — drag me!'"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
     >
-      <span
-        class="absolute -top-7 right-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-2 py-0.5 font-mono text-[10px] text-gray-500 shadow-sm transition-opacity"
-        :class="waving ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-        :aria-hidden="true"
-      >// salary cat</span>
     </button>
   </div>
 
   <!-- ── QR Code modal (teleported to body) ─────────────────── -->
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)]"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    <div
+      v-if="coffeeOpen"
+      class="fixed inset-0 z-[200] flex items-center justify-center p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Buy Me a Coffee"
     >
+      <!-- Frosted backdrop — matches site's ConfirmModal pattern -->
       <div
-        v-if="coffeeOpen"
-        class="fixed inset-0 z-[200] flex items-center justify-center p-6"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Buy Me a Coffee"
-      >
-        <!-- Frosted backdrop -->
-        <div
-          class="absolute inset-0 bg-gray-500/20 backdrop-blur-md"
-          aria-hidden="true"
-          @click="closeCoffee"
-        />
-        <!-- Card -->
-        <div class="relative z-10 w-full max-w-xs overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-          <!-- Header -->
-          <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
-            <div class="flex items-center gap-2">
-              <span class="text-[16px]" aria-hidden="true">☕</span>
-              <span class="font-mono text-[13px] font-semibold text-ink">Buy Me a Coffee</span>
-            </div>
-            <button
-              type="button"
-              class="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
-              aria-label="Close"
-              @click="closeCoffee"
-            >
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
+        class="absolute inset-0 bg-gray-500/20 backdrop-blur-md"
+        aria-hidden="true"
+        @click="closeCoffee"
+      />
+      <!-- Card — theme-aligned: bg-white in light, bg-gray-100 in dark, border-gray-200 -->
+      <div class="coffee-card relative z-10 w-full max-w-xs overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-300 dark:bg-gray-100">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-gray-300">
+          <div class="flex items-center gap-2">
+            <span class="text-[16px]" aria-hidden="true">☕</span>
+            <span class="font-mono text-[13px] font-semibold text-ink">Buy Me a Coffee</span>
           </div>
-          <!-- QR -->
-          <div class="flex flex-col items-center gap-3 px-5 py-5">
-            <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <img
-                src="https://aromin-resume.pages.dev/images/qr-tip.jpg"
-                alt="Buy me a Coffee QR — GCash, PayMaya, or Bank Transfer"
-                class="block h-44 w-44 rounded-md object-contain"
-                loading="lazy"
-              />
-            </div>
-            <p class="text-center font-mono text-[11px] leading-relaxed text-gray-500">
-              scan the qr to send a tip<br />
-              <span class="text-gray-400">GCash · PayMaya · Bank Transfer</span>
-            </p>
-            <!-- Fallback link -->
-            <a
-              href="https://www.buymeacoffee.com/eddysonaromin"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#FFDD00] px-4 py-2.5 font-mono text-[12px] font-semibold text-[#000000] transition-opacity hover:opacity-80"
-            >
-              <span class="text-[14px]">☕</span>
-              buymeacoffee.com/eddysonaromin
-            </a>
+          <button
+            type="button"
+            class="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink dark:hover:bg-gray-200"
+            aria-label="Close"
+            @click="closeCoffee"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <!-- QR -->
+        <div class="flex flex-col items-center gap-3 px-5 py-5">
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-300 dark:bg-gray-200">
+            <img
+              src="/images/qr-tip.jpg"
+              alt="InstaPay QR — Scan to send a tip"
+              class="block h-44 w-44 rounded-md object-contain"
+              loading="lazy"
+            />
           </div>
+          <p class="text-center font-mono text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+            scan the qr to send a tip<br />
+            <span class="text-gray-400 dark:text-gray-500">GCash · PayMaya · Bank Transfer</span>
+          </p>
         </div>
       </div>
-    </Transition>
+    </div>
   </Teleport>
 </template>
 
 <style scoped>
 .salary-cat { filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.18)); }
 .salary-cat:hover { filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.25)); }
+
+/* Pop-in animation for bubble */
+.coffee-pop {
+  animation: coffee-pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes coffee-pop-in {
+  from { opacity: 0; transform: scale(0.92) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Modal card entrance — matches site's ConfirmModal style */
+.coffee-card {
+  animation: coffee-card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes coffee-card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* Speech-bubble tail — a tiny CSS triangle pointing down */
 .coffee-tail {

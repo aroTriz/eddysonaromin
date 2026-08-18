@@ -2,15 +2,17 @@ import { json } from '../../_lib'
 
 interface Env {
   blog_db: D1Database
+  ASK_API_KEY?: string
+  ASK_API_BASE?: string
+  ASK_API_MODEL?: string
 }
 
 /**
- * POST /api/v1/ask — proxy a question to the EddGPT chat API
- * (https://edd-gpt.pages.dev/api/chat) with Eddyson's system prompt.
- * Mirrors the Laravel AskController (no API key needed — EddGPT
- * holds the key server-side).
+ * POST /api/v1/ask — proxy a question to an OpenAI-compatible AI API.
+ * Uses OpenCode API (mimo v2.5) when ASK_API_KEY is set in Cloudflare secrets.
+ * Falls back to EddGPT proxy when no key is configured.
  */
-export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   let body: Record<string, unknown>
   try {
     body = (await request.json()) as Record<string, unknown>
@@ -26,18 +28,42 @@ export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
     return json({ error: 'The question must not be greater than 500 characters.' }, 422)
   }
 
-  try {
-    // Retry up to 2 times on upstream failures (DeepSeek V4 Flash / EddGPT
-    // occasionally return 5xx or timeout under load).
-    const maxRetries = 2
-    let lastError = ''
+  const apiKey = env.ASK_API_KEY || ''
+  const apiBase = (env.ASK_API_BASE || 'https://api.opencode.ai').replace(/\/+$/, '')
+  const apiModel = env.ASK_API_MODEL || 'opencode-go/mimo-v2.5'
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 25_000)
+  const maxRetries = 2
+  let lastError = ''
 
-        const response = await fetch('https://edd-gpt.pages.dev/api/chat', {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60_000)
+
+      let response: Response
+
+      if (apiKey) {
+        // Direct OpenAI-compatible call (OpenCode API).
+        response = await fetch(`${apiBase}/v1/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: apiModel,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: question },
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
+          }),
+          signal: controller.signal,
+        })
+      } else {
+        // EddGPT proxy path (free, no key needed).
+        response = await fetch('https://edd-gpt.pages.dev/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -46,41 +72,38 @@ export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
           }),
           signal: controller.signal,
         })
-        clearTimeout(timeout)
+      }
 
-        if (!response.ok) {
-          lastError = `The AI provider returned an error: ${response.status}`
-          // Retry on 5xx (server-side) but not on 4xx (client-side).
-          if (response.status < 500) {
-            return json({ error: lastError }, 502)
-          }
-        } else {
-          const data = (await response.json()) as {
-            response?: string
-            choices?: Array<{ message?: { content?: string } }>
-          }
-          const answer = data.response ?? data.choices?.[0]?.message?.content ?? null
-          if (answer && answer.trim() !== '') {
-            return json({ answer: answer.trim() })
-          }
-          lastError = 'No answer returned from the AI provider.'
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        lastError = `The AI provider returned an error: ${response.status}`
+        if (response.status < 500) {
+          return json({ error: lastError }, 502)
         }
-      } catch (err: unknown) {
-        lastError = err instanceof Error && err.name === 'AbortError'
-          ? 'The AI provider timed out.'
-          : 'The AI provider returned an error.'
+      } else {
+        const data = (await response.json()) as {
+          response?: string
+          choices?: Array<{ message?: { content?: string } }>
+        }
+        const answer = data.response ?? data.choices?.[0]?.message?.content ?? null
+        if (answer && answer.trim() !== '') {
+          return json({ answer: answer.trim() })
+        }
+        lastError = 'No answer returned from the AI provider.'
       }
-
-      // Exponential back-off: 1s, 2s between retries.
-      if (attempt < maxRetries) {
-        await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1000))
-      }
+    } catch (err: unknown) {
+      lastError = err instanceof Error && err.name === 'AbortError'
+        ? 'The AI provider timed out.'
+        : 'The AI provider returned an error.'
     }
 
-    return json({ error: lastError || 'The AI provider returned an error.' }, 502)
-  } catch {
-    return json({ error: 'The AI provider returned an error.' }, 502)
+    if (attempt < maxRetries) {
+      await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1000))
+    }
   }
+
+  return json({ error: lastError || 'The AI provider returned an error.' }, 502)
 }
 
 const SYSTEM_PROMPT = `You are EddysonGPT, the assistant on Eddyson Tristan Aromin's portfolio website.

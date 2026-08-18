@@ -463,104 +463,132 @@ function timeAgo(iso: string): string {
 
     <!-- ── Per-IP detail modal (eye icon) ───────────────────── -->
     <Teleport to="body">
-      <div
-        v-if="historyOpen"
-        class="fixed inset-0 z-[120] flex items-center justify-center p-6"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="`Details for ${historyTarget?.ip ?? 'this IP'}`"
-      >
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="closeVisitHistory"></div>
+      <Transition name="modal">
         <div
-          class="relative z-10 flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-300 dark:bg-gray-100"
+          v-if="historyOpen"
+          class="fixed inset-0 z-[120] flex items-center justify-center p-6"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="`Details for ${historyTarget?.ip ?? 'this IP'}`"
         >
-          <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-300">
-            <div class="min-w-0">
-              <p class="font-mono text-[13px] font-semibold text-ink">
-                {{ historyTarget?.ip || 'IP' }}
-              </p>
-              <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
-                visitor profile — everything recorded about this IP
-              </p>
-            </div>
-            <button
-              type="button"
-              class="shrink-0 rounded p-1 text-gray-400 transition-colors hover:text-ink"
-              aria-label="Close visitor details"
-              @click="closeVisitHistory"
-            >
-              <X class="h-4 w-4" :stroke-width="1.7" />
-            </button>
-          </div>
+          <!-- Frosted blur backdrop (matching ConfirmModal) -->
+          <div
+            class="absolute inset-0 bg-gray-500/20 backdrop-blur-md"
+            aria-hidden="true"
+            @click="closeVisitHistory"
+          ></div>
 
-          <div class="min-h-0 flex-1 overflow-y-auto">
-            <div v-if="historyLoading" class="space-y-2 p-6">
-              <div v-for="i in 4" :key="i" class="h-12 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
+          <!-- Card -->
+          <div
+            class="relative z-10 flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-300 dark:bg-gray-100"
+          >
+            <!-- Header with accent bar -->
+            <div class="flex items-start gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-300">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 font-mono text-[11px] text-gray-500 dark:border-gray-300 dark:bg-gray-200">
+                <Eye class="h-4 w-4" :stroke-width="1.7" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-mono text-[14px] font-semibold tracking-tight text-ink">
+                  {{ historyTarget?.ip || 'IP' }}
+                </p>
+                <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
+                  visitor profile — everything recorded about this IP
+                </p>
+              </div>
+              <button
+                type="button"
+                class="-mr-1 -mt-1 shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+                aria-label="Close visitor details"
+                @click="closeVisitHistory"
+              >
+                <X class="h-4 w-4" :stroke-width="1.7" />
+              </button>
             </div>
-            <p v-else-if="historyError" class="p-6 font-mono text-[11.5px] text-red-500">
-              // {{ historyError }}
-            </p>
-            <template v-else>
-              <!-- Summary grid — everything about this IP -->
-              <div class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-gray-200 bg-gray-200 dark:border-gray-300 sm:grid-cols-3">
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">total visits</p>
-                  <p class="mt-1 font-pixel text-[1.35rem] leading-none text-ink">{{ historyTarget?.visits ?? historyRows.length }}</p>
+
+            <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+              <!-- Loading -->
+              <div v-if="historyLoading" class="space-y-3">
+                <div class="grid grid-cols-3 gap-3">
+                  <div v-for="i in 3" :key="i" class="h-16 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
                 </div>
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">first seen</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ firstSeen || '—' }}</p>
-                </div>
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">last seen</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ fullDateTime(historyTarget?.created_at ?? '') || '—' }}</p>
-                </div>
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">location</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
-                    {{ flag(historyTarget?.country ?? '') }}
-                    <template v-if="historyTarget?.country || historyTarget?.city">
-                      {{ [historyTarget?.city, historyTarget?.country].filter(Boolean).join(', ') }}
-                    </template>
-                    <template v-else>—</template>
-                  </p>
-                </div>
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">device</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">{{ deviceLabel(historyTarget ?? {}) }}</p>
-                </div>
-                <div class="bg-white px-4 py-3 dark:bg-gray-100">
-                  <p class="font-mono text-[9.5px] uppercase tracking-wide text-gray-400">browser / os</p>
-                  <p class="mt-1 font-mono text-[11px] leading-snug text-ink">
-                    {{ [historyTarget?.browser, historyTarget?.os].filter(Boolean).join(' · ') || '—' }}
-                  </p>
-                </div>
+                <div class="h-32 animate-pulse rounded-lg border border-gray-200 bg-gray-50"></div>
               </div>
 
-              <!-- Pages this IP visited, aggregated -->
-              <div v-if="pageBreakdown.length" class="mt-5">
-                <p class="mb-2 font-mono text-[11px] text-gray-500">// pages visited</p>
-                <ul class="divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-200 dark:border-gray-300">
-                  <li
-                    v-for="(row, i) in pageBreakdown"
-                    :key="row.path"
-                    class="flex items-center gap-3 bg-white px-4 py-2.5 dark:bg-gray-100"
-                  >
-                    <span class="w-6 shrink-0 font-mono text-[10px] text-gray-300">{{ i + 1 }}</span>
-                    <span class="min-w-0 flex-1 truncate font-mono text-[12px] text-ink">{{ row.path }}</span>
-                    <span class="shrink-0 font-mono text-[10.5px] text-gray-400">
-                      {{ row.count }}×
-                    </span>
-                  </li>
-                </ul>
-              </div>
-              <p v-else class="p-6 text-center font-mono text-[11.5px] text-gray-400">
-                no visits recorded for this IP
+              <!-- Error -->
+              <p v-else-if="historyError" class="font-mono text-[11.5px] text-red-500">
+                // {{ historyError }}
               </p>
-            </template>
+
+              <template v-else>
+                <!-- Summary — key metrics as individual stat cards -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">total visits</p>
+                    <p class="mt-1.5 font-pixel text-[1.4rem] leading-none text-ink">{{ historyTarget?.visits ?? historyRows.length }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">first seen</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ firstSeen || '—' }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">last seen</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ fullDateTime(historyTarget?.created_at ?? '') || '—' }}</p>
+                  </div>
+                </div>
+
+                <!-- Device & location row -->
+                <div class="mt-3 grid grid-cols-3 gap-3">
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">location</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
+                      {{ flag(historyTarget?.country ?? '') }}
+                      <template v-if="historyTarget?.country || historyTarget?.city">
+                        {{ [historyTarget?.city, historyTarget?.country].filter(Boolean).join(', ') }}
+                      </template>
+                      <template v-else>—</template>
+                    </p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">device</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ deviceLabel(historyTarget ?? {}) }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">browser / os</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
+                      {{ [historyTarget?.browser, historyTarget?.os].filter(Boolean).join(' · ') || '—' }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Pages this IP visited, aggregated with proportional bars -->
+                <div v-if="pageBreakdown.length" class="mt-5">
+                  <p class="mb-3 font-mono text-[11px] text-gray-500">// pages visited</p>
+                  <div class="flex flex-col gap-2.5">
+                    <div v-for="(row, i) in pageBreakdown" :key="row.path" class="group">
+                      <div class="mb-1 flex items-baseline justify-between gap-3 font-mono text-[11px]">
+                        <span class="flex items-center gap-2 min-w-0">
+                          <span class="w-4 shrink-0 text-[10px] text-gray-300">{{ i + 1 }}.</span>
+                          <span class="truncate text-ink">{{ row.path }}</span>
+                        </span>
+                        <span class="shrink-0 text-gray-400">{{ row.count }}×</span>
+                      </div>
+                      <div class="h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-300">
+                        <div
+                          class="h-full rounded-full bg-ink transition-[width] duration-500 group-hover:opacity-60"
+                          :style="{ width: `${Math.round((row.count / Math.max(1, pageBreakdown[0]?.count ?? 1)) * 100)}%` }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="py-8 text-center font-mono text-[11.5px] text-gray-400">
+                  no visits recorded for this IP
+                </p>
+              </template>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </AdminLayout>
 </template>

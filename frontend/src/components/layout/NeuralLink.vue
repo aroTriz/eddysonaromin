@@ -195,13 +195,15 @@ onMounted(() => {
 })
 
 // When the theme flips and this layer becomes (or stops being) the visible
-// backdrop, start/stop the loop accordingly. The canvas itself is already
-// painted from mount, so the switch is instant either way.
+// backdrop, start/stop the loop. Draw one frame immediately (deferred to
+// after the View Transition capture so it doesn't compete for CPU).
 watch(
   () => props.active,
   (active) => {
     if (active && !reduced && !raf) {
-      draw()
+      // Deferred draw: the View Transition captures its snapshot first,
+      // then we paint the backdrop canvas so it's visible instantly.
+      setTimeout(() => { draw() }, 0)
       raf = requestAnimationFrame(tick)
     } else if (!active && raf) {
       cancelAnimationFrame(raf)

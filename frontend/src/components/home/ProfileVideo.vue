@@ -8,7 +8,8 @@
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointerleave="onPointerUp"
-  >    <!-- Front: profile.sh with theme video -->
+  >
+    <!-- Front: profile.sh with image sequence -->
     <div class="phone-face phone-front">
       <div class="terminal-bar">
         <span class="dot-red"></span>
@@ -17,16 +18,8 @@
         <span class="terminal-title">profile.sh</span>
       </div>
       <div class="face-body">
-        <div class="video-container">
-          <video
-            ref="videoRef"
-            class="theme-video"
-            muted
-            playsinline
-            preload="metadata"
-            :poster="posterSrc"
-            @ended="onVideoEnded"
-          ></video>
+        <div class="photo-container" style="view-transition-name: profile-video">
+          <canvas ref="canvasRef" class="profile-canvas" aria-hidden="true"></canvas>
         </div>
         <div class="face-footer">
           <span class="fp">$</span>
@@ -65,11 +58,15 @@
 
 <script setup lang="ts">
 /**
- * ProfileVideo — 3D-flippable terminal card with a theme-triggered video.
- * The video/theme mapping is intentionally REVERSED (per client request):
- *  - Light theme → plays profile-reverse.mp4 (the dark-colored clip)
- *  - Dark theme  → plays profile-forward.mp4 (the light-colored clip)
- * Draggable to flip between profile.sh and contact.json.
+ * ProfileVideo — 3D-flippable terminal card with a 151-frame image sequence.
+ *
+ * Behavior:
+ *  - On page load: STATIC frame (1 for light, 151 for dark). ZERO animation.
+ *  - Theme toggle light→dark: animates forward 1→151.
+ *  - Theme toggle dark→light: animates backward 151→1.
+ *  - Toggle mid-sequence (e.g. at frame 60): reverses from there.
+ *    1→2→3→…→60→59→…→2→1 (ping-pong).
+ *  - Animation end: FREEZES at last frame. NEVER snaps to frame 1.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
@@ -77,15 +74,107 @@ import { profile } from '@/data/profile'
 import { THEME_CHANGE_EVENT, resolveIsDark } from '@/composables/useTheme'
 import type { ThemePreference } from '@/composables/useTheme'
 
-const contactRows = [
-  { label: 'email', value: profile.email, href: `mailto:${profile.email}`, external: false },
-  { label: 'phone', value: profile.phone, href: `tel:${profile.phone.replace(/\s/g, '')}`, external: false },
-  { label: 'location', value: profile.location, href: null as string | null, external: false },
-  { label: 'github', value: 'github.com/EddysonA15', href: profile.github, external: true },
-  { label: 'linkedin', value: '/in/eddyson-tristan-aromin', href: profile.linkedin, external: true },
-]
+/* ── Frame sequence ────────────────────────────────────────── */
+const TOTAL = 151
+const FPS = 30
+const PREFIX = '/profile-frames/ezgif-frame-'
+const INTERVAL = 1000 / FPS
 
-/* ── 3D drag/flip state ─────────────────────────────────── */
+function frameSrc(i: number): string {
+  return `${PREFIX}${String(i).padStart(3, '0')}.jpg`
+}
+
+/** Canvas-based rendering — bypasses Vue reactivity for butter-smooth 30fps. */
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+const frameImages: HTMLImageElement[] = []
+let loadedCount = 0
+let firstFrameDrawn = false
+const INITIAL_FRAME = 1
+let currentFrame = INITIAL_FRAME
+
+/* ── Preload + draw first frame instantly ──────────────────── */
+let preloaded = false
+function preload(): void {
+  if (preloaded) return
+  preloaded = true
+  for (let i = 1; i <= TOTAL; i++) {
+    const img = new Image()
+    img.src = frameSrc(i)
+    img.onload = () => {
+      loadedCount++
+      // Draw first frame as soon as it loads (no waiting for all 151).
+      if (!firstFrameDrawn && i === INITIAL_FRAME) {
+        drawFrame(INITIAL_FRAME)
+        firstFrameDrawn = true
+      }
+    }
+    frameImages[i] = img
+  }
+}
+
+function drawFrame(frame: number): void {
+  const c = canvasRef.value
+  const img = frameImages[frame]
+  if (!c || !img || !img.complete || !img.naturalWidth) return
+  const ctx = c.getContext('2d')
+  if (!ctx) return
+  // Match the CSS container size (DPR-aware for crisp rendering).
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const rect = c.getBoundingClientRect()
+  if (c.width !== rect.width * dpr || c.height !== rect.height * dpr) {
+    c.width = rect.width * dpr
+    c.height = rect.height * dpr
+    ctx.scale(dpr, dpr)
+  }
+  // Clear + draw with cover behavior + 1.08 zoom.
+  ctx.clearRect(0, 0, rect.width, rect.height)
+  const iw = img.naturalWidth
+  const ih = img.naturalHeight
+  const scale = Math.max(rect.width / iw, rect.height / ih) * 1.08
+  const sw = rect.width / scale
+  const sh = rect.height / scale
+  const sx = (iw - sw) / 2
+  const sy = (ih - sh) * 0.2 // Shift up 20%
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, rect.width, rect.height)
+}
+
+/* ── Animation ─────────────────────────────────────────────── */
+let raf = 0
+let running = false
+let dir: 1 | -1 = 1
+let lastT = 0
+
+function tick(ts: number): void {
+  if (!running) return
+  if (ts - lastT >= INTERVAL) {
+    lastT = ts
+    const next = currentFrame + dir
+    if (next < 1 || next > TOTAL) {
+      currentFrame = dir === 1 ? TOTAL : 1
+      drawFrame(currentFrame)
+      running = false
+      return
+    }
+    currentFrame = next
+    drawFrame(currentFrame)
+  }
+  raf = requestAnimationFrame(tick)
+}
+
+function animateTo(direction: 1 | -1): void {
+  if (running) {
+    cancelAnimationFrame(raf)
+    running = false
+  }
+  dir = direction
+  const target = direction === 1 ? TOTAL : 1
+  if (currentFrame === target) return
+  running = true
+  lastT = 0
+  raf = requestAnimationFrame(tick)
+}
+
+/* ── 3D drag/flip ──────────────────────────────────────────── */
 const ox = ref(0)
 const oy = ref(0)
 const sx = ref(0)
@@ -124,80 +213,22 @@ function onPointerUp(): void {
   oy.value = 0
   rx.value = 0
   ry.value = 0
-  setTimeout(() => {
-    snap.value = false
-  }, 600)
+  setTimeout(() => { snap.value = false }, 600)
 }
 
-/* ── Theme-triggered video ──────────────────────────────── */
-const videoRef = ref<HTMLVideoElement | null>(null)
+/* ── Contact data ──────────────────────────────────────────── */
+const contactRows = [
+  { label: 'email', value: profile.email, href: `mailto:${profile.email}`, external: false },
+  { label: 'phone', value: profile.phone, href: `tel:${profile.phone.replace(/\s/g, '')}`, external: false },
+  { label: 'location', value: profile.location, href: null as string | null, external: false },
+  { label: 'github', value: 'github.com/EddysonA15', href: profile.github, external: true },
+  { label: 'linkedin', value: '/in/eddyson-tristan-aromin', href: profile.linkedin, external: true },
+]
 
-/** Tiny poster stills — shown instantly instead of downloading the video. */
-const posterForLight = '/videos/profile-forward-poster.webp'
-const posterForDark = '/videos/profile-reverse-poster.webp'
-
-const posterSrc = ref(posterForLight)
-
-let activeVideoLoad: (() => void) | null = null
+/* ── Theme listener — BULLETPROOF guard ────────────────────── */
 let themeListener: ((e: Event) => void) | null = null
-
-function onVideoEnded(): void {
-  // Video finished — stays at last frame
-}
-
-/**
- * Swap the theme video INSTANTLY — not part of the theme transition.
- * The new theme's poster shows immediately (no blank frame, no fade), the new
- * MP4 loads in the background, and takes over when a frame is ready. The video
- * area never blinks or waits for the network during a light↔dark switch.
- */
-function playVideo(src: string, poster: string): void {
-  const v = videoRef.value
-  if (!v) return
-
-  if (activeVideoLoad) {
-    activeVideoLoad()
-    activeVideoLoad = null
-  }
-
-  // Show the incoming theme's poster right away — no opacity flicker.
-  posterSrc.value = poster
-  v.style.opacity = '1'
-
-  v.pause()
-  v.src = src
-  v.load()
-
-  let cancelled = false
-  activeVideoLoad = () => {
-    cancelled = true
-  }
-
-  const onReady = (): void => {
-    v.removeEventListener('canplay', onReady)
-    activeVideoLoad = null
-    if (cancelled) return
-    // A real frame is available — drop the poster and play.
-    posterSrc.value = ''
-    v.play().catch(() => {})
-  }
-
-  v.addEventListener('canplay', onReady, { once: true })
-}
-
-function playForward(): void {
-  playVideo('/videos/profile-forward.mp4', posterForLight)
-}
-function playReverse(): void {
-  playVideo('/videos/profile-reverse.mp4', posterForDark)
-}
-
-function handleThemeChange(dark: boolean): void {
-  // Reversed mapping: dark theme shows the forward (light-colored) clip,
-  // light theme shows the reverse (dark-colored) clip.
-  if (dark) playForward()
-  else playReverse()
-}
+let clickListener: ((e: Event) => void) | null = null
+let userToggled = false // Only true AFTER user explicitly clicks theme switch
 
 function currentThemeIsDark(): boolean {
   const stored = (localStorage.getItem('theme') ?? 'light') as ThemePreference
@@ -205,28 +236,54 @@ function currentThemeIsDark(): boolean {
 }
 
 onMounted(() => {
-  const v = videoRef.value
-  if (!v) return
+  // Set correct starting frame. Draw it immediately on the canvas.
   const dark = currentThemeIsDark()
+  currentFrame = dark ? TOTAL : 1
 
-  // Show the correct theme's poster instantly — the video itself only
-  // downloads when the theme flips (rare), so the page stays fast.
-  // Reversed mapping: dark → forward poster, light → reverse poster.
-  posterSrc.value = dark ? posterForLight : posterForDark
-  v.style.opacity = '1'
+  // Preload all frames in background.
+  preload()
 
+  // Draw the first frame once the canvas is mounted and the first image loads.
+  // Use a ResizeObserver to handle the case where the canvas has 0 dimensions
+  // on first mount (e.g. hidden behind another element).
+  const drawInitial = (): void => {
+    drawFrame(currentFrame)
+  }
+  // Try drawing immediately (works if canvas has dimensions).
+  requestAnimationFrame(() => drawInitial())
+  // Also try after a short delay for slow mounts.
+  setTimeout(drawInitial, 100)
+
+  // THEME listener — only responds AFTER user has clicked theme switch.
   const onThemeChange = (e: Event): void => {
-    const dark = (e as CustomEvent).detail?.dark
-    if (typeof dark === 'boolean') handleThemeChange(dark)
+    if (!userToggled) return
+    const d = (e as CustomEvent).detail?.dark
+    if (typeof d === 'boolean') {
+      animateTo(d ? 1 : -1)
+    }
   }
   themeListener = onThemeChange
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
+
+  // Detect ACTUAL click on the theme switch button in the DOM.
+  const onDocClick = (e: Event): void => {
+    if ((e.target as HTMLElement).closest('.theme-switch')) {
+      userToggled = true
+    }
+  }
+  clickListener = onDocClick
+  document.addEventListener('click', onDocClick, true)
 })
 
 onUnmounted(() => {
+  if (running) cancelAnimationFrame(raf)
   if (themeListener) {
     window.removeEventListener(THEME_CHANGE_EVENT, themeListener)
     themeListener = null
+  }
+  if (clickListener) {
+    document.removeEventListener('click', clickListener, true)
+    clickListener = null
   }
 })
 </script>
@@ -282,36 +339,27 @@ onUnmounted(() => {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-red {
-  background: #ff5f57;
-}
-.dot-yellow {
-  background: #ffbd2e;
-}
-.dot-green {
-  background: #28c840;
-}
+.dot-red { background: #ff5f57; }
+.dot-yellow { background: #ffbd2e; }
+.dot-green { background: #28c840; }
 .face-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.video-container {
+.photo-container {
   position: relative;
   flex: 1;
   overflow: hidden;
   min-height: 0;
 }
-.theme-video {
+.profile-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0;
   pointer-events: none;
-  transform: scale(1.15);
 }
 .face-footer {
   display: flex;
@@ -326,18 +374,9 @@ onUnmounted(() => {
   flex-shrink: 0;
   font-family: var(--font-mono);
 }
-.fp {
-  color: rgb(var(--ink));
-  font-weight: 700;
-}
-.fc {
-  color: rgb(var(--ink));
-  font-weight: 500;
-}
-.fr {
-  color: rgb(var(--g600));
-  font-style: italic;
-}
+.fp { color: rgb(var(--ink)); font-weight: 700; }
+.fc { color: rgb(var(--ink)); font-weight: 500; }
+.fr { color: rgb(var(--g600)); font-style: italic; }
 .back-body {
   align-items: stretch;
   justify-content: flex-start;
@@ -358,9 +397,7 @@ onUnmounted(() => {
   border-left: 2px solid rgb(var(--g300));
   border-radius: 0 8px 8px 0;
   background: rgb(var(--g50));
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .br:hover {
   border-left-color: rgb(var(--ink));

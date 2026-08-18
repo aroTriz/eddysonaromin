@@ -54,6 +54,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/settings/pet', [SiteSettingsController::class, 'pet']);
     Route::post('/admin/settings/community-chat', [SiteSettingsController::class, 'updateCommunityChat']);
     Route::post('/admin/settings/backdrop', [SiteSettingsController::class, 'updateBackdrop']);
+    Route::post('/admin/settings/click-me', [SiteSettingsController::class, 'updateClickMe']);
+    Route::post('/admin/settings/ask-triz', [SiteSettingsController::class, 'updateAskTriz']);
     Route::post('/admin/settings/pet', [SiteSettingsController::class, 'updatePet']);
 
     // ── Private chat (visitor ↔ admin DMs) ─────────────────────

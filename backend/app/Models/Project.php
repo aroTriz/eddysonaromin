@@ -58,7 +58,7 @@ class Project extends Model
     }
 
     /**
-     * Scope a query to a given category (personal | academic).
+     * Scope a query to a given category (personal | academic | professional).
      */
     public function scopeOfCategory(Builder $query, string $category): Builder
     {
