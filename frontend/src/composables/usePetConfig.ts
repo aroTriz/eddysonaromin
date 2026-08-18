@@ -12,6 +12,8 @@ import { getToken } from './useAuth'
 export interface PetConfig {
   /** Show the pet on public pages (global default). */
   enabled: boolean
+  /** When false the pet toggle button is hidden site-wide (admin can disable the pet entirely). */
+  globalEnabled: boolean
   /** Sprite scale multiplier (0.35 small → 0.65 large). */
   scale: number
   /** Walk-speed multiplier (0.6 slow → 1.5 fast). */
@@ -25,6 +27,7 @@ export const DEFAULT_PET_CONFIG: PetConfig = {
   // Off by default — the pet appears only after the visitor toggles it on
   // from the navbar ("toggle pet", ⌘P / Alt+P) or the admin enables it.
   enabled: false,
+  globalEnabled: true,
   scale: 0.5,
   speed: 1,
   animate: true,
@@ -119,6 +122,7 @@ export async function bootPetConfig(): Promise<void> {
   // New visitors (no localStorage choice) always get pet OFF.
   // Only returning visitors who explicitly toggled it on see the pet.
   petConfig.enabled = local === true
+  petConfig.globalEnabled = base.globalEnabled ?? DEFAULT_PET_CONFIG.globalEnabled
   petConfig.scale = base.scale ?? DEFAULT_PET_CONFIG.scale
   petConfig.speed = base.speed ?? DEFAULT_PET_CONFIG.speed
   petConfig.animate = base.animate ?? DEFAULT_PET_CONFIG.animate
