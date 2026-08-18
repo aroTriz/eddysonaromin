@@ -62,6 +62,13 @@ class VisitorController extends Controller
             'device' => $this->clean($request->input('device'), 40) ?: null,
             'browser' => $this->clean($request->input('browser'), 40) ?: null,
             'os' => $this->clean($request->input('os'), 40) ?: null,
+            'screen' => $this->clean($request->input('screen'), 20) ?: null,
+            'cores' => $this->clean($request->input('cores'), 10) ?: null,
+            'ram' => $this->clean($request->input('ram'), 10) ?: null,
+            'lang' => $this->clean($request->input('lang'), 10) ?: null,
+            'tz' => $this->clean($request->input('tz'), 80) ?: null,
+            'conn' => $this->clean($request->input('conn'), 10) ?: null,
+            'isp' => $this->clean($request->input('isp'), 100) ?: null,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -93,5 +100,34 @@ class VisitorController extends Controller
         $value = trim((string) $value);
 
         return mb_strlen($value) > $max ? mb_substr($value, 0, $max) : $value;
+    }
+
+    /**
+     * GET /api/v1/visitors/active — public endpoint showing currently active viewers.
+     * A visitor is "active" if their last page view was within the last 5 minutes.
+     */
+    public function active(): JsonResponse
+    {
+        $since = now()->subMinutes(5);
+
+        $rows = DB::table('visits')
+            ->where('site', 'portfolio')
+            ->whereNotNull('ip')
+            ->where('ip', '!=', '')
+            ->where('created_at', '>=', $since)
+            ->select('ip', 'device', 'browser', 'os', 'country_name', 'city')
+            ->groupBy('ip', 'device', 'browser', 'os', 'country_name', 'city')
+            ->orderByDesc(DB::raw('MAX(created_at)'))
+            ->get();
+
+        $viewers = $rows->map(fn ($r) => [
+            'device' => $r->device ?: 'Unknown',
+            'browser' => $r->browser ?: 'Unknown',
+            'os' => $r->os ?: 'Unknown',
+            'city' => $r->city ?: '',
+            'country' => $r->country_name ?: '',
+        ])->all();
+
+        return response()->json(['count' => count($viewers), 'viewers' => $viewers]);
     }
 }

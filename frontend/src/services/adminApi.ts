@@ -39,11 +39,13 @@ function authHeaders(): HeadersInit {
 }
 
 async function handle<T>(res: Response): Promise<T> {
+  const text = await res.text()
   let payload: unknown
   try {
-    payload = await res.json()
+    payload = JSON.parse(text)
   } catch {
-    throw new Error('The API returned an invalid response.')
+    // Non-JSON response (e.g. Cloudflare HTML error page)
+    throw new Error(`Server error (${res.status}) — ${text.slice(0, 200)}`)
   }
 
   if (!res.ok) {
@@ -53,7 +55,11 @@ async function handle<T>(res: Response): Promise<T> {
     throw new Error(message)
   }
 
-  return (payload as { data?: T })?.data as T
+  // Handle both wrapped { data: T } and direct T responses
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as { data: T }).data
+  }
+  return payload as T
 }
 
 export interface AdminStats {
@@ -124,6 +130,13 @@ export interface RecentVisit {
   device: string
   browser: string
   os: string
+  screen: string
+  cores: string
+  ram: string
+  lang: string
+  tz: string
+  conn: string
+  isp: string
   /** How many times this IP visited in the retention window. */
   visits: number
   created_at: string
@@ -136,8 +149,18 @@ export interface VisitHistoryEntry {
   device: string
   browser: string
   os: string
+  screen: string
+  cores: string
+  ram: string
+  lang: string
+  tz: string
+  conn: string
+  isp: string
   country: string
+  country_name: string
+  region: string
   city: string
+  referrer: string
   created_at: string
 }
 

@@ -163,5 +163,6 @@ Route::prefix('v1')->group(function (): void {
 
     // ── Visitor counter ────────────────────────────────────────
     Route::get('/visitors', [VisitorController::class, 'index']);
+    Route::get('/visitors/active', [VisitorController::class, 'active']);
     Route::post('/visitors', [VisitorController::class, 'increment']);
 });

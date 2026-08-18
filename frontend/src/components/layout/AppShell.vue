@@ -15,6 +15,22 @@ import { petConfig, togglePetLocal } from '@/composables/usePetConfig'
 import { profile } from '@/data/profile'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
+/** Active viewers — fetched from /api/v1/visitors/active, polled every 30s. */
+interface ActiveViewer { device: string; browser: string; os: string; city: string; country: string }
+const activeCount = ref(1)
+const activeViewers = ref<ActiveViewer[]>([])
+let activePollTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchActiveViewers(): Promise<void> {
+  try {
+    const res = await fetch('/api/v1/visitors/active', { cache: 'no-store' })
+    if (!res.ok) return
+    const data = await res.json() as { count: number; viewers: ActiveViewer[] }
+    activeCount.value = data.count || 1
+    activeViewers.value = data.viewers || []
+  } catch { /* fail-open: keep previous count */ }
+}
+
 defineProps<{
   /** Route name of the active page — drives the arrow indicator. */
   active: string
@@ -72,8 +88,14 @@ onMounted(() => {
       if (typeof d.ask_triz_enabled === 'boolean') askTrizEnabled.value = d.ask_triz_enabled
     })
     .catch(() => { /* fail-open: show by default */ })
+  // Fetch active viewers immediately + poll every 30s
+  void fetchActiveViewers()
+  activePollTimer = setInterval(fetchActiveViewers, 30_000)
 })
-onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+  if (activePollTimer) clearInterval(activePollTimer)
+})
 
 /**
  * Nav groups mirror bryllim.com's sidebar: three divisions separated by
@@ -224,8 +246,24 @@ const navGroups = [
 
     <div class="mt-4 border-y border-gray-200 py-3.5 dark:border-gray-300">
       <p class="presence-label mt-1 font-mono text-[10.5px] text-gray-500 dark:text-gray-400">
-        <b class="presence-num font-bold text-ink dark:text-gray-950">1</b> person viewing now
+        <b class="presence-num font-bold text-ink dark:text-gray-950">{{ activeCount }}</b>
+        {{ activeCount === 1 ? 'person' : 'people' }} viewing now
       </p>
+      <!-- active viewers list -->
+      <div v-if="activeViewers.length > 0" class="mt-2 flex flex-wrap gap-1.5">
+        <span
+          v-for="(v, i) in activeViewers.slice(0, 5)"
+          :key="i"
+          class="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 font-mono text-[9px] text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400"
+        >
+          <span class="inline-block h-1 w-1 rounded-full bg-green-500" />
+          {{ v.city || v.os }}
+        </span>
+        <span
+          v-if="activeViewers.length > 5"
+          class="font-mono text-[9px] text-gray-400"
+        >+{{ activeViewers.length - 5 }}</span>
+      </div>
       <button
         type="button"
         class="mt-3 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"

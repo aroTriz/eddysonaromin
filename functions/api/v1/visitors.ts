@@ -79,8 +79,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .prepare(
         `INSERT INTO visits
            (site, ip, country, country_name, region, city, lat, lon,
-            path, referrer, device, browser, os, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            path, referrer, device, browser, os, screen, cores, ram,
+            lang, tz, conn, isp, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         SITE,
@@ -96,6 +97,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         str(body.device, 40) || null,
         str(body.browser, 40) || null,
         str(body.os, 40) || null,
+        str(body.screen, 20) || null,
+        str(body.cores, 10) || null,
+        str(body.ram, 10) || null,
+        str(body.lang, 10) || null,
+        str(body.tz, 80) || null,
+        str(body.conn, 10) || null,
+        str(body.isp, 100) || null,
         now,
         now,
       )

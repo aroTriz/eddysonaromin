@@ -111,6 +111,14 @@ export async function trackVisit(path: string, referrer: string): Promise<void> 
       device: detectDevice(),
       browser: detectBrowser(),
       os: detectOs(),
+      screen: `${screen.width}×${screen.height}`,
+      cores: String(navigator.hardwareConcurrency || ''),
+      ram: (navigator as unknown as { deviceMemory?: number }).deviceMemory
+        ? `${(navigator as unknown as { deviceMemory: number }).deviceMemory}GB`
+        : '',
+      lang: navigator.language || '',
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+      conn: (navigator as unknown as { connection?: { effectiveType?: string } }).connection?.effectiveType || '',
     }
     if (geo) {
       if (geo.ip) payload.ip = geo.ip
@@ -121,6 +129,18 @@ export async function trackVisit(path: string, referrer: string): Promise<void> 
       if (geo.lat) payload.lat = geo.lat
       if (geo.lon) payload.lon = geo.lon
     }
+    // ISP from ipwho.is (included in geo response)
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 2000)
+      const res = await fetch('https://ipwho.is/', { signal: ctrl.signal })
+      clearTimeout(timer)
+      if (res.ok) {
+        const d = await res.json() as { connection?: { isp?: string }; org?: string }
+        const isp = d?.connection?.isp || d?.org || ''
+        if (isp) payload.isp = isp
+      }
+    } catch { /* best effort */ }
     await fetch('/api/v1/visitors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

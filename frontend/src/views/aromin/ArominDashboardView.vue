@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Trash2,
   UserCheck,
+  Users,
   X,
 } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -72,6 +73,7 @@ async function load(force = false): Promise<void> {
   loading.value = true
   error.value = ''
   try {
+    await Promise.all([fetchAdminStats(force), fetchActiveViewers()])
     stats.value = await fetchAdminStats(force)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load stats'
@@ -129,11 +131,24 @@ function onVisibility(): void {
 
 /* ── KPI cards ─────────────────────────────────────────────── */
 
+/** Active viewers — fetched separately (public endpoint, no auth needed). */
+const activeViewersCount = ref(0)
+
+async function fetchActiveViewers(): Promise<void> {
+  try {
+    const res = await fetch('/api/v1/visitors/active', { cache: 'no-store' })
+    if (!res.ok) return
+    const data = await res.json() as { count: number }
+    activeViewersCount.value = data.count || 0
+  } catch { /* best effort */ }
+}
+
 const analyticsCards = computed(() => [
   { label: 'unique visitors', value: a.value.totals.visitors, icon: Eye, hint: 'distinct IPs — last 12 months' },
   { label: 'page views', value: a.value.totals.views, icon: MousePointerClick, hint: 'total pages opened — last 12 months' },
   { label: 'visitors today', value: a.value.totals.visitors_today, icon: UserCheck, hint: 'distinct IPs — today' },
   { label: 'views today', value: a.value.totals.views_today, icon: CalendarClock, hint: 'pages opened today' },
+  { label: 'currently viewing', value: activeViewersCount.value, icon: Users, hint: 'active right now — last 5 min' },
 ])
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -240,6 +255,15 @@ const pageBreakdown = computed(() => {
     .sort((a, b) => b.count - a.count)
 })
 
+/** Check if a visitor is "active" — last seen within the last 5 minutes. */
+const ACTIVE_THRESHOLD_MS = 5 * 60 * 1000
+function isActive(iso: string): boolean {
+  if (!iso) return false
+  const d = new Date(iso.replace(' ', 'T'))
+  return Date.now() - d.getTime() < ACTIVE_THRESHOLD_MS
+}
+const isVisitorActive = computed(() => isActive(historyTarget.value?.created_at ?? ''))
+
 /** Show a specific device label, or infer it from OS for legacy rows. */
 function deviceLabel(v: { device?: string | null; os?: string | null }): string {
   const d = v.device?.trim()
@@ -317,7 +341,7 @@ function timeAgo(iso: string): string {
       <!-- ── KPI: analytics ───────────────────────────────── -->
       <section aria-label="Visitor metrics">
         <p class="mb-3 font-mono text-[11px] text-gray-500">// visitor metrics</p>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <div
             v-for="card in analyticsCards"
             :key="card.label"
@@ -404,6 +428,7 @@ function timeAgo(iso: string): string {
                   <th class="px-3 py-2.5 font-normal">device</th>
                   <th class="px-3 py-2.5 font-normal">browser / os</th>
                   <th class="px-3 py-2.5 font-normal">last seen</th>
+                  <th class="px-3 py-2.5 font-normal">status</th>
                   <th class="px-6 py-2.5 text-right font-normal">detail</th>
                 </tr>
               </thead>
@@ -425,6 +450,15 @@ function timeAgo(iso: string): string {
                     {{ [v.browser, v.os].filter(Boolean).join(' · ') || '—' }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
+                  <td class="whitespace-nowrap px-3 py-3">
+                    <span
+                      class="inline-flex items-center gap-1 font-mono text-[10px]"
+                      :class="isActive(v.created_at) ? 'text-green-600 dark:text-green-400' : 'text-gray-400'"
+                    >
+                      <span class="h-1.5 w-1.5 rounded-full" :class="isActive(v.created_at) ? 'bg-green-500' : 'bg-gray-300'" />
+                      {{ isActive(v.created_at) ? 'active' : 'offline' }}
+                    </span>
+                  </td>
                   <td class="whitespace-nowrap px-6 py-3 text-right">
                     <button
                       type="button"
@@ -438,7 +472,7 @@ function timeAgo(iso: string): string {
                   </td>
                 </tr>
                 <tr v-if="a.recent.length === 0">
-                  <td colspan="7" class="px-6 py-8 text-center text-gray-400">
+                  <td colspan="8" class="px-6 py-8 text-center text-gray-400">
                     // no visits recorded yet
                   </td>
                 </tr>
@@ -488,9 +522,20 @@ function timeAgo(iso: string): string {
                 <Eye class="h-4 w-4" :stroke-width="1.7" />
               </div>
               <div class="min-w-0 flex-1">
-                <p class="font-mono text-[14px] font-semibold tracking-tight text-ink">
-                  {{ historyTarget?.ip || 'IP' }}
-                </p>
+                <div class="flex items-center gap-2">
+                  <p class="font-mono text-[14px] font-semibold tracking-tight text-ink">
+                    {{ historyTarget?.ip || 'IP' }}
+                  </p>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-medium"
+                    :class="isVisitorActive
+                      ? 'border border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'border border-gray-200 bg-gray-100 text-gray-400'"
+                  >
+                    <span class="h-1 w-1 rounded-full" :class="isVisitorActive ? 'bg-green-500' : 'bg-gray-300'" />
+                    {{ isVisitorActive ? 'active now' : 'offline' }}
+                  </span>
+                </div>
                 <p class="mt-0.5 font-mono text-[10.5px] text-gray-400">
                   visitor profile — everything recorded about this IP
                 </p>
@@ -557,6 +602,50 @@ function timeAgo(iso: string): string {
                     <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
                       {{ [historyTarget?.browser, historyTarget?.os].filter(Boolean).join(' · ') || '—' }}
                     </p>
+                  </div>
+                </div>
+
+                <!-- Connection & specs row -->
+                <div class="mt-3 grid grid-cols-3 gap-3">
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">screen</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.screen || '—' }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">cpu cores / ram</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
+                      {{ [historyTarget?.cores ? historyTarget.cores + ' cores' : '', historyTarget?.ram].filter(Boolean).join(' · ') || '—' }}
+                    </p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">connection</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">
+                      {{ historyTarget?.conn ? historyTarget.conn.toUpperCase() : '—' }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Language, timezone, ISP row -->
+                <div class="mt-3 grid grid-cols-3 gap-3">
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">language</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.lang || '—' }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">timezone</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.tz || '—' }}</p>
+                  </div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">ISP</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget?.isp || '—' }}</p>
+                  </div>
+                </div>
+
+                <!-- Referrer row -->
+                <div v-if="historyTarget?.referrer" class="mt-3">
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-300 dark:bg-gray-200">
+                    <p class="font-mono text-[9px] uppercase tracking-wider text-gray-400">referrer</p>
+                    <p class="mt-1.5 font-mono text-[11px] leading-snug text-ink">{{ historyTarget.referrer }}</p>
                   </div>
                 </div>
 

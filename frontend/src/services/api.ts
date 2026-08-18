@@ -44,12 +44,13 @@ function toError(payload: ApiError | string): string {
 }
 
 async function parse<T>(response: Response): Promise<T> {
+  const text = await response.text()
   let payload: unknown
   try {
-    payload = await response.json()
+    payload = JSON.parse(text)
   } catch {
     // Non-JSON body (e.g. an HTML fallback page) — never pass it through.
-    throw new Error('The API returned an invalid response.')
+    throw new Error(`Server error (${response.status}) — ${text.slice(0, 200)}`)
   }
 
   const body = payload as { data?: T; message?: string } | ApiError
@@ -60,12 +61,14 @@ async function parse<T>(response: Response): Promise<T> {
 
   // Guard against a 200 with a missing `data` payload (SPA fallback pages,
   // misconfigured proxies, etc.) so callers never crash on `.map` / `.data`.
-  const data = (body as { data?: T } | null)?.data
-  if (body === null || typeof body !== 'object' || data === undefined) {
-    throw new Error('The API returned an unexpected response.')
+  if (body === null || typeof body !== 'object') {
+    return body as T
   }
+  const data = (body as { data?: T })?.data
+  if (data !== undefined) return data
 
-  return data
+  // Direct response without data wrapper
+  return body as T
 }
 
 /** Fetch projects — optionally filtered by category / type / featured. */

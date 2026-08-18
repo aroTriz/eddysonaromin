@@ -258,12 +258,13 @@ async function computeAnalytics(
     // Get latest detail fields for this IP
     const detail = await env.blog_db
       .prepare(
-        `SELECT path, country, country_name, region, city, device, browser, os, referrer
+        `SELECT path, country, country_name, region, city, device, browser, os,
+           screen, cores, ram, lang, tz, conn, isp, referrer
          FROM visits WHERE site = ? AND ip = ? AND created_at >= ?
          ORDER BY created_at DESC LIMIT 1`,
       )
       .bind(site, r.ip, retentionStart)
-      .first<{ path: string; country: string; country_name: string; region: string; city: string; device: string; browser: string; os: string; referrer: string }>()
+      .first<{ path: string; country: string; country_name: string; region: string; city: string; device: string; browser: string; os: string; screen: string; cores: string; ram: string; lang: string; tz: string; conn: string; isp: string; referrer: string }>()
 
     recent.push({
       id: 0,
@@ -277,6 +278,13 @@ async function computeAnalytics(
       device: detail?.device ?? '',
       browser: detail?.browser ?? '',
       os: detail?.os ?? '',
+      screen: detail?.screen ?? '',
+      cores: detail?.cores ?? '',
+      ram: detail?.ram ?? '',
+      lang: detail?.lang ?? '',
+      tz: detail?.tz ?? '',
+      conn: detail?.conn ?? '',
+      isp: detail?.isp ?? '',
       referrer: detail?.referrer ?? '',
       visits: r.visits,
       created_at: r.created_at,
