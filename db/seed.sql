@@ -235,12 +235,12 @@ Reusability is not about avoiding repetition. It''s about making change cheap. E
 -- ────────────────────────────────────────────────────────────────
 -- Admin account for the /aromin area.
 -- Default credentials (same as the previous projects):
---   username: Aromin
+--   username: Aromin15
 --   password: 0xydmuhv!
 -- OTP emails always go to the email below (aromintristan@gmail.com).
 -- ────────────────────────────────────────────────────────────────
 INSERT INTO admins (username, password_hash, email, user_id, created_at, updated_at)
-VALUES ('Aromin', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+VALUES ('Aromin15', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
 
 -- Private-chat account for the admin — visitors DM THIS user. The password
 -- is a throwaway hash (the admin replies from the /aromin area, never logs

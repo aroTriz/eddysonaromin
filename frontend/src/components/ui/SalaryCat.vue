@@ -292,15 +292,14 @@ onBeforeUnmount(() => {
         <div class="flex flex-col items-center gap-3 px-5 py-5">
           <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-300 dark:bg-gray-200">
             <img
-              src="/images/qr-tip.jpg"
+              src="/images/instapay-qr.jpg"
               alt="InstaPay QR — Scan to send a tip"
               class="block h-44 w-44 rounded-md object-contain"
               loading="lazy"
             />
           </div>
           <p class="text-center font-mono text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
-            scan the qr to send a tip<br />
-            <span class="text-gray-400 dark:text-gray-500">GCash · PayMaya · Bank Transfer</span>
+            scan the qr to send a tip
           </p>
         </div>
       </div>
