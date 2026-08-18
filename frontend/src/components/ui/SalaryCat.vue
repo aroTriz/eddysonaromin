@@ -44,9 +44,10 @@ const dragging = ref(false)
 const waving = ref(false)
 
 // ── Buy Me a Coffee ──────────────────────────────────────────────
-const BUBBLE_W = 160
+const BUBBLE_W = 190
 const coffeeOpen = ref(false)
 const bubbleVisible = ref(false)
+const bubbleDismissing = ref(false)
 let bubbleTimer: ReturnType<typeof setTimeout> | null = null
 
 /** Center the bubble horizontally on the cat, clamp to viewport. */
@@ -60,21 +61,19 @@ const bubbleY = computed(() => {
   return Math.max(8, top)
 })
 
-/** Cycle: 3 min visible, 5 min hidden, repeat. */
-const SHOW_MS = 3 * 60 * 1000  // 3 minutes
-const HIDE_MS = 5 * 60 * 1000  // 5 minutes
+/** Dismiss bubble with pop+dust animation, then show again after 3 minutes. */
+const DISMISS_MS = 3 * 60 * 1000
+const DISMISS_ANIM_MS = 500
 
-function cycleBubble(): void {
-  if (coffeeOpen.value) {
-    // Don't cycle while the QR modal is open — retry after a bit
-    bubbleTimer = setTimeout(cycleBubble, 10_000)
-    return
-  }
-  bubbleVisible.value = true
-  bubbleTimer = setTimeout(() => {
+function dismissBubble(): void {
+  if (bubbleDismissing.value) return
+  bubbleDismissing.value = true
+  if (bubbleTimer) clearTimeout(bubbleTimer)
+  setTimeout(() => {
     bubbleVisible.value = false
-    bubbleTimer = setTimeout(cycleBubble, HIDE_MS)
-  }, SHOW_MS)
+    bubbleDismissing.value = false
+    bubbleTimer = setTimeout(() => { bubbleVisible.value = true }, DISMISS_MS)
+  }, DISMISS_ANIM_MS)
 }
 
 function openCoffee(): void {
@@ -204,8 +203,8 @@ onMounted(() => {
   }
   scheduleNext(); lastT = performance.now(); physAccum = 0; physTimer = requestAnimationFrame(function rafLoop() { loop(); physTimer = requestAnimationFrame(rafLoop) })
 
-  // Start the "Buy Me a Coffee" bubble cycle: 3 min on, 5 min off, repeat
-  bubbleTimer = setTimeout(cycleBubble, 2500)
+  // Show bubble 5s after spawn
+  bubbleTimer = setTimeout(() => { bubbleVisible.value = true }, 5000)
 })
 onBeforeUnmount(() => {
   if (physTimer) cancelAnimationFrame(physTimer)
@@ -223,15 +222,33 @@ onBeforeUnmount(() => {
       v-if="bubbleVisible && !coffeeOpen"
       type="button"
       class="coffee-bubble pointer-events-auto coffee-pop absolute z-[71]"
+      :class="{ 'coffee-dismiss': bubbleDismissing }"
       :style="{ left: `${bubbleX}px`, top: `${bubbleY}px`, width: `${BUBBLE_W}px` }"
       @click.stop="openCoffee"
     >
       <span class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-[11.5px] font-medium text-ink shadow-md transition-all hover:shadow-lg hover:border-gray-300">
         <span class="text-[14px]" aria-hidden="true">☕</span>
         Buy Me a Coffee
+        <button
+          type="button"
+          class="ml-1 rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+          aria-label="Dismiss"
+          @click.stop="dismissBubble"
+        >
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
       </span>
       <!-- Tail / triangle pointing down -->
       <span class="coffee-tail absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full" />
+      <!-- Dust particles on dismiss -->
+      <template v-if="bubbleDismissing">
+        <span class="coffee-dust-particle absolute left-[15%] top-[60%] h-1 w-1 rounded-full bg-amber-400/60" style="animation-delay:0.08s" />
+        <span class="coffee-dust-particle absolute left-[45%] top-[30%] h-0.5 w-0.5 rounded-full bg-amber-300/50" style="animation-delay:0.15s" />
+        <span class="coffee-dust-particle absolute right-[20%] top-[50%] h-1 w-1 rounded-full bg-amber-500/40" style="animation-delay:0.04s" />
+        <span class="coffee-dust-particle absolute left-[70%] top-[25%] h-0.5 w-0.5 rounded-full bg-orange-400/50" style="animation-delay:0.2s" />
+      </template>
     </button>
 
     <!-- ── SalaryCat sprite ──────────────────────────────── -->
@@ -319,6 +336,54 @@ onBeforeUnmount(() => {
   from { opacity: 0; transform: scale(0.92) translateY(6px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* Dismiss: pop-out + dust particles */
+.coffee-dismiss {
+  animation: coffee-dust-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+.coffee-dismiss::before,
+.coffee-dismiss::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: dust-fall 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.coffee-dismiss::before {
+  width: 4px; height: 4px;
+  background: rgba(180, 160, 140, 0.6);
+  top: 50%; left: 20%;
+  animation-delay: 0.05s;
+}
+.coffee-dismiss::after {
+  width: 3px; height: 3px;
+  background: rgba(180, 160, 140, 0.4);
+  top: 40%; right: 25%;
+  animation-delay: 0.1s;
+}
+@keyframes coffee-dust-out {
+  0%   { opacity: 1; transform: scale(1); filter: blur(0); }
+  40%  { opacity: 0.9; transform: scale(1.15); filter: blur(0); }
+  100% { opacity: 0; transform: scale(0.3) translateY(10px); filter: blur(4px); }
+}
+@keyframes dust-fall {
+  0%   { opacity: 0.8; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(24px) scale(0.2); }
+}
+
+/* Extra dust particles */
+.coffee-dust-particle {
+  pointer-events: none;
+  animation: dust-particle-fall 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes dust-particle-fall {
+  0%   { opacity: 0.9; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx, 8px), 22px) scale(0.15); }
+}
+.coffee-dust-particle:nth-child(odd)  { --dx: -10px; }
+.coffee-dust-particle:nth-child(even) { --dx: 12px; }
+.coffee-dust-particle:nth-child(3)    { --dx: -6px; }
+.coffee-dust-particle:nth-child(4)    { --dx: 15px; }
 
 /* Modal card entrance — matches site's ConfirmModal style */
 .coffee-card {
