@@ -1,13 +1,9 @@
 ﻿-- ────────────────────────────────────────────────────────────────
--- Fix D1 schema: add missing columns that newer Pages Functions expect.
--- Uses D1 batch API with continue_on_error so "duplicate column" errors
--- are silently skipped.
+-- Fix D1 schema: ensure critical tables exist for auth flow.
+-- All statements are idempotent (safe to re-run).
 -- ────────────────────────────────────────────────────────────────
 
--- admins.updated_at (may not exist on older D1 databases)
-ALTER TABLE admins ADD COLUMN updated_at TEXT;
-
--- admin_sessions table may not exist at all if schema was incomplete
+-- admin_sessions (needed for verify.ts to create session tokens)
 CREATE TABLE IF NOT EXISTS admin_sessions (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   admin_id   INTEGER NOT NULL,
@@ -17,9 +13,8 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
   updated_at TEXT,
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token);
 
--- otp_codes table may not exist
+-- otp_codes (needed for login.ts to store OTPs)
 CREATE TABLE IF NOT EXISTS otp_codes (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   admin_id   INTEGER NOT NULL,
@@ -30,8 +25,7 @@ CREATE TABLE IF NOT EXISTS otp_codes (
   updated_at TEXT,
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_otp_codes_admin ON otp_codes(admin_id, used);
 
--- Ensure pet_settings entry exists in site_settings
+-- pet_settings default (the backend reads this on boot)
 INSERT OR IGNORE INTO site_settings (key, value)
 VALUES ('pet_settings', '{"enabled":false,"globalEnabled":true,"scale":0.5,"speed":1,"animate":true}');
