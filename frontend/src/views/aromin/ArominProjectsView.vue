@@ -11,7 +11,6 @@ import {
   ArchiveRestore,
   ArrowDown,
   ArrowUp,
-  FileVideo,
   FolderKanban,
   Image as ImageIcon,
   ImagePlus,
@@ -323,15 +322,6 @@ async function onFaviconFileChange(e: Event): Promise<void> {
   }
 }
 
-/** Reorder one media item within its device list. */
-function moveMedia(device: 'laptop' | 'phone', index: number, dir: -1 | 1): void {
-  const list = deviceList(device)
-  const target = index + dir
-  if (target < 0 || target >= list.length) return
-  const tmp = list[index]
-  list[index] = list[target]
-  list[target] = tmp
-}
 
 function startNew(): void {
   editing.value = null
