@@ -890,71 +890,69 @@ onMounted(load)
             </span>
           </p>
 
-          <!-- Media grid -->
-          <div v-if="showcaseItems.length" class="flex flex-wrap gap-2">
+                    <!-- Device cards grid -->
+          <div v-if="showcaseItems.length" class="flex flex-wrap gap-3">
             <div
               v-for="entry in showcaseItems"
               :key="`${entry.device}-${entry.index}`"
-              class="group relative overflow-hidden rounded-md border border-gray-200 bg-gray-50"
-              :class="entry.device === 'phone' ? 'h-24 w-14' : 'h-16 w-24'"
+              class="group relative flex flex-col items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 p-2"
+              :class="entry.device === 'phone' ? 'w-24' : 'w-36'"
             >
-              <img
-                v-if="mediaKind(entry.item) === 'image'"
-                :src="mediaSrc(entry.item)"
-                class="h-full w-full object-cover"
-                :alt="`${entry.device === 'phone' ? 'Mobile' : 'PC'} media ${entry.index + 1}`"
-                loading="lazy"
-              />
-              <video
-                v-else
-                :src="mediaSrc(entry.item)"
-                class="h-full w-full object-cover"
-                muted
-                playsinline
-                preload="metadata"
-                :aria-label="`${entry.device === 'phone' ? 'Mobile' : 'PC'} media ${entry.index + 1}`"
-              ></video>
-
-              <!-- Device tag â€” always visible so PC vs Mobile is obvious -->
-              <span
-                class="absolute left-0.5 top-0.5 inline-flex items-center gap-0.5 rounded bg-black/60 px-1 py-0.5 text-white"
-                :title="entry.device === 'phone' ? 'Mobile / phone' : 'PC / laptop'"
+              <!-- Image or device icon -->
+              <div
+                class="flex w-full items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
+                :class="entry.device === 'phone' ? 'aspect-[9/16]' : 'aspect-video'"
               >
-                <component :is="entry.device === 'phone' ? Smartphone : Laptop" class="h-2.5 w-2.5" :stroke-width="2" />
-              </span>
-              <!-- Video tag -->
-              <span
-                v-if="mediaKind(entry.item) === 'video'"
-                class="absolute right-0.5 top-0.5 rounded bg-black/60 p-0.5 text-white"
-                title="Video"
-              >
-                <FileVideo class="h-2.5 w-2.5" :stroke-width="2" />
-              </span>
+                <img
+                  v-if="mediaSrc(entry.item)"
+                  :src="mediaSrc(entry.item)"
+                  class="h-full w-full object-cover"
+                  :alt="`${entry.device} media`"
+                  loading="lazy"
+                />
+                <div v-else class="flex flex-col items-center gap-1 text-gray-300">
+                  <component :is="entry.device === 'phone' ? Smartphone : Laptop" class="h-6 w-6" :stroke-width="1.5" />
+                  <span class="font-mono text-[8px] text-gray-400">no image</span>
+                </div>
+              </div>
 
-              <!-- Hover actions: reorder + remove -->
-              <div class="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-black/60 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+              <!-- Device label -->
+              <div class="flex w-full items-center justify-center">
+                <template v-if="editingDeviceLabel?.device === entry.device && editingDeviceLabel?.index === entry.index">
+                  <input
+                    v-model="deviceLabelInput"
+                    type="text"
+                    class="w-full rounded border border-gray-300 px-1 py-0.5 font-mono text-[10px] text-ink outline-none"
+                    placeholder="Device name"
+                    @keydown.enter.prevent="saveDeviceLabel()"
+                    @blur="saveDeviceLabel()"
+                  />
+                </template>
+                <button
+                  v-else
+                  type="button"
+                  class="w-full truncate text-center font-mono text-[10px] text-gray-500 hover:text-ink"
+                  title="Click to rename"
+                  @click="startEditLabel(entry.device, entry.index)"
+                >
+                  {{ typeof entry.item === 'string' ? entry.device : (entry.item as any).label || entry.device }}
+                </button>
+              </div>
+
+              <!-- Actions -->
+              <div class="absolute -right-1 -top-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                 <button
                   type="button"
-                  class="p-0.5 text-white transition-colors hover:text-gray-300 disabled:opacity-30"
-                  :aria-label="`Move ${entry.device} media ${entry.index + 1} earlier`"
-                  :disabled="entry.index === 0"
-                  @click="moveMedia(entry.device, entry.index, -1)"
+                  class="rounded-full bg-white p-1 text-gray-400 shadow-sm transition-colors hover:text-ink"
+                  title="Add or replace image"
+                  @click="openCropForDevice(entry.device, entry.index)"
                 >
-                  <ArrowUp class="h-3 w-3" :stroke-width="2" />
+                  <ImagePlus class="h-3 w-3" :stroke-width="2" />
                 </button>
                 <button
                   type="button"
-                  class="p-0.5 text-white transition-colors hover:text-gray-300 disabled:opacity-30"
-                  :aria-label="`Move ${entry.device} media ${entry.index + 1} later`"
-                  :disabled="entry.index >= deviceList(entry.device).length - 1"
-                  @click="moveMedia(entry.device, entry.index, 1)"
-                >
-                  <ArrowDown class="h-3 w-3" :stroke-width="2" />
-                </button>
-                <button
-                  type="button"
-                  class="p-0.5 text-white transition-colors hover:text-red-400"
-                  :aria-label="`Remove ${entry.device} media ${entry.index + 1}`"
+                  class="rounded-full bg-white p-1 text-gray-400 shadow-sm transition-colors hover:text-red-500"
+                  title="Remove device"
                   @click="removeMedia(entry.device, entry.index)"
                 >
                   <X class="h-3 w-3" :stroke-width="2" />
@@ -963,7 +961,7 @@ onMounted(load)
             </div>
           </div>
           <p v-else class="font-mono text-[10px] text-gray-400">
-            No media yet — click "Add" and pick PC or Mobile, then upload a screenshot (jpg/png) or video
+            No devices yet — click "Add" to add a laptop or phone device
           </p>
 
           <input
@@ -975,8 +973,9 @@ onMounted(load)
             @change="onMediaFileChange"
           />
           <p class="font-mono text-[10px] text-gray-400">
-            Images up to 8MB · videos up to 60MB · leave empty to fall back to the cover image
+            One image per device · phone images crop portrait (9:16) · laptop images crop landscape (16:9)
           </p>
+
         </div>
 
         <div class="flex gap-2">
