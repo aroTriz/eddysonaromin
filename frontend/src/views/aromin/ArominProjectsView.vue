@@ -184,10 +184,6 @@ function mediaSrc(item: ShowcaseMedia): string {
   return typeof item === 'string' ? item : item.src
 }
 
-/** Media kind â€” legacy strings are images; objects carry their own kind. */
-function mediaKind(item: ShowcaseMedia): 'image' | 'video' {
-  return typeof item === 'string' ? 'image' : item.kind
-}
 
 /** Flat list of showcase entries for the editor grid (laptops first). */
 const showcaseItems = computed(() => {
