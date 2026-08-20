@@ -29,6 +29,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import ImageCropModal from '@/components/ui/ImageCropModal.vue'
 import {
   archiveAdminProject,
   createAdminProject,
@@ -83,11 +84,16 @@ const filteredItems = computed(() => {
   })
 })
 
-// Showcase media upload state
+// Showcase media state
 const showcasePickerOpen = ref(false)
-const pendingDevice = ref<'laptop' | 'phone' | null>(null)
 const uploadingMedia = ref(false)
 const mediaInput = ref<HTMLInputElement | null>(null)
+const editingDeviceLabel = ref<{ device: 'laptop' | 'phone'; index: number } | null>(null)
+const deviceLabelInput = ref('')
+const cropModalOpen = ref(false)
+const cropSrc = ref('')
+const cropDevice = ref<'laptop' | 'phone'>('laptop')
+const cropIndex = ref<number>(-1)
 
 // Editor state
 const editing = ref<Project | null>(null)
@@ -193,14 +199,29 @@ const showcaseItems = computed(() => {
   ]
 })
 
-/** Close the picker and open the file chooser for the chosen device. */
+/** Add a new device entry (name-only, no photo required). */
+function addDeviceEntry(device: 'laptop' | 'phone'): void {
+  showcasePickerOpen.value = false
+  const list = deviceList(device)
+  list.push({ src: '', kind: 'image' as const, label: device === 'phone' ? 'Phone' : 'Laptop' })
+}
+
+/** Open the file chooser for a device entry that needs an image. */
 function openDevicePicker(device: 'laptop' | 'phone'): void {
   showcasePickerOpen.value = false
   pendingDevice.value = device
   mediaInput.value?.click()
 }
 
-/** Upload the picked file and append it to the chosen device list. */
+/** Open crop modal for an existing device entry. */
+function openCropForDevice(device: 'laptop' | 'phone', index: number): void {
+  cropDevice.value = device
+  cropIndex.value = index
+  pendingDevice.value = device
+  mediaInput.value?.click()
+}
+
+/** Handle the picked file — if editing an existing entry, open crop; else append. */
 async function onMediaFileChange(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
@@ -208,16 +229,76 @@ async function onMediaFileChange(e: Event): Promise<void> {
   const device = pendingDevice.value
   pendingDevice.value = null
   if (!file || !device) return
+
+  // If editing an existing device entry, open the crop modal
+  if (cropIndex.value >= 0) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      cropSrc.value = reader.result as string
+      cropModalOpen.value = true
+    }
+    reader.readAsDataURL(file)
+    return
+  }
+
+  // New device with image: open crop modal
+  const reader = new FileReader()
+  reader.onload = () => {
+    cropDevice.value = device
+    cropIndex.value = -1
+    cropSrc.value = reader.result as string
+    cropModalOpen.value = true
+  }
+  reader.readAsDataURL(file)
+}
+
+/** Handle cropped image — upload and save to device entry. */
+async function onCroppedImage(blob: Blob): Promise<void> {
+  cropModalOpen.value = false
+  const device = cropDevice.value
+  const idx = cropIndex.value
+  const file = new File([blob], 'cropped.png', { type: 'image/png' })
   uploadingMedia.value = true
   error.value = ''
   try {
     const { url, kind } = await uploadProjectMedia(file, device)
-    deviceList(device).push({ src: url, kind })
+    if (idx >= 0) {
+      // Replace existing entry
+      const list = deviceList(device)
+      list[idx] = { src: url, kind, label: typeof list[idx] === 'string' ? '' : (list[idx] as any).label ?? '' }
+    } else {
+      // New entry
+      deviceList(device).push({ src: url, kind, label: device === 'phone' ? 'Phone' : 'Laptop' })
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Upload failed'
   } finally {
     uploadingMedia.value = false
+    cropIndex.value = -1
   }
+}
+
+function closeCropModal(): void {
+  cropModalOpen.value = false
+  cropIndex.value = -1
+}
+
+/** Start editing a device label. */
+function startEditLabel(device: 'laptop' | 'phone', index: number): void {
+  const item = deviceList(device)[index]
+  deviceLabelInput.value = typeof item === 'string' ? item : (item as any).label ?? ''
+  editingDeviceLabel.value = { device, index }
+}
+
+function saveDeviceLabel(): void {
+  if (!editingDeviceLabel.value) return
+  const { device, index } = editingDeviceLabel.value
+  const list = deviceList(device)
+  const item = list[index]
+  if (typeof item !== 'string') {
+    (item as any).label = deviceLabelInput.value.trim() || undefined
+  }
+  editingDeviceLabel.value = null
 }
 
 function removeMedia(device: 'laptop' | 'phone', index: number): void {
@@ -225,28 +306,8 @@ function removeMedia(device: 'laptop' | 'phone', index: number): void {
 }
 
 // â”€â”€ Card image / favicon uploads (instead of typing URLs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const coverUploading = ref(false)
 const faviconUploading = ref(false)
-const coverInput = ref<HTMLInputElement | null>(null)
 const faviconInput = ref<HTMLInputElement | null>(null)
-
-/** Upload the picked cover image and store its served URL in image_url. */
-async function onCoverFileChange(e: Event): Promise<void> {
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file) return
-  coverUploading.value = true
-  error.value = ''
-  try {
-    const { url } = await uploadProjectImage(file, 'cover')
-    form.value.image_url = url
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Cover upload failed'
-  } finally {
-    coverUploading.value = false
-  }
-}
 
 /** Upload the picked favicon and store its served URL in favicon_url. */
 async function onFaviconFileChange(e: Event): Promise<void> {
@@ -706,53 +767,6 @@ onMounted(load)
             />
           </div>
 
-          <!-- Cover image â€” uploaded, not typed -->
-          <div class="flex flex-col gap-1.5">
-            <span class="font-mono text-[11px] text-gray-500">cover image</span>
-            <div class="flex items-center gap-3">
-              <div class="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-gray-50">
-                <img
-                  v-if="form.image_url"
-                  :src="form.image_url"
-                  class="h-full w-full object-cover"
-                  alt="Project cover preview"
-                />
-                <ImageIcon v-else class="h-5 w-5 text-gray-300" :stroke-width="1.5" />
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink disabled:opacity-50"
-                  :disabled="coverUploading"
-                  :aria-label="coverUploading ? 'Uploading coverâ€¦' : 'Upload cover image'"
-                  @click="coverInput?.click()"
-                >
-                  <LoaderCircle v-if="coverUploading" class="h-3.5 w-3.5 animate-spin" :stroke-width="1.7" />
-                  <ImagePlus v-else class="h-3.5 w-3.5" :stroke-width="1.7" />
-                  {{ coverUploading ? 'Uploading…' : form.image_url ? 'Replace' : 'Upload' }}
-                </button>
-                <button
-                  v-if="form.image_url"
-                  type="button"
-                  class="inline-flex items-center justify-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-red-200 hover:text-red-500"
-                  aria-label="Remove cover image"
-                  @click="form.image_url = null"
-                >
-                  <X class="h-3.5 w-3.5" :stroke-width="1.7" />
-                  Remove
-                </button>
-                <input
-                  ref="coverInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  aria-hidden="true"
-                  @change="onCoverFileChange"
-                />
-              </div>
-            </div>
-          </div>
-
           <!-- Favicon â€” uploaded, not typed -->
           <div class="flex flex-col gap-1.5">
             <span class="font-mono text-[11px] text-gray-500">favicon</span>
@@ -860,19 +874,19 @@ onMounted(load)
                   type="button"
                   role="menuitem"
                   class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 font-mono text-[12px] text-gray-600 transition-colors hover:bg-gray-50 hover:text-ink"
-                  @click="openDevicePicker('laptop')"
+                  @click="addDeviceEntry('laptop')"
                 >
                   <Laptop class="h-3.5 w-3.5" :stroke-width="1.7" />
-                  PC / laptop
+                  Add laptop
                 </button>
                 <button
                   type="button"
                   role="menuitem"
                   class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 font-mono text-[12px] text-gray-600 transition-colors hover:bg-gray-50 hover:text-ink"
-                  @click="openDevicePicker('phone')"
+                  @click="addDeviceEntry('phone')"
                 >
                   <Smartphone class="h-3.5 w-3.5" :stroke-width="1.7" />
-                  Mobile / phone
+                  Add phone
                 </button>
               </div>
               <!-- Click-catcher â€” closes the picker on any outside click -->
@@ -1214,7 +1228,16 @@ onMounted(load)
       edits appear instantly on /projects â€” archived projects are hidden from the site but can be restored here
     </div>
 
-    <!-- -- Themed confirm dialog (delete / save) ----------------- -->
+    
+    <!-- Image crop modal -->
+    <ImageCropModal
+      :open="cropModalOpen"
+      :src="cropSrc"
+      :device="cropDevice"
+      @confirm="onCroppedImage"
+      @cancel="closeCropModal"
+    />
+<!-- -- Themed confirm dialog (delete / save) ----------------- -->
     <ConfirmModal
       :open="confirm !== null"
       :title="confirm?.title ?? ''"

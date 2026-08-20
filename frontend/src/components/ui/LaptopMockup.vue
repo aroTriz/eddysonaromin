@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * LaptopMockup — renders a project screenshot inside a CSS laptop frame
  * (screen bezel + browser chrome + base deck), greyfolio-style.
@@ -15,6 +15,8 @@ defineProps<{
   url?: string | null
   /** Render a <video> instead of an <img> (uploaded showcase clips). */
   video?: boolean
+  /** Optional device label shown below the mockup. */
+  label?: string
 }>()
 </script>
 
@@ -76,4 +78,7 @@ defineProps<{
       aria-hidden="true"
     ></div>
   </figure>
+  <p v-if="label" class="mt-2 text-center font-mono text-[11px] text-gray-400">
+    {{ label }}
+  </p>
 </template>

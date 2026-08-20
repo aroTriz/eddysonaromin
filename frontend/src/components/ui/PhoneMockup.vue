@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * PhoneMockup — renders a screenshot inside a CSS phone frame (rounded bezel
  * + dynamic island + screen), greyfolio-style. Matches the LaptopMockup frame
@@ -13,6 +13,8 @@ defineProps<{
   alt?: string
   /** Render a <video> instead of an <img> (uploaded showcase clips). */
   video?: boolean
+  /** Optional device label shown below the mockup. */
+  label?: string
 }>()
 </script>
 
@@ -59,4 +61,7 @@ defineProps<{
       </div>
     </div>
   </figure>
+  <p v-if="label" class="mt-2 text-center font-mono text-[11px] text-gray-400">
+    {{ label }}
+  </p>
 </template>

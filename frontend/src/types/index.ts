@@ -44,8 +44,9 @@ export interface ProjectShowcase {
 /**
  * One device-showcase media entry: either a legacy URL string (an image) or
  * an uploaded media object tagged with its kind ("image" | "video").
+ * `label` is an optional device name shown on the public site.
  */
-export type ShowcaseMedia = string | { src: string; kind: 'image' | 'video' }
+export type ShowcaseMedia = string | { src: string; kind: 'image' | 'video'; label?: string }
 
 export interface BlogPost {
   id: number

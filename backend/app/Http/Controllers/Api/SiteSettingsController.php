@@ -36,6 +36,7 @@ class SiteSettingsController extends Controller
     /** Default pet config — off until the visitor toggles it / admin enables it. */
     private const DEFAULT_PET = [
         'enabled' => false,
+        'globalEnabled' => true,
         'scale' => 0.5,
         'speed' => 1,
         'animate' => true,
@@ -120,13 +121,14 @@ class SiteSettingsController extends Controller
 
         $validated = $request->validate([
             'enabled' => ['sometimes', 'boolean'],
+            'globalEnabled' => ['sometimes', 'boolean'],
             'scale' => ['sometimes', Rule::in([0.35, 0.5, 0.65])],
             'speed' => ['sometimes', Rule::in([0.6, 1, 1.5])],
             'animate' => ['sometimes', 'boolean'],
         ]);
 
         $current = $this->petSettings();
-        foreach (['enabled', 'scale', 'speed', 'animate'] as $field) {
+        foreach (['enabled', 'globalEnabled', 'scale', 'speed', 'animate'] as $field) {
             if (array_key_exists($field, $validated)) {
                 $current[$field] = $validated[$field];
             }

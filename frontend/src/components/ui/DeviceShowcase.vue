@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * DeviceShowcase — greyfolio-style device switcher for a project detail page.
  * Renders the project's CMS-configured screens:
@@ -29,8 +29,8 @@ const views = computed(() => {
   if (hasShow) {
     const map = (items: ShowcaseMedia[], device: 'laptop' | 'phone') =>
       (items ?? []).map((item) => {
-        if (typeof item === 'string') return { device, src: item, media: 'image' as const }
-        return { device, src: item.src, media: item.kind }
+        if (typeof item === 'string') return { device, src: item, media: 'image' as const, label: '' }
+        return { device, src: item.src, media: item.kind, label: item.label ?? '' }
       })
     return [
       ...map(show?.laptops ?? [], 'laptop'),
