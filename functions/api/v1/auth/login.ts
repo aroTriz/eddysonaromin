@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/v1/auth/login — validate username/password (SHA-256), generate a
  * 6-digit OTP, and email it via Resend's free tier. When no RESEND_API_KEY is
  * configured, returns the OTP in dev_mode (same behaviour as the previous
@@ -68,12 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       })
     }
 
-    // ── TEMP DEV MODE ──────────────────────────────────────────────
-    // OTP pinned to 041502 + Resend email disabled so no free-SMTP
-    // credits are consumed while testing. To restore real behaviour,
-    // uncomment the two lines below and delete the pinned ones.
-    const otp = '041502'
-    // const otp = String(Math.floor(100000 + Math.random() * 900000))
+    const otp = String(Math.floor(100000 + Math.random() * 900000))
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60000).toISOString()
 
     await env.blog_db

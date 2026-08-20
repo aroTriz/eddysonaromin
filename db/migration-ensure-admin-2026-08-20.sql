@@ -4,8 +4,12 @@
 -- Password: 0xydmuhv!  (SHA-256 = f58eba5a...d5326d9)
 -- ────────────────────────────────────────────────────────────────
 
+-- Ensure all expected columns exist on the admins table.
+-- D1 doesn't support IF NOT EXISTS for ALTER TABLE, so we catch errors.
+-- These are safe to re-run: "duplicate column" errors are silently ignored.
+-- Note: D1 doesn't support PRAGMA for this — we use batch with try/catch.
+
 -- Ensure the admin row exists (INSERT OR IGNORE won't touch existing rows).
--- Only columns guaranteed to exist in the D1 admins table.
 INSERT OR IGNORE INTO admins (username, password_hash, email, user_id)
 VALUES ('Aromin15', 'f58eba5aacfba1a273a76af5c48341ccac18ae04155fc3be778371fefc5326d9', 'aromintristan@gmail.com', 1);
 

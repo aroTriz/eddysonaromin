@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * /aromin — admin login. Username + password, then a 6-digit OTP sent to
  * aromintristan@gmail.com via Resend (free tier). Dark, mono, terminal-styled
@@ -26,6 +26,7 @@ const otp = ref(['', '', '', '', '', ''])
 const otpRefs = ref<(HTMLInputElement | null)[]>([])
 const otpError = ref('')
 const storedUser = ref('')
+const devOtp = ref('')
 const otpTimer = ref(0)
 const verifying = ref(false)
 let timerInterval: ReturnType<typeof setInterval> | null = null
@@ -58,6 +59,7 @@ async function handleLogin(): Promise<void> {
   }
 
   storedUser.value = username.value.trim()
+  devOtp.value = result.otp ?? ''
   otp.value = ['', '', '', '', '', '']
   otpError.value = ''
   showOtp.value = true
@@ -222,7 +224,13 @@ function otpRef(el: unknown, i: number): void {
           <div class="mb-5 text-center">
             <p class="font-pixel text-[clamp(1.2rem,3.5vw,1.5rem)] text-ink">&lt; OTP /&gt;</p>
             <p class="mt-1 font-mono text-[11px] text-gray-500">
-              // enter the 6-digit code from your email
+              // enter the 6-digit code
+            </p>
+            <p v-if="devOtp" class="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center font-mono text-[13px] font-semibold text-amber-700">
+              {{ devOtp }}
+            </p>
+            <p v-if="devOtp" class="mt-1 text-center font-mono text-[10px] text-amber-500">
+              // dev mode — code shown here (email disabled)
             </p>
           </div>
 

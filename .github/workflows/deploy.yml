@@ -27,7 +27,14 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Apply D1 migrations (ensure admin + settings)
+      - name: Fix D1 schema (add missing columns/tables)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute blog-db --remote --file=db/migration-fix-schema-2026-08-20.sql --continue-on-error
+
+      - name: Ensure admin account + settings in D1
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
