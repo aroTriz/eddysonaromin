@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     class="phone"
     :style="phoneStyle"
@@ -92,23 +92,38 @@ let firstFrameDrawn = false
 const INITIAL_FRAME = 1
 let currentFrame = INITIAL_FRAME
 
-/* ── Preload + draw first frame instantly ──────────────────── */
+/* ── Preload: frame 1 first, rest lazy-loaded after idle ───── */
 let preloaded = false
 function preload(): void {
   if (preloaded) return
   preloaded = true
-  for (let i = 1; i <= TOTAL; i++) {
-    const img = new Image()
-    img.src = frameSrc(i)
-    img.onload = () => {
-      loadedCount++
-      // Draw first frame as soon as it loads (no waiting for all 151).
-      if (!firstFrameDrawn && i === INITIAL_FRAME) {
-        drawFrame(INITIAL_FRAME)
-        firstFrameDrawn = true
-      }
+
+  // 1. Load frame 1 immediately — it's the one shown on screen.
+  const first = new Image()
+  first.src = frameSrc(1)
+  first.onload = () => {
+    loadedCount++
+    if (!firstFrameDrawn) {
+      drawFrame(INITIAL_FRAME)
+      firstFrameDrawn = true
     }
-    frameImages[i] = img
+  }
+  frameImages[1] = first
+
+  // 2. Load the remaining 150 frames after the browser is idle
+  //    (avoids clogging the connection pool on page load).
+  const loadRest = (): void => {
+    for (let i = 2; i <= TOTAL; i++) {
+      const img = new Image()
+      img.src = frameSrc(i)
+      img.onload = () => { loadedCount++ }
+      frameImages[i] = img
+    }
+  }
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(loadRest, { timeout: 2000 })
+  } else {
+    setTimeout(loadRest, 500)
   }
 }
 
