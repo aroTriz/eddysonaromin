@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
  * ImageCropModal — crop an uploaded image before adding it to the device
- * showcase. Uses Cropper.js with the device-appropriate aspect ratio:
+ * showcase. Uses Cropper.js v1 with the device-appropriate aspect ratio:
  *  - phone  → 9:16 (portrait)
  *  - laptop → 16:9 (landscape)
  *
  * Emits the cropped Blob on confirm, null on cancel.
  */
+import Cropper from 'cropperjs'
+import 'cropperjs/dist/cropper.css'
 import { X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import Cropper from 'cropperjs'
 
 const props = defineProps<{
   open: boolean
@@ -54,7 +55,7 @@ watch(
   (v) => {
     if (v) {
       // Wait for the DOM to render the image, then init
-      setTimeout(initCropper, 100)
+      setTimeout(initCropper, 150)
     } else {
       destroyCropper()
     }
@@ -62,15 +63,16 @@ watch(
 )
 
 onMounted(() => {
-  if (props.open) setTimeout(initCropper, 100)
+  if (props.open) setTimeout(initCropper, 150)
 })
 
 onBeforeUnmount(() => destroyCropper())
 
 function confirm(): void {
   if (!cropper) return
-  cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(
-    (blob) => {
+  const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' })
+  canvas.toBlob(
+    (blob: Blob | null) => {
       if (blob) emit('confirm', blob)
     },
     'image/png',
@@ -138,19 +140,3 @@ function cancel(): void {
     </div>
   </Teleport>
 </template>
-
-<style>
-/* Cropper.js v2 styles — auto-injected at runtime, but we ensure the
-   container and canvas are properly sized inside the modal. */
-.cropper-container {
-  position: relative;
-  overflow: hidden;
-}
-.cropper-modal {
-  background: rgba(0, 0, 0, 0.5);
-}
-.cropper-line,
-.cropper-point {
-  background-color: currentColor;
-}
-</style>

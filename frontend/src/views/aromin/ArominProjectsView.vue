@@ -86,6 +86,7 @@ const filteredItems = computed(() => {
 
 // Showcase media state
 const showcasePickerOpen = ref(false)
+const pendingDevice = ref<'laptop' | 'phone' | null>(null)
 const uploadingMedia = ref(false)
 const mediaInput = ref<HTMLInputElement | null>(null)
 const editingDeviceLabel = ref<{ device: 'laptop' | 'phone'; index: number } | null>(null)
@@ -206,12 +207,7 @@ function addDeviceEntry(device: 'laptop' | 'phone'): void {
   list.push({ src: '', kind: 'image' as const, label: device === 'phone' ? 'Phone' : 'Laptop' })
 }
 
-/** Open the file chooser for a device entry that needs an image. */
-function openDevicePicker(device: 'laptop' | 'phone'): void {
-  showcasePickerOpen.value = false
-  pendingDevice.value = device
-  mediaInput.value?.click()
-}
+
 
 /** Open crop modal for an existing device entry. */
 function openCropForDevice(device: 'laptop' | 'phone', index: number): void {
