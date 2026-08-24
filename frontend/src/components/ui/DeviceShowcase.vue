@@ -84,29 +84,31 @@ function onTouchEnd(e: TouchEvent): void {
         <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
       </button>
 
-      <!-- device stage — only the CURRENT device is rendered -->
+      <!-- device stage — fixed height so laptop & phone occupy the same space -->
       <div
-        class="min-w-0 flex-1"
+        class="min-w-0 flex-1 overflow-hidden"
         @touchstart.passive="onTouchStart"
         @touchend.passive="onTouchEnd"
       >
-        <LaptopMockup
-          v-if="current?.device === 'laptop'"
-          :key="`lap-${index}`"
-          :src="current.src"
-          :video="current.media === 'video'"
-          :alt="`${project.title} laptop view ${index + 1}`"
-          :url="project.url"
-          class="mx-auto transition-opacity duration-300"
-        />
-        <PhoneMockup
-          v-else-if="current?.device === 'phone'"
-          :key="`ph-${index}`"
-          :src="current.src"
-          :video="current.media === 'video'"
-          :alt="`${project.title} phone view ${index + 1}`"
-          class="mx-auto transition-opacity duration-300"
-        />
+        <div class="flex h-[320px] items-center justify-center sm:h-[380px]">
+          <LaptopMockup
+            v-if="current?.device === 'laptop'"
+            :key="`lap-${index}`"
+            :src="current.src"
+            :video="current.media === 'video'"
+            :alt="`${project.title} laptop view ${index + 1}`"
+            :url="project.url"
+            class="w-full transition-opacity duration-300"
+          />
+          <PhoneMockup
+            v-else-if="current?.device === 'phone'"
+            :key="`ph-${index}`"
+            :src="current.src"
+            :video="current.media === 'video'"
+            :alt="`${project.title} phone view ${index + 1}`"
+            class="transition-opacity duration-300"
+          />
+        </div>
       </div>
 
       <!-- next arrow -->

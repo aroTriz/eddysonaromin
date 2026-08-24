@@ -19,7 +19,7 @@ defineProps<{
 </script>
 
 <template>
-  <figure class="mx-auto w-full max-w-[240px] select-none">
+  <figure class="mx-auto w-full max-w-[220px] select-none sm:max-w-[260px]">
     <!-- ── Phone body (bezel) ────────────────────────────────── -->
     <div
       class="rounded-[2.4rem] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 p-[6px] shadow-md ring-1 ring-gray-200"
