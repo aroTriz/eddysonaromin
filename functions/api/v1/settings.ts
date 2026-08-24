@@ -35,8 +35,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       flag(env, 'click_me_enabled'),
       flag(env, 'ask_triz_enabled'),
     ])
-    return json({ community_chat_enabled, backdrop_enabled, click_me_enabled, ask_triz_enabled })
+
+    // Pet config — JSON blob in site_settings
+    const petRow = await env.blog_db
+      .prepare('SELECT value FROM site_settings WHERE key = ?')
+      .bind('pet_settings')
+      .first<{ value: string }>()
+    const DEFAULT_PET = { enabled: false, globalEnabled: true, scale: 0.5, speed: 1, animate: true }
+    let pet = DEFAULT_PET
+    if (petRow?.value) {
+      try { pet = { ...DEFAULT_PET, ...JSON.parse(petRow.value) } } catch { /* use defaults */ }
+    }
+
+    return json({ community_chat_enabled, backdrop_enabled, click_me_enabled, ask_triz_enabled, pet })
   } catch {
-    return json({ community_chat_enabled: true, backdrop_enabled: true, click_me_enabled: true, ask_triz_enabled: true }, 500)
+    return json({ community_chat_enabled: true, backdrop_enabled: true, click_me_enabled: true, ask_triz_enabled: true, pet: { enabled: false, globalEnabled: true, scale: 0.5, speed: 1, animate: true } }, 500)
   }
 }
