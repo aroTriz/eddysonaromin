@@ -17,8 +17,6 @@ export interface LoginResult {
   success: boolean
   email_sent?: boolean
   email?: string
-  otp?: string
-  dev_mode?: boolean
   error?: string
 }
 

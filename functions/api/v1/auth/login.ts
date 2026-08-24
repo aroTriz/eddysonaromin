@@ -1,8 +1,8 @@
 ﻿/**
  * POST /api/v1/auth/login — validate username/password (SHA-256), generate a
- * 6-digit OTP, and email it via Resend's free tier. When no RESEND_API_KEY is
- * configured, returns the OTP in dev_mode (same behaviour as the previous
- * projects' Pages Functions).
+ * 6-digit OTP, and email it via Resend. When no RESEND_API_KEY is configured
+ * the OTP is logged server-side for local dev. OTP is NEVER sent to the
+ * frontend.
  */
 
 interface Env {
@@ -100,17 +100,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     //   if (res.ok) emailSent = true
     // }
 
-    const result: Record<string, unknown> = {
+    // When email fails, log OTP server-side. NEVER send it to the frontend.
+    if (!emailSent) {
+      console.log(`[AUTH] OTP for ${admin.username}: ${otp}`)
+    }
+
+    return new Response(JSON.stringify({
       success: true,
       email_sent: emailSent,
       email: admin.email,
-    }
-    if (!emailSent) {
-      result.otp = otp
-      result.dev_mode = true
-    }
-
-    return new Response(JSON.stringify(result), {
+    }), {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch {

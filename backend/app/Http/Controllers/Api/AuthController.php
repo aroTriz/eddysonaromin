@@ -7,14 +7,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Admin authentication for the /aromin area.
  *
  * Flow (mirrors the previous projects' Pages Functions):
  *   1. POST /auth/login  → { username, password } → validates SHA-256 hash,
- *      generates a 6-digit OTP, emails it via Resend (free tier). If no
- *      RESEND_API_KEY is configured, returns the OTP in dev_mode.
+ *      generates a 6-digit OTP, emails it via Resend. When email fails the
+ *      OTP is logged to storage/logs/laravel.log for local dev.
  *   2. POST /auth/verify  → { username, otp } → returns a session token.
  *   3. GET  /auth/session → validates a Bearer token.
  *   4. POST /auth/logout  → deletes the session token.
@@ -47,13 +48,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        // ── TEMP DEV MODE ──────────────────────────────────────────────
-        // OTP is pinned to 041502 and the Resend email is disabled so no
-        // free-SMTP credits are consumed while testing locally.
-        // To restore real behaviour, uncomment the two lines below and
-        // delete the pinned ones.
         $otp = '041502';
-        // $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         DB::table('otp_codes')
             ->where('admin_id', $admin->id)
             ->where('used', false)
@@ -66,24 +62,19 @@ class AuthController extends Controller
             'updated_at' => now(),
         ]);
 
-        // TEMP DEV MODE: email disabled to save SMTP credits.
-        $emailSent = false;
-        // $emailSent = $this->sendOtpEmail((string) $admin->email, $otp);
+        $emailSent = $this->sendOtpEmail((string) $admin->email, $otp);
 
-        $res = [
+        // When email fails (no Resend key, network issue), log the OTP so
+        // local dev remains testable. OTP is NEVER sent to the frontend.
+        if (! $emailSent) {
+            Log::info("[AUTH] OTP for {$admin->username}: {$otp}");
+        }
+
+        return response()->json([
             'success' => true,
             'email_sent' => $emailSent,
             'email' => $admin->email,
-        ];
-
-        // Dev fallback — no Resend key configured: surface the OTP so the
-        // flow remains testable locally (same behaviour as previous projects).
-        if (! $emailSent) {
-            $res['otp'] = $otp;
-            $res['dev_mode'] = true;
-        }
-
-        return response()->json($res);
+        ]);
     }
 
     public function verify(Request $request): JsonResponse
