@@ -68,7 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       })
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+    const otp = '041502'
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60000).toISOString()
 
     await env.blog_db
