@@ -84,13 +84,13 @@ function onTouchEnd(e: TouchEvent): void {
         <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
       </button>
 
-      <!-- device stage — fixed height so laptop & phone occupy the same space -->
+      <!-- device stage — fixed height matches laptop, phone scales to same height -->
       <div
-        class="min-w-0 flex-1 overflow-hidden"
+        class="min-w-0 flex-1"
         @touchstart.passive="onTouchStart"
         @touchend.passive="onTouchEnd"
       >
-        <div class="flex h-[320px] items-center justify-center sm:h-[380px]">
+        <div class="mx-auto max-w-3xl" style="height: clamp(300px, 42vw, 420px)">
           <LaptopMockup
             v-if="current?.device === 'laptop'"
             :key="`lap-${index}`"
@@ -98,7 +98,7 @@ function onTouchEnd(e: TouchEvent): void {
             :video="current.media === 'video'"
             :alt="`${project.title} laptop view ${index + 1}`"
             :url="project.url"
-            class="w-full transition-opacity duration-300"
+            class="w-full"
           />
           <PhoneMockup
             v-else-if="current?.device === 'phone'"
@@ -106,7 +106,7 @@ function onTouchEnd(e: TouchEvent): void {
             :src="current.src"
             :video="current.media === 'video'"
             :alt="`${project.title} phone view ${index + 1}`"
-            class="transition-opacity duration-300"
+            class="mx-auto"
           />
         </div>
       </div>

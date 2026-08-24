@@ -19,19 +19,19 @@ defineProps<{
 </script>
 
 <template>
-  <figure class="mx-auto w-full max-w-[220px] select-none sm:max-w-[260px]">
+  <figure class="mx-auto h-full w-auto select-none">
     <!-- ── Phone body (bezel) ────────────────────────────────── -->
     <div
-      class="rounded-[2.4rem] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 p-[6px] shadow-md ring-1 ring-gray-200"
+      class="flex h-full flex-col rounded-[2.4rem] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 p-[6px] shadow-md ring-1 ring-gray-200"
     >
-      <div class="relative overflow-hidden rounded-[1.9rem] bg-white">
+      <div class="relative flex-1 overflow-hidden rounded-[1.9rem] bg-white">
         <!-- Dynamic island -->
         <div
           class="absolute left-1/2 top-2.5 z-10 h-[18px] w-[72px] -translate-x-1/2 rounded-full bg-gray-200"
           aria-hidden="true"
         ></div>
         <!-- Screen -->
-        <div v-if="src" class="aspect-[9/19] w-full bg-gray-100">
+        <div v-if="src" class="h-full w-full bg-gray-100">
           <video
             v-if="video"
             :src="src"
@@ -53,7 +53,7 @@ defineProps<{
         </div>
         <div
           v-else
-          class="flex aspect-[9/19] w-full items-center justify-center bg-gray-50"
+          class="flex h-full w-full items-center justify-center bg-gray-50"
           aria-hidden="true"
         >
           <Smartphone class="h-10 w-10 text-gray-300" :stroke-width="1.2" />
