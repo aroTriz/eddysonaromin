@@ -9,7 +9,7 @@
  * language, or blacklisted manually) land in the blacklist section at the
  * bottom — unban or delete them there.
  */
-import { Ban, Check, Copy, LoaderCircle, Pencil, Plus, Save, Trash2, UserCheck, Users, X } from 'lucide-vue-next'
+import { Ban, Check, Copy, Eye, LoaderCircle, Pencil, Plus, Save, Trash2, UserCheck, Users, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
@@ -59,6 +59,9 @@ const confirm = ref<{
   danger: boolean
   action: () => void | Promise<void>
 } | null>(null)
+
+// Detail modal state
+const viewing = ref<AdminUser | null>(null)
 
 const allSelected = computed(
   () => activeItems.value.length > 0 && activeItems.value.every((u) => selected.value.has(u.id)),
@@ -125,8 +128,16 @@ function requestSave(): void {
     error.value = 'New accounts need a password of at least 8 characters.'
     return
   }
+  if (!editing.value && form.value.password.length > 16) {
+    error.value = 'Password must be 16 characters or fewer.'
+    return
+  }
   if (editing.value && form.value.password && form.value.password.length < 8) {
     error.value = 'Password needs at least 8 characters.'
+    return
+  }
+  if (editing.value && form.value.password && form.value.password.length > 16) {
+    error.value = 'Password must be 16 characters or fewer.'
     return
   }
   askConfirm({
@@ -398,9 +409,10 @@ onMounted(load)
             id="user-password"
             v-model="form.password"
             type="text"
+            maxlength="16"
             autocomplete="new-password"
             class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="Min 8 characters"
+            placeholder="8–16 characters"
           />
           <p class="font-mono text-[10px] text-gray-400">
             stored as a one-way SHA-256 hash — nobody (including you) can see the plaintext again
@@ -546,22 +558,22 @@ onMounted(load)
                 />
               </td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-2 font-medium text-ink">
+                <span class="inline-flex items-center gap-2 truncate font-medium text-ink">
                   {{ user.name }}
                 </span>
               </td>
-              <td class="px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
+              <td class="max-w-[180px] truncate px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
               <td class="px-3 py-3">
                 <span class="inline-flex items-center gap-1.5">
                   <span
-                    class="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10.5px] text-gray-500"
+                    class="max-w-[140px] truncate rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10.5px] text-gray-500"
                     :title="`${user.password} — stored as a one-way hash, not the real password`"
                   >
                     {{ shortHash(user.password) }}
                   </span>
                   <button
                     type="button"
-                    class="rounded p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+                    class="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
                     :aria-label="`Copy ${user.email} password hash`"
                     :title="copiedId === user.id ? 'Copied!' : 'Copy hash'"
                     @click="copyHash(user)"
@@ -575,6 +587,15 @@ onMounted(load)
               <td class="px-3 py-3 text-right text-gray-500">{{ user.conversations }}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
+                    :aria-label="`View ${user.email} details`"
+                    title="View details"
+                    @click="viewing = user"
+                  >
+                    <Eye class="h-3.5 w-3.5" :stroke-width="1.7" />
+                  </button>
                   <button
                     type="button"
                     class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
@@ -650,12 +671,12 @@ onMounted(load)
                 class="border-b border-red-50 bg-red-50/40 last:border-0"
               >
                 <td class="px-4 py-3">
-                  <span class="inline-flex items-center gap-2 font-medium text-ink">
+                  <span class="inline-flex items-center gap-2 truncate font-medium text-ink">
                     <Ban class="h-3.5 w-3.5 shrink-0 text-red-500" :stroke-width="1.7" />
                     {{ user.name }}
                   </span>
                 </td>
-                <td class="px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
+                <td class="max-w-[180px] truncate px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
                 <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ bannedLabel(user.banned_at) }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
@@ -692,6 +713,44 @@ onMounted(load)
         passwords are stored as one-way SHA-256 hashes — the original can never be recovered, even by you. To change one,
         edit the account and set a new password.
       </span>
+    </div>
+
+    <!-- -- Detail modal (eye icon) -------------------------------- -->
+    <div v-if="viewing" class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4" @click.self="viewing = null">
+      <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-300 dark:bg-gray-100">
+        <div class="mb-5 flex items-center justify-between">
+          <p class="font-mono text-[11px] text-gray-500">// account details — #{{ viewing.id }}</p>
+          <button type="button" class="rounded p-1 text-gray-400 hover:text-ink" @click="viewing = null">
+            <X class="h-4 w-4" :stroke-width="1.7" />
+          </button>
+        </div>
+        <div class="space-y-3 font-mono text-[12px]">
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-400">name</span>
+            <span class="text-right text-ink">{{ viewing.name }}</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-400">email</span>
+            <span class="text-right text-ink">{{ viewing.email }}</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-400">password hash</span>
+            <span class="max-w-[260px] break-all text-right text-ink" :title="viewing.password">{{ shortHash(viewing.password) }}</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-400">conversations</span>
+            <span class="text-right text-ink">{{ viewing.conversations }}</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-400">created</span>
+            <span class="text-right text-ink">{{ createdLabel(viewing.created_at) }}</span>
+          </div>
+          <div v-if="viewing.banned_at" class="flex justify-between gap-3">
+            <span class="text-gray-400">banned</span>
+            <span class="text-right text-red-500">{{ bannedLabel(viewing.banned_at) }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- -- Themed confirm dialog (delete / save) ----------------- -->
