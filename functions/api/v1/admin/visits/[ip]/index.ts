@@ -9,13 +9,7 @@ interface Env {
 }
 
 function maskIp(ip: string): string {
-  if (!ip) return ''
-  if (ip.includes(':')) {
-    const parts = ip.split(':')
-    return parts.length > 1 ? parts.slice(0, 3).join(':') + ':…' : ip
-  }
-  const parts = ip.split('.')
-  return parts.length === 4 ? parts.slice(0, 3).join('.') + '.x' : ip
+  return ip
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
@@ -50,7 +44,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     const rows = await env.blog_db
       .prepare(
         `SELECT id, path, device, browser, os, screen, cores, ram, lang, tz, conn, isp,
-           country, country_name, region, city, referrer, created_at
+           country, country_name, region, city, referrer, lat, lon, created_at
          FROM visits
          WHERE site = 'portfolio' AND ip = ? AND created_at >= ?
          ORDER BY created_at DESC LIMIT 200`,
@@ -59,7 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
       .all<{ id: number; path: string; device: string; browser: string; os: string;
         screen: string; cores: string; ram: string; lang: string; tz: string;
         conn: string; isp: string; country: string; country_name: string;
-        region: string; city: string; referrer: string; created_at: string }>()
+        region: string; city: string; referrer: string; lat: number | null; lon: number | null; created_at: string }>()
 
     const data = rows.results.map((r) => ({
       id: r.id,
@@ -80,6 +74,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
       region: r.region ?? '',
       city: r.city ?? '',
       referrer: r.referrer ?? '',
+      lat: r.lat ?? null,
+      lon: r.lon ?? null,
       created_at: r.created_at ?? '',
     }))
 

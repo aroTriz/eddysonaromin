@@ -9,13 +9,7 @@ interface Env {
 }
 
 function maskIp(ip: string): string {
-  if (!ip) return ''
-  if (ip.includes(':')) {
-    const parts = ip.split(':')
-    return parts.length > 1 ? parts.slice(0, 3).join(':') + ':…' : ip
-  }
-  const parts = ip.split('.')
-  return parts.length === 4 ? parts.slice(0, 3).join('.') + '.x' : ip
+  return ip
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
@@ -259,12 +253,12 @@ async function computeAnalytics(
     const detail = await env.blog_db
       .prepare(
         `SELECT path, country, country_name, region, city, device, browser, os,
-           screen, cores, ram, lang, tz, conn, isp, referrer
+           screen, cores, ram, lang, tz, conn, isp, referrer, lat, lon
          FROM visits WHERE site = ? AND ip = ? AND created_at >= ?
          ORDER BY created_at DESC LIMIT 1`,
       )
       .bind(site, r.ip, retentionStart)
-      .first<{ path: string; country: string; country_name: string; region: string; city: string; device: string; browser: string; os: string; screen: string; cores: string; ram: string; lang: string; tz: string; conn: string; isp: string; referrer: string }>()
+      .first<{ path: string; country: string; country_name: string; region: string; city: string; device: string; browser: string; os: string; screen: string; cores: string; ram: string; lang: string; tz: string; conn: string; isp: string; referrer: string; lat: number | null; lon: number | null }>()
 
     recent.push({
       id: 0,
@@ -286,6 +280,8 @@ async function computeAnalytics(
       conn: detail?.conn ?? '',
       isp: detail?.isp ?? '',
       referrer: detail?.referrer ?? '',
+      lat: detail?.lat ?? null,
+      lon: detail?.lon ?? null,
       visits: r.visits,
       created_at: r.created_at,
     })
