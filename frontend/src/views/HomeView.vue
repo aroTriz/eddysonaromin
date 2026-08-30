@@ -163,7 +163,7 @@ const socials = [
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-2xl px-6">
+  <div class="mx-auto w-full max-w-2xl px-4 sm:px-6">
     <!-- -- Hero ----------------------------------------------- -->
     <section class="relative py-16 sm:py-24">
       <div class="grid gap-9 sm:grid-cols-[16rem_1fr] sm:items-start sm:gap-10">
@@ -254,18 +254,23 @@ const socials = [
       </div>
     </section>
 
-    <!-- -- Stats (bryllim-style) ------------------------------ -->
+    <!-- -- Stats (bryllim-style) — 5 cols ONE LINE on all widths (mobile too) --
+         Desktop: px-4 py-6 text-lg / text[11px]; Mobile: px-1 py-4 text[11px] / text[7px]
+         shrunk to fit 320px without wrapping to 2 rows — exactly as requested.
+         Desktop structure/position untouched (sm: keeps original). -->
     <section
       aria-label="Highlights"
-      class="grid grid-cols-2 divide-x divide-y divide-gray-200 border-t border-gray-200 sm:grid-cols-5 sm:divide-y-0"
+      class="grid grid-cols-5 divide-x divide-gray-200 border-t border-gray-200"
     >
       <div
         v-for="stat in displayStats"
         :key="stat.label"
-        class="flex flex-col items-center py-6 text-center sm:px-4"
+        class="flex flex-col items-center px-1 py-4 text-center sm:px-4 sm:py-6"
       >
-        <div class="font-pixel text-lg leading-none text-ink">{{ stat.value }}</div>
-        <div class="mt-2 font-mono text-[11px] uppercase tracking-wider text-gray-500">
+        <div class="font-pixel text-[11px] leading-none text-ink sm:text-lg">{{ stat.value }}</div>
+        <div
+          class="mt-1.5 break-words font-mono text-[7px] uppercase leading-tight tracking-wider text-gray-500 sm:mt-2 sm:text-[11px]"
+        >
           {{ stat.label }}
         </div>
       </div>

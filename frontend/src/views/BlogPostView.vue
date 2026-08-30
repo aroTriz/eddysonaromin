@@ -158,7 +158,7 @@ function formatDate(iso: string | null): string {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+  <div class="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12 md:py-16">
     <RouterLink
       to="/blog"
       class="inline-flex items-center gap-1.5 font-mono text-[13px] text-gray-500 hover:text-ink"

@@ -60,18 +60,19 @@ function resize(): void {
   const canvas = canvasRef.value
   if (!canvas) return
   lowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false
-  // Low-end machines render every other frame (30fps) — the rotation is
-  // imperceptibly different but the GPU/CPU cost is halved.
-  frameSkip = lowEnd ? 2 : 1
+  // Always 30fps for starfield — rotation delta is tiny, 60fps is waste
+  frameSkip = 2
   const mobile = window.innerWidth < 768
-  const dpr = Math.min(window.devicePixelRatio || 1, reduced || lowEnd ? 1 : 1.5)
+  // DPR 1 on all devices for stars — white 1px dots don't benefit from HiDPI
+  const dpr = Math.min(window.devicePixelRatio || 1, reduced ? 1 : 1)
   const w = Math.round(window.innerWidth * dpr)
   const h = Math.round(window.innerHeight * dpr)
   canvas.width = w
   canvas.height = h
   canvas.style.width = `${window.innerWidth}px`
   canvas.style.height = `${window.innerHeight}px`
-  const n = mobile || lowEnd ? 1500 : 3000
+  // Lower counts: 1000 mobile / 1800 desktop — still dense, 40% cheaper
+  const n = mobile ? 1000 : lowEnd ? 1500 : 1800
   if (n !== count) {
     count = n
     positions = generateSphere(n)
@@ -152,8 +153,6 @@ function start(): void {
 }
 
 function onVisibility(): void {
-  // Only run when BOTH the tab is visible AND this layer is the active
-  // backdrop — a hidden layer must never keep animating (double rAF = lag).
   if (document.visibilityState === 'visible' && props.active !== false) start()
   else stop()
 }
@@ -184,13 +183,17 @@ onMounted(() => {
   document.addEventListener('visibilitychange', onVisibility)
 })
 
-// Theme flip — this layer becomes (or stops being) the visible backdrop.
-// Start/stop the rotation loop; the sphere is always rendered from mount.
+// Theme flip — ensure the newly visible starfield is painted synchronously
+// so the View Transition new snapshot is not blank at the tail.
 watch(
   () => props.active,
   (active) => {
-    if (active && !reduced) start()
-    else stop()
+    if (active && !reduced) {
+      // Force a sync draw before the transition snapshots the new state
+      const c = canvasRef.value; const ctx = c?.getContext('2d')
+      if (c && ctx) draw(ctx, c.width, c.height)
+      start()
+    } else stop()
   },
 )
 

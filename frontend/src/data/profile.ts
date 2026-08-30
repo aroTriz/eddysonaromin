@@ -143,7 +143,6 @@ export const stackGroups: StackGroup[] = [
     items: [
       'Vue',
       'Nuxt',
-      'Ionic',
       'React',
       'TypeScript',
       'JavaScript',
@@ -154,7 +153,11 @@ export const stackGroups: StackGroup[] = [
   },
   {
     label: 'Backend',
-    items: ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite'],
+    items: ['Laravel', 'PHP', 'Node.js'],
+  },
+  {
+    label: 'Database',
+    items: ['MySQL', 'SQLite', 'SQL', 'DBeaver'],
   },
   {
     label: 'CMS',
@@ -162,15 +165,15 @@ export const stackGroups: StackGroup[] = [
   },
   {
     label: 'Mobile & Desktop',
-    items: ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java'],
+    items: ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java', 'Ionic', 'Android Studio'],
   },
   {
     label: 'Machine Learning and Data',
-    items: ['Python', 'Machine Learning', 'Data Analytics', 'SQL', 'Anaconda', 'Jupyter'],
+    items: ['Python', 'Machine Learning', 'Data Analytics', 'Anaconda', 'Jupyter'],
   },
   {
     label: 'AI & Assistant',
-    items: ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Mimo', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
+    items: ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Muse Spark', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
   },
   {
     label: 'Version Control & CI/CD',
@@ -178,11 +181,11 @@ export const stackGroups: StackGroup[] = [
   },
   {
     label: 'Developer Tools',
-    items: ['VS Code', 'Docker', 'XAMPP', 'WAMP', 'DBeaver', 'Android Studio', 'IntelliJ IDEA', 'PyCharm'],
+    items: ['VS Code', 'XAMPP', 'WAMP', 'IntelliJ IDEA', 'PyCharm'],
   },
   {
     label: 'Hosting & Deployment',
-    items: ['Vercel', 'Cloudflare'],
+    items: ['Vercel', 'Cloudflare', 'Docker'],
   },
   {
     label: 'OS',
@@ -245,7 +248,7 @@ export const allTechnologies: string[] = [
   'OpenClaw',
   'Grok',
   'BigPickle',
-  'Mimo',
+  'Muse Spark',
   'Higgsfield',
   'GitLab',
   'Docker',

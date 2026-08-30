@@ -19,7 +19,7 @@ defineProps<{
 </script>
 
 <template>
-  <figure class="mx-auto h-full w-auto select-none">
+  <figure class="mx-auto h-full w-auto max-h-full select-none" style="aspect-ratio: 9 / 19.5; width:auto; height:100%; max-height:100%">
     <!-- ── Phone body (bezel) ────────────────────────────────── -->
     <div
       class="flex h-full flex-col rounded-[2.4rem] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 p-[6px] shadow-md ring-1 ring-gray-200"

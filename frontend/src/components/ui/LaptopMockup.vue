@@ -17,18 +17,42 @@ defineProps<{
   video?: boolean
   /** Optional device label shown below the mockup. */
   label?: string
+  /** When true, the mockup stretches to the showcase stage height so its
+   *  total visual height equals the phone mockup (height equal, width auto).
+   *  Default false keeps the classic width-driven layout. */
+  equalHeight?: boolean
 }>()
 </script>
 
 <template>
-  <figure class="mx-auto w-full max-w-3xl select-none">
+  <figure
+    :class="[
+      'mx-auto select-none',
+      equalHeight
+        ? 'flex h-full max-h-full w-auto max-w-full flex-col justify-center'
+        : 'w-full max-w-3xl',
+    ]"
+  >
     <!-- ── Laptop lid (bezel + browser window) ───────────────── -->
     <div
-      class="rounded-[14px] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 p-2 shadow-md ring-1 ring-gray-200 sm:p-2.5"
+      :class="[
+        'rounded-[14px] bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 shadow-md ring-1 ring-gray-200',
+        equalHeight ? 'flex flex-col p-1.5 sm:p-2' : 'p-2 sm:p-2.5',
+      ]"
+      :style="
+        equalHeight
+          ? 'height:calc(100% - 14px); aspect-ratio:1.62; width:auto; max-width:100%; min-height:0; max-height:calc(100% - 14px)'
+          : undefined
+      "
     >
-      <div class="overflow-hidden rounded-[8px] bg-white shadow-sm">
+      <div
+        :class="[
+          'overflow-hidden rounded-[8px] bg-white shadow-sm',
+          equalHeight ? 'flex flex-1 flex-col min-h-0' : '',
+        ]"
+      >
         <!-- Browser chrome -->
-        <div class="flex items-center gap-1.5 border-b border-gray-200 bg-gray-50 px-3 py-2">
+        <div class="flex shrink-0 items-center gap-1.5 border-b border-gray-200 bg-gray-50 px-3 py-2">
           <span class="h-2.5 w-2.5 rounded-full bg-gray-200" aria-hidden="true"></span>
           <span class="h-2.5 w-2.5 rounded-full bg-gray-200" aria-hidden="true"></span>
           <span class="h-2.5 w-2.5 rounded-full bg-gray-200" aria-hidden="true"></span>
@@ -38,7 +62,10 @@ defineProps<{
           >{{ url }}</span>
         </div>
         <!-- Screen -->
-        <div v-if="src" class="aspect-[16/9] w-full bg-gray-100">
+        <div
+          v-if="src"
+          :class="[equalHeight ? 'aspect-[16/9] w-full bg-gray-100 shrink-0' : 'aspect-[16/9] w-full bg-gray-100']"
+        >
           <video
             v-if="video"
             :src="src"

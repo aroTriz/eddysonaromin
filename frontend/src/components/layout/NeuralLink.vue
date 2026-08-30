@@ -9,6 +9,8 @@
  */
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import { THEME_CHANGE_EVENT } from '@/composables/useTheme'
+
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 /**
@@ -36,6 +38,7 @@ let dpr = 1
 let ink = '10 10 10'
 let resizeObserver: ResizeObserver | null = null
 let reduced = false
+let frameCount = 0
 
 function readInk(): void {
   const val = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()
@@ -43,19 +46,17 @@ function readInk(): void {
 }
 
 function buildNodes(width: number, height: number): LinkNode[] {
-  // Balanced visibility: enough nodes to read as a real backdrop (not a white
-  // void), but subtle enough that cards and text stay dominant. area/8000 →
-  // ~260 nodes @1080p, ~460 @1440p, cap 500 for 4K (the spatial grid keeps
-  // the per-frame cost ~O(n) regardless of density).
-  const count = Math.round(Math.min(500, Math.max(100, (width * height) / 8000)))
+  // Lower density for smoothness: area/12000 → ~175 @1080p, ~300 @1440p, cap 320.
+  // Visually almost identical (halftone already sparse) but ~35% fewer links.
+  const count = Math.round(Math.min(320, Math.max(80, (width * height) / 12000)))
   const arr: LinkNode[] = []
   for (let i = 0; i < count; i++) {
     arr.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.32,
-      vy: (Math.random() - 0.5) * 0.32,
-      r: Math.random() * 1.8 + 0.9,
+      vx: (Math.random() - 0.5) * 0.28,
+      vy: (Math.random() - 0.5) * 0.28,
+      r: Math.random() * 1.6 + 0.8,
     })
   }
   return arr
@@ -64,8 +65,8 @@ function buildNodes(width: number, height: number): LinkNode[] {
 function resize(): void {
   const c = canvasRef.value
   if (!c) return
-  // DPR capped at 1.5 — visually identical dots, half the pixels to paint.
-  dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+  // DPR capped at 1 — crisp enough for 1px dots, huge perf win on HiDPI
+  dpr = Math.min(window.devicePixelRatio || 1, 1)
   w = window.innerWidth
   h = window.innerHeight
   c.width = Math.round(w * dpr)
@@ -158,14 +159,14 @@ function draw(): void {
 }
 
 function tick(): void {
-  draw()
+  // Throttle to ~30fps — halftone drift is imperceptible at 60fps, 30fps halves CPU
+  frameCount++
+  if (frameCount % 2 === 0) draw()
   raf = requestAnimationFrame(tick)
 }
 
 function onVisibility(): void {
   const nowVisible = document.visibilityState === 'visible'
-  // Only run when BOTH the tab is visible AND this layer is the active
-  // backdrop — a hidden layer must never keep animating (double rAF = lag).
   if (nowVisible && !reduced && props.active !== false && !raf) {
     raf = requestAnimationFrame(tick)
   } else if (!nowVisible && raf) {
@@ -174,12 +175,20 @@ function onVisibility(): void {
   }
 }
 
+function onThemeChange(): void {
+  readInk()
+  // Repaint immediately so the node color matches the new --ink token
+  // (light 10 10 10 vs dark 244 244 245) without waiting for next rAF.
+  draw()
+}
+
 onMounted(() => {
   reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   readInk()
   resize()
   resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(document.body)
+  window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
   // Draw the FIRST frame synchronously — do NOT wait for the rAF loop.
   // During a View-Transition theme switch the browser freezes rAF until the
   // transition finishes, so waiting would leave the canvas blank (pure white)
@@ -194,16 +203,15 @@ onMounted(() => {
   document.addEventListener('visibilitychange', onVisibility)
 })
 
-// When the theme flips and this layer becomes (or stops being) the visible
-// backdrop, start/stop the loop. Draw one frame immediately (deferred to
-// after the View Transition capture so it doesn't compete for CPU).
+// When the theme flips, the new layer becomes visible. Draw synchronously
+// so the new View Transition snapshot already contains the painted backdrop
+// (setTimeout would paint AFTER the snapshot → blank tail flash).
 watch(
   () => props.active,
   (active) => {
     if (active && !reduced && !raf) {
-      // Deferred draw: the View Transition captures its snapshot first,
-      // then we paint the backdrop canvas so it's visible instantly.
-      setTimeout(() => { draw() }, 0)
+      readInk()
+      draw()
       raf = requestAnimationFrame(tick)
     } else if (!active && raf) {
       cancelAnimationFrame(raf)
@@ -218,6 +226,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   resizeObserver = null
   document.removeEventListener('visibilitychange', onVisibility)
+  window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange)
 })
 </script>
 

@@ -143,12 +143,6 @@ const router = createRouter({
       meta: { title: 'Preferences — Aromin Admin', requiresAuth: true },
     },
     {
-      path: '/aromin/pet',
-      name: 'aromin-pet',
-      component: () => import('@/views/aromin/ArominPetView.vue'),
-      meta: { title: 'Pet — Aromin Admin', requiresAuth: true },
-    },
-    {
       path: '/aromin/users',
       name: 'aromin-users',
       component: () => import('@/views/aromin/ArominUsersView.vue'),

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminBlogPostController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminExperienceController;
 use App\Http\Controllers\Api\AdminRecommendationController;
 use App\Http\Controllers\Api\AdminStackGroupController;
 use App\Http\Controllers\Api\AdminUserController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\AdminProjectController;
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\ExperienceController;
 use App\Http\Controllers\Api\GithubController;
 use App\Http\Controllers\Api\PrivateChatController;
 use App\Http\Controllers\Api\ProjectController;
@@ -36,6 +38,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::get('/projects/{slug}', [ProjectController::class, 'show']);
+
+    Route::get('/experiences', [ExperienceController::class, 'index']);
 
     Route::get('/blog/posts', [BlogPostController::class, 'index']);
     Route::get('/blog/posts/{slug}', [BlogPostController::class, 'show']);
@@ -140,6 +144,17 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/recommendations/{id}/archive', [AdminRecommendationController::class, 'archive']);
     Route::post('/admin/recommendations/{id}/restore', [AdminRecommendationController::class, 'restore']);
     Route::delete('/admin/recommendations/{id}', [AdminRecommendationController::class, 'destroy']);
+
+    // ── Admin experiences ──────────────────────────────────────────
+    Route::get('/admin/experiences', [AdminExperienceController::class, 'index']);
+    Route::post('/admin/experiences', [AdminExperienceController::class, 'store']);
+    Route::delete('/admin/experiences/bulk', [AdminExperienceController::class, 'bulkDestroy']);
+    Route::get('/admin/experiences/{id}', [AdminExperienceController::class, 'show']);
+    Route::put('/admin/experiences/{id}', [AdminExperienceController::class, 'update']);
+    Route::post('/admin/experiences/{id}/archive', [AdminExperienceController::class, 'archive']);
+    Route::post('/admin/experiences/{id}/restore', [AdminExperienceController::class, 'restore']);
+    Route::delete('/admin/experiences/{id}', [AdminExperienceController::class, 'destroy']);
+    Route::post('/admin/experiences/upload', [AdminExperienceController::class, 'upload']);
 
     Route::get('/admin/projects', [AdminProjectController::class, 'index']);
     Route::post('/admin/projects', [AdminProjectController::class, 'store']);

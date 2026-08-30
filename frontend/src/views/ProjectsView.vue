@@ -105,7 +105,7 @@ const paginationTotal = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-16">
+  <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-12 md:py-16">
     <!-- ── Header (bryllim-style) ────────────────────────────── -->
     <Reveal>
       <p class="terminal-comment text-[13px]">$ ls ./projects/</p>

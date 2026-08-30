@@ -128,7 +128,7 @@ function requestSave(): void {
     error.value = 'New accounts need a password of at least 8 characters.'
     return
   }
-  if (!editing.value && form.value.password.length > 16) {
+  if (!editing.value && (form.value.password?.length ?? 0) > 16) {
     error.value = 'Password must be 16 characters or fewer.'
     return
   }
@@ -337,7 +337,7 @@ onMounted(load)
 
 <template>
   <AdminLayout active="aromin-users">
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink">
           accounts<span class="text-gray-400">.</span>
@@ -766,3 +766,4 @@ onMounted(load)
     />
   </AdminLayout>
 </template>
+

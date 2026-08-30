@@ -24,7 +24,7 @@ async function flag(env: Env, key: string): Promise<boolean> {
     .prepare('SELECT value FROM site_settings WHERE key = ?')
     .bind(key)
     .first<{ value: string }>()
-  return (row?.value ?? '1') !== '0'
+  return (row?.value ?? '0') !== '0'
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
@@ -41,7 +41,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       .prepare('SELECT value FROM site_settings WHERE key = ?')
       .bind('pet_settings')
       .first<{ value: string }>()
-    const DEFAULT_PET = { enabled: false, globalEnabled: true, scale: 0.5, speed: 1, animate: true }
+    const DEFAULT_PET = { enabled: false, globalEnabled: false, scale: 0.5, speed: 1, animate: false }
     let pet = DEFAULT_PET
     if (petRow?.value) {
       try { pet = { ...DEFAULT_PET, ...JSON.parse(petRow.value) } } catch { /* use defaults */ }
@@ -49,6 +49,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
     return json({ community_chat_enabled, backdrop_enabled, click_me_enabled, ask_triz_enabled, pet })
   } catch {
-    return json({ community_chat_enabled: true, backdrop_enabled: true, click_me_enabled: true, ask_triz_enabled: true, pet: { enabled: false, globalEnabled: true, scale: 0.5, speed: 1, animate: true } }, 500)
+    return json({ community_chat_enabled: false, backdrop_enabled: false, click_me_enabled: false, ask_triz_enabled: false, pet: { enabled: false, globalEnabled: false, scale: 0.5, speed: 1, animate: false } }, 500)
   }
 }

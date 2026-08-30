@@ -30,8 +30,11 @@ const { preference } = useTheme()
 
 const isDark = computed(() => resolveIsDark(preference.value))
 
-/** Animated backdrops on/off — from the server-side site setting. Fail-open. */
-const backdropOn = ref(true)
+/** Animated backdrops on/off — from the server-side site setting.
+ *  null = still loading (render nothing → no flash). Caches to localStorage
+ *  so a reload paints the correct state instantly before the async fetch.
+ */
+const backdropOn = ref<boolean | null>(null)
 
 const BACKDROP_CHANGE_EVENT = 'backdrop-change'
 
@@ -39,12 +42,21 @@ function onBackdropChange(e: Event): void {
   const detail = (e as CustomEvent).detail
   if (detail && typeof detail.enabled === 'boolean') {
     backdropOn.value = detail.enabled
+    try { localStorage.setItem('backdrop_enabled', detail.enabled ? '1' : '0') } catch {}
   }
 }
 
 onMounted(() => {
+  // Instant paint from cache — eliminates the "true then false" flash
+  // that made neurolink/stars appear during loading even when admin = OFF.
+  try {
+    const cached = localStorage.getItem('backdrop_enabled')
+    if (cached === '0') backdropOn.value = false
+    else if (cached === '1') backdropOn.value = true
+  } catch {}
   void fetchBackdropEnabled().then((ok) => {
     backdropOn.value = ok
+    try { localStorage.setItem('backdrop_enabled', ok ? '1' : '0') } catch {}
   })
   window.addEventListener(BACKDROP_CHANGE_EVENT, onBackdropChange)
 })

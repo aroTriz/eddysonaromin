@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * About — bio (terminal style), info.json card, tech stack grid, interests.
  */
@@ -54,7 +54,7 @@ const info = [
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <PageHeader
       comment="$ cd ./about"
       title="about"

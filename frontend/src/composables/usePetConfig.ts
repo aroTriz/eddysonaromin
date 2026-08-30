@@ -24,13 +24,12 @@ export interface PetConfig {
 }
 
 export const DEFAULT_PET_CONFIG: PetConfig = {
-  // Off by default — the pet appears only after the visitor toggles it on
-  // from the navbar ("toggle pet", ⌘P / Alt+P) or the admin enables it.
+  // Off by default — everything disabled until the admin enables via preferences.
   enabled: false,
-  globalEnabled: true,
+  globalEnabled: false,
   scale: 0.5,
   speed: 1,
-  animate: true,
+  animate: false,
 }
 
 /** Size presets used by the admin page. */
@@ -119,13 +118,24 @@ export async function bootPetConfig(): Promise<void> {
   const base = { ...DEFAULT_PET_CONFIG, ...(api ?? readCache() ?? {}) }
   const local = readLocalEnabled()
 
-  // New visitors (no localStorage choice) always get pet OFF.
-  // Only returning visitors who explicitly toggled it on see the pet.
-  petConfig.enabled = local === true
+  // Apply global config fields first
   petConfig.globalEnabled = base.globalEnabled ?? DEFAULT_PET_CONFIG.globalEnabled
   petConfig.scale = base.scale ?? DEFAULT_PET_CONFIG.scale
   petConfig.speed = base.speed ?? DEFAULT_PET_CONFIG.speed
   petConfig.animate = base.animate ?? DEFAULT_PET_CONFIG.animate
+
+  // Per-browser enabled logic — requested behavior:
+  //  - Admin OFF (globalEnabled=false) → hide "toggle pet" button and force pet OFF (enabled=false), clear stale local.
+  //  - Admin ON (globalEnabled=true) → only SHOWS the toggle button; pet stays OFF by default (enabled=false)
+  //    until the visitor clicks toggle (local=1). Never auto-on for new visitors.
+  if (!petConfig.globalEnabled) {
+    clearLocalEnabled()
+    petConfig.enabled = false
+  } else if (local !== null) {
+    petConfig.enabled = local
+  } else {
+    petConfig.enabled = false
+  }
   writeCache()
 }
 
@@ -149,6 +159,9 @@ export async function savePetConfigToApi(): Promise<void> {
 
   const saved = (await res.json()) as PetConfig
   Object.assign(petConfig, saved)
+  // Admin enabling the pet only shows the toggle button — never auto-enable the cat itself.
+  // Visitor must click "toggle pet" to turn it on. Force OFF after every admin save.
+  petConfig.enabled = false
   clearLocalEnabled()
   writeCache()
 }
@@ -158,6 +171,8 @@ export async function savePetConfigToApi(): Promise<void> {
  * touches the global API config (the admin pet page owns that).
  */
 export function togglePetLocal(): void {
+  // If the admin has disabled the pet globally, the visitor can't re-enable it
+  if (!petConfig.globalEnabled) return
   const next = !petConfig.enabled
   petConfig.enabled = next
   try {

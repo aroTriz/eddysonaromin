@@ -296,7 +296,7 @@ function formatCount(n: number): string {
 <template>
   <AdminLayout active="aromin-dashboard" wide>
     <!-- ── Header ─────────────────────────────────────────── -->
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-pixel text-[1.9rem] leading-none sm:text-[2.4rem]">
           {{ profile.name }}
@@ -418,7 +418,7 @@ function formatCount(n: number): string {
       <section class="mt-4 grid grid-cols-1 gap-4" aria-label="Recent activity">
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <p class="border-b border-gray-200 px-6 py-4 font-mono text-[11px] text-gray-500 dark:border-gray-300">
-            // recent visits <span class="text-gray-400">(latest 10 IPs — IPs masked)</span>
+            // recent visits <span class="text-gray-400">(latest 10 IPs)</span>
           </p>
           <div class="overflow-x-auto">
             <table class="w-full min-w-[560px] text-left font-mono text-[11.5px]">
@@ -439,7 +439,7 @@ function formatCount(n: number): string {
                   :key="i"
                   class="border-b border-gray-100 last:border-0 dark:border-gray-200"
                 >
-                  <td class="whitespace-nowrap px-6 py-3 text-gray-500">{{ v.ip || '—' }}</td>
+                  <td class="max-w-[280px] break-all px-6 py-3 text-gray-500">{{ v.raw_ip || v.ip || '—' }}</td>
                   <td class="whitespace-nowrap px-3 py-3 text-ink">{{ v.visits ?? 0 }}</td>
                   <td class="whitespace-nowrap px-3 py-3 text-gray-600 dark:text-gray-400">
                     {{ flag(v.country) }}
@@ -455,7 +455,7 @@ function formatCount(n: number): string {
                     <button
                       type="button"
                       class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
-                      :aria-label="`View visit history for ${v.ip}`"
+                      :aria-label="`View visit history for ${v.raw_ip || v.ip}`"
                       title="View visit history"
                       @click="openVisitHistory(v)"
                     >
@@ -495,7 +495,7 @@ function formatCount(n: number): string {
           class="fixed inset-0 z-[120] flex items-center justify-center p-6"
           role="dialog"
           aria-modal="true"
-          :aria-label="`Details for ${historyTarget?.ip ?? 'this IP'}`"
+          :aria-label="`Details for ${historyTarget?.raw_ip || historyTarget?.ip || 'this IP'}`"
         >
           <!-- Frosted blur backdrop (matching ConfirmModal) -->
           <div
@@ -515,8 +515,8 @@ function formatCount(n: number): string {
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <p class="font-mono text-[14px] font-semibold tracking-tight text-ink">
-                    {{ historyTarget?.ip || 'IP' }}
+                  <p class="break-all font-mono text-[13px] font-semibold tracking-tight text-ink">
+                    {{ historyTarget?.raw_ip || historyTarget?.ip || 'IP' }}
                   </p>
                   <span
                     class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-medium"

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Stack — greyfolio-style tech stack: banner + description + category
  * sections, each a dashed-border pill row of technologies WITH their brand
@@ -39,7 +39,7 @@ const fallbackGroups: StackGroup[] = staticGroups.map((g, i) => ({
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-2xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- header -->
     <header class="mb-12">
       <p class="terminal-comment mb-3 text-[13px]">$ ls ./stack/</p>

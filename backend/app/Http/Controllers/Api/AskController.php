@@ -28,7 +28,7 @@ class AskController extends Controller
 
         $question = $validated['question'];
 
-        // Use opencode CLI to get AI answers via mimo v2.5
+        // Use opencode CLI to get AI answers via muse spark 1.2 contributor
         // opencode run uses its own agent, so we prefix the question directly
         $fullPrompt = "Answer this question directly in 1-3 sentences: {$question}";
         $escapedPrompt = escapeshellarg($fullPrompt);
@@ -44,7 +44,7 @@ class AskController extends Controller
                 $raw = trim(implode("\n", $output));
                 // Strip ANSI escape codes and terminal formatting
                 $answer = preg_replace('/\x1b\[[0-9;]*[a-zA-Z]/', '', $raw);
-                $answer = preg_replace('/^\s*>\s*build\s*·\s*mimo-v2\.5\s*/m', '', $answer);
+                $answer = preg_replace('/^\s*>\s*build\s*·\s*muse-spark-1\.2-contributor\s*/m', '', $answer);
                 $answer = trim($answer);
 
                 if ($exitCode === 0 && $answer !== '') {

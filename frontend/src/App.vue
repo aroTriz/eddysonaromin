@@ -90,11 +90,15 @@ onMounted(async () => {
        relied on Ionic's runtime behaviour beyond the host element, so the
        wrapper swaps 1:1 and drops the Ionic framework from the bundle. -->
   <div class="bg-bg text-ink">
+    <!-- Backdrop sits behind the loader from first paint — no pop when loader fades.
+         It self-hides when backdrop_enabled=off or during admin routes via v-if inside. -->
+    <SiteBackdrop v-if="!isAdmin" />
+
     <!-- Render nothing until the initial route (and its auth guard) settles,
          so a refresh on /aromin never flashes the public navbar. -->
     <template v-if="routerReady">
       <template v-if="isAdmin">
-      <!-- Admin area — own layout, no site shell/backdrop.
+      <!-- Admin area — own layout (AdminLayout has its own SiteBackdrop).
            The blur entrance lives inside AdminLayout around the content
            only, so the sidebar never blurs. -->
       <main class="relative z-10 min-h-dvh">
@@ -102,8 +106,6 @@ onMounted(async () => {
       </main>
     </template>
     <template v-else>
-      <SiteBackdrop />
-
       <AppShell :active="activeRoute" />
 
       <!-- SalaryCat desktop pet — always mounted, visibility toggled via CSS -->

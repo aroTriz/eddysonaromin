@@ -14,10 +14,10 @@ interface Env {
 
 const DEFAULT_PET = {
   enabled: false,
-  globalEnabled: true,
+  globalEnabled: false,
   scale: 0.5,
   speed: 1,
-  animate: true,
+  animate: false,
 }
 
 function json(data: unknown, status = 200): Response {
@@ -67,6 +67,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (typeof body.animate === 'boolean') current.animate = body.animate
     if (typeof body.scale === 'number' && VALID_SCALES.includes(body.scale)) current.scale = body.scale
     if (typeof body.speed === 'number' && VALID_SPEEDS.includes(body.speed)) current.speed = body.speed
+    // Never auto-enable via admin: admin ON only shows toggle button; visitor toggles per-browser.
+    current.enabled = false
 
     const now = new Date().toISOString()
 

@@ -48,14 +48,24 @@ export function resolveIsDark(pref: ThemePreference): boolean {
   return isDark(pref)
 }
 
+/** Sync the <meta name="theme-color"> so mobile browser chrome matches the theme. */
+function syncMetaThemeColor(dark: boolean): void {
+  try {
+    const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null
+    if (meta) meta.content = dark ? '#0c0c0f' : '#ffffff'
+  } catch {}
+}
+
 /**
  * Toggle the `dark` class on <html> and release the inline background set by
  * the pre-paint <head> script so the CSS variables in main.css take over.
  */
 function applyClass(pref: ThemePreference): void {
+  const dark = isDark(pref)
   const root = document.documentElement
-  root.classList.toggle('dark', isDark(pref))
+  root.classList.toggle('dark', dark)
   root.style.backgroundColor = ''
+  syncMetaThemeColor(dark)
 }
 
 /* ── Smooth theme flip — View Transitions API ─────────────────────────
@@ -108,8 +118,6 @@ function setRevealOrigin(event?: MouseEvent): void {
  */
 function animateCircleReveal(vt: ViewTransitionLike): void {
   const root = document.documentElement
-  // Distance from the click point to the FARTHEST corner of the viewport —
-  // the radius that guarantees the circle fully covers the screen.
   const r = Math.hypot(
     Math.max(revealX, window.innerWidth - revealX),
     Math.max(revealY, window.innerHeight - revealY),
@@ -124,6 +132,7 @@ function animateCircleReveal(vt: ViewTransitionLike): void {
           ],
         },
         {
+          // Bryllim exact: 540ms + .32,.08,.24,1 — keep it for reference smoothness
           duration: 540,
           easing: 'cubic-bezier(0.32, 0.08, 0.24, 1)',
           pseudoElement: '::view-transition-new(root)',
@@ -150,11 +159,36 @@ let transitioning = false
  * never leave the page's theme desynced from its preference (that desync is
  * what used to make the backdrop particles disappear until a refresh).
  */
+let animT: ReturnType<typeof setTimeout> | undefined
+
+function crossfade(pref: ThemePreference): void {
+  // Fallback / coordinated crossfade like bryllim — html.theme-anim drives
+  // background/border/color for 520ms, then cleans up. Also used when the
+  // new pref is already the current dark state (no visual flip needed).
+  const root = document.documentElement
+  root.classList.add('theme-anim')
+  preference.value = pref
+  applyClass(pref)
+  window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
+  clearTimeout(animT)
+  animT = setTimeout(() => root.classList.remove('theme-anim'), 520)
+}
+
 async function applyThemeTransition(pref: ThemePreference, event?: MouseEvent): Promise<void> {
   setRevealOrigin(event)
   const doc = document as ViewTransitionDoc
 
+  // No visual change needed — just sync the active pill state
+  if (isDark(pref) === document.documentElement.classList.contains('dark')) {
+    preference.value = pref
+    applyClass(pref)
+    window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
+    await nextTick()
+    return
+  }
+
   const flip = async (): Promise<void> => {
+    preference.value = pref
     applyClass(pref)
     window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { dark: isDark(pref) } }))
     await nextTick()
@@ -168,24 +202,19 @@ async function applyThemeTransition(pref: ThemePreference, event?: MouseEvent): 
   if (canAnimate && !transitioning) {
     transitioning = true
     try {
-      const vt = doc.startViewTransition(flip)
-      // Circular wipe from the click point (bryllim technique) — animate the
-      // `::view-transition-new(root)` pseudo-element via the Web Animations API.
+      const vt = (document as ViewTransitionDoc).startViewTransition!(flip)
       animateCircleReveal(vt)
-      // Race with a timeout so a stalled transition (e.g. the tab hid
-      // mid-flip) can NEVER wedge the guard — worst case we lose the
-      // animation, never the theme application.
       await Promise.race([
         vt.finished.catch(() => {}),
-        new Promise<void>((res) => setTimeout(res, 1200)),
+        new Promise<void>((res) => setTimeout(res, 900)),
       ])
     } finally {
       transitioning = false
     }
   } else {
-    // Mid-flight flip, hidden tab, reduced motion, or no API support —
-    // apply instantly, no animation. The class still lands.
-    await flip()
+    // Fallback / mid-flight / hidden / reduced-motion → bryllim crossfade (smooth 520ms)
+    // No View Transition to avoid stacking; theme-anim handles the tail
+    crossfade(pref)
   }
 }
 
@@ -194,13 +223,14 @@ async function applyThemeTransition(pref: ThemePreference, event?: MouseEvent): 
  * when the browser doesn't support it / reduced motion is on).
  */
 export function setTheme(pref: ThemePreference, event?: MouseEvent): void {
-  preference.value = pref
   try {
     localStorage.setItem(STORAGE_KEY, pref)
-  } catch {
-    /* storage unavailable — still apply in-session */
-  }
-  void applyThemeTransition(pref, event)
+  } catch {}
+  const x = (event && (event as MouseEvent).clientX) || window.innerWidth
+  const y = (event && (event as MouseEvent).clientY) || window.innerHeight
+  // Pass coordinates through for the clip origin (bryllim pattern)
+  const ev = { clientX: x, clientY: y } as unknown as MouseEvent
+  void applyThemeTransition(pref, ev)
 }
 
 /* ── System-mode daylight timer (single instance, app lifetime) ─────── */

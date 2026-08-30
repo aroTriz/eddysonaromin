@@ -13,10 +13,10 @@ interface Env {
 
 const DEFAULT_PET = {
   enabled: false,
-  globalEnabled: true,
+  globalEnabled: false,
   scale: 0.5,
   speed: 1,
-  animate: true,
+  animate: false,
 }
 
 function json(data: unknown, status = 200): Response {

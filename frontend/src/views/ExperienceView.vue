@@ -83,7 +83,7 @@ function onKeydown(e: KeyboardEvent): void {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-2xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- header -->
     <header class="mb-12">
       <p class="terminal-comment mb-3 text-[13px]">$ cat ./resume.md</p>
@@ -129,37 +129,40 @@ function onKeydown(e: KeyboardEvent): void {
               {{ job.company.charAt(0) }}
             </div>
 
-            <!-- floating tooltip (left of logo) -->
+            <!-- floating tooltip (left of logo) — outer handles enter, inner handles float (no transform conflict) -->
             <Transition name="float">
               <div
                 v-if="hovered === String(job.id) && job.tooltip_desc"
-                class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                class="tooltip-outer absolute right-full top-0 z-30 mr-4 w-64"
                 @mouseenter="show(String(job.id))"
                 @mouseleave="hide"
               >
-                <!-- company logo -->
-                <div
-                  class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
-                >
-                  <img
-                    v-if="job.logo_url"
-                    :src="job.logo_url"
-                    :alt="`${job.company} logo`"
-                    class="max-h-full max-w-full object-contain"
-                    loading="lazy"
-                  />
-                  <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
-                    <Images class="h-7 w-7" :stroke-width="1.4" />
-                    <span class="font-mono text-[10px] text-gray-400">no logo</span>
+                <!-- invisible bridge over the 16px gap so hover doesn't flicker when crossing -->
+                <div class="tooltip-float-inner overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_16px_40px_-16px_rgba(0,0,0,0.25)] will-change-transform">
+                  <!-- company logo -->
+                  <div
+                    class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
+                  >
+                    <img
+                      v-if="job.logo_url"
+                      :src="job.logo_url"
+                      :alt="`${job.company} logo`"
+                      class="max-h-full max-w-full object-contain"
+                      loading="lazy"
+                    />
+                    <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
+                      <Images class="h-7 w-7" :stroke-width="1.4" />
+                      <span class="font-mono text-[10px] text-gray-400">no logo</span>
+                    </div>
                   </div>
-                </div>
-                <div class="p-3.5">
-                  <p class="text-[13px] font-semibold leading-snug text-ink">
-                    {{ job.company }}
-                  </p>
-                  <p class="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-gray-600">
-                    {{ job.tooltip_desc }}
-                  </p>
+                  <div class="p-3.5">
+                    <p class="text-[13px] font-semibold leading-snug text-ink">
+                      {{ job.company }}
+                    </p>
+                    <p class="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-gray-600">
+                      {{ job.tooltip_desc }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </Transition>
@@ -171,25 +174,23 @@ function onKeydown(e: KeyboardEvent): void {
         <div class="flex-1 pb-12">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ job.company }}</h2>
-            <!-- album + certificate buttons -->
+            <!-- album + certificate buttons — always visible per experience (even when CMS has no photos yet, modal shows logo placeholder) -->
             <div class="flex shrink-0 items-center gap-1.5">
               <button
-                v-if="job.albums.length > 0"
                 type="button"
                 class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} photos`"
                 :aria-label="`Open ${job.company} album`"
-                @click="openModal(`${job.company} — photos`, job.albums, job.logo_url)"
+                @click="openModal(`${job.company} — photos`, job.albums ?? [], job.logo_url)"
               >
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="job.certificates.length > 0"
                 type="button"
                 class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} certificates`"
                 :aria-label="`Open ${job.company} certificates`"
-                @click="openModal(`${job.company} — certificates`, job.certificates, job.logo_url)"
+                @click="openModal(`${job.company} — certificates`, job.certificates ?? [], job.logo_url)"
               >
                 <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -255,37 +256,39 @@ function onKeydown(e: KeyboardEvent): void {
               <span class="font-pixel text-[12px] text-ink">{{ edu.company.charAt(0) }}</span>
             </div>
 
-            <!-- floating tooltip (left of logo) -->
+            <!-- floating tooltip (left of logo) — outer handles enter, inner handles float -->
             <Transition name="float">
               <div
                 v-if="hovered === String(edu.id) && edu.tooltip_desc"
-                class="absolute right-full top-0 z-30 mr-4 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)]"
+                class="tooltip-outer absolute right-full top-0 z-30 mr-4 w-64"
                 @mouseenter="show(String(edu.id))"
                 @mouseleave="hide"
               >
-                <!-- school logo -->
-                <div
-                  class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
-                >
-                  <img
-                    v-if="edu.logo_url"
-                    :src="edu.logo_url"
-                    :alt="`${edu.company} logo`"
-                    class="max-h-full max-w-full object-contain"
-                    loading="lazy"
-                  />
-                  <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
-                    <Images class="h-7 w-7" :stroke-width="1.4" />
-                    <span class="font-mono text-[10px] text-gray-400">no logo</span>
+                <div class="tooltip-float-inner overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_16px_40px_-16px_rgba(0,0,0,0.25)] will-change-transform">
+                  <!-- school logo -->
+                  <div
+                    class="flex aspect-[16/10] w-full items-center justify-center bg-[#ffffff] p-5"
+                  >
+                    <img
+                      v-if="edu.logo_url"
+                      :src="edu.logo_url"
+                      :alt="`${edu.company} logo`"
+                      class="max-h-full max-w-full object-contain"
+                      loading="lazy"
+                    />
+                    <div v-else class="flex flex-col items-center gap-1.5 text-gray-300">
+                      <Images class="h-7 w-7" :stroke-width="1.4" />
+                      <span class="font-mono text-[10px] text-gray-400">no logo</span>
+                    </div>
                   </div>
-                </div>
-                <div class="p-3.5">
-                  <p class="text-[13px] font-semibold leading-snug text-ink">
-                    {{ edu.company }}
-                  </p>
-                  <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
-                    {{ edu.tooltip_desc }}
-                  </p>
+                  <div class="p-3.5">
+                    <p class="text-[13px] font-semibold leading-snug text-ink">
+                      {{ edu.company }}
+                    </p>
+                    <p class="mt-1.5 text-[12px] leading-relaxed text-gray-600">
+                      {{ edu.tooltip_desc }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </Transition>
@@ -295,25 +298,23 @@ function onKeydown(e: KeyboardEvent): void {
         <div class="flex-1">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-[16px] font-semibold leading-snug text-ink">{{ edu.company }}</h2>
-            <!-- album + certificate buttons -->
+            <!-- album + certificate buttons — always visible per experience (even when CMS has no photos yet, modal shows logo placeholder) -->
             <div class="flex shrink-0 items-center gap-1.5">
               <button
-                v-if="edu.albums.length > 0"
                 type="button"
                 class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${edu.company} photos`"
                 :aria-label="`Open ${edu.company} album`"
-                @click="openModal(`${edu.company} — photos`, edu.albums)"
+                @click="openModal(`${edu.company} — photos`, edu.albums ?? [], edu.logo_url)"
               >
                 <Images class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
               <button
-                v-if="edu.certificates.length > 0"
                 type="button"
                 class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${edu.company} certificates`"
                 :aria-label="`Open ${edu.company} certificates`"
-                @click="openModal(`${edu.company} — certificates`, edu.certificates)"
+                @click="openModal(`${edu.company} — certificates`, edu.certificates ?? [], edu.logo_url)"
               >
                 <Award class="h-3.5 w-3.5" :stroke-width="1.7" />
               </button>
@@ -443,34 +444,58 @@ function onKeydown(e: KeyboardEvent): void {
 </template>
 
 <style scoped>
-/* gentle floating animation for the tooltip */
+/* ── Tooltip enter — GPU-composited, no layout thrash ───── */
+.tooltip-outer {
+  will-change: transform, opacity;
+  contain: layout paint style;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+/* invisible hover bridge over the 16px gap (mr-4) so crossing doesn't flicker */
+.tooltip-outer::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 16px;
+  height: 100%;
+}
+.tooltip-float-inner {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
 .float-enter-active,
 .float-leave-active {
   transition:
-    opacity 0.3s ease,
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .float-enter-from,
 .float-leave-to {
   opacity: 0;
-  transform: translateX(8px) scale(0.96);
-}
-/* once entered, keep a slow float up/down */
-.float-enter-active {
-  animation: tooltip-float 3s ease-in-out 0.35s infinite;
+  transform: translate3d(8px, 0, 0) scale(0.97);
 }
 .float-enter-to,
 .float-leave-from {
   opacity: 1;
-  transform: translateX(0) scale(1);
+  transform: translate3d(0, 0, 0) scale(1);
+}
+/* once entered, only the inner floats — outer's transform stays untouched, no conflict → no lag */
+.float-enter-active .tooltip-float-inner {
+  animation: tooltip-float 3.2s ease-in-out 0.32s infinite;
 }
 @keyframes tooltip-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translate3d(0, -5px, 0);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .float-enter-active .tooltip-float-inner { animation: none; }
+  .float-enter-active, .float-leave-active { transition-duration: 0.01ms; }
 }
 </style>

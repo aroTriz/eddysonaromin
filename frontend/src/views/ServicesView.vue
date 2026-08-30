@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Services — bryllim consulting-exact cards in an infinite ring carousel.
  * Window shows 3 cards: left + right neighbors peek at half width and are
@@ -41,8 +41,15 @@ function onModalKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape') closeService()
 }
 
-const CARD_WIDTH = 340
+const CARD_WIDTH_DESKTOP = 340
 const GAP = 20
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+/** Responsive card width — 340px on desktop, capped 300px on mobile so 320px never overflows. */
+function getCardWidth(): number {
+  const cw = container.value?.offsetWidth
+  if (windowWidth.value < 640 && cw) return Math.min(300, cw - 16)
+  return windowWidth.value < 640 ? Math.min(300, windowWidth.value - 64) : CARD_WIDTH_DESKTOP
+}
 
 const services = [
   {
@@ -102,7 +109,7 @@ const services = [
 ]
 
 const N = services.length
-const STEP = CARD_WIDTH + GAP
+const STEP = computed(() => getCardWidth() + GAP)
 
 /** 3 copies of the deck so the ring never shows a gap. */
 const deck = [...services, ...services, ...services]
@@ -115,8 +122,9 @@ const track = ref<HTMLElement | null>(null)
 
 /** Translate so the centered card sits in the middle of the visible window. */
 const offset = computed(() => {
-  const w = container.value?.offsetWidth ?? CARD_WIDTH
-  return (w - CARD_WIDTH) / 2 - current.value * STEP
+  const cw = getCardWidth()
+  const w = container.value?.offsetWidth ?? cw
+  return (w - cw) / 2 - current.value * STEP.value
 })
 
 /** Content of a given deck slot, wrapped mod N. */
@@ -185,6 +193,7 @@ function onTrackTransitionEnd(e: TransitionEvent): void {
 /** Re-center after resize (keeps the ring in sync with the new width). */
 let resizeTimer: ReturnType<typeof setTimeout> | undefined
 function onResize(): void {
+  windowWidth.value = window.innerWidth
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(() => {
     // Snap back into the middle copy without animating (position is identical
@@ -200,6 +209,7 @@ function onResize(): void {
 }
 
 onMounted(() => {
+  windowWidth.value = window.innerWidth
   window.addEventListener('resize', onResize)
   track.value?.addEventListener('transitionend', onTrackTransitionEnd)
 })
@@ -213,7 +223,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- header -->
     <header class="mb-12">
       <p class="terminal-comment mb-3 text-[13px]">$ ls ./services/</p>
@@ -253,7 +263,7 @@ onBeforeUnmount(() => {
           :class="distance(i) === 0
             ? 'z-10 opacity-100 blur-0'
             : 'opacity-50 blur-[3px]'"
-          :style="{ width: `${CARD_WIDTH}px`, marginRight: `${GAP}px` }"
+          :style="{ width: `${getCardWidth()}px`, marginRight: `${GAP}px` }"
           role="button"
           tabindex="0"
           :aria-label="`Open details for ${at(i).title}`"

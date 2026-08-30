@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Blog — index of published posts served by the Laravel API.
  * Bryllim-style: pixel "blog" header + description + list/grid view toggle.
@@ -46,7 +46,7 @@ const pagedPosts = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-4xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-4xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- Header (bryllim-style with view toggle) -->
     <header class="mb-10 flex items-start justify-between gap-4">
       <div>

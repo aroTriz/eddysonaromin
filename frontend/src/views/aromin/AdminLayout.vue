@@ -1,10 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Admin layout — fixed left sidebar matching the main site's shell:
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { FolderKanban, Briefcase, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { FolderKanban, Briefcase, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -105,7 +105,6 @@ const navGroups = [
     label: 'g4',
     links: [
       { label: 'Users', to: '/aromin/users', name: 'aromin-users', icon: Users },
-      { label: 'Pet', to: '/aromin/pet', name: 'aromin-pet', icon: PawPrint },
       { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
     ],
   },
@@ -295,7 +294,7 @@ async function handleLogout(): Promise<void> {
     <!-- ── Content ───────────────────────────────────────────── -->
     <div class="relative z-10 lg:pl-56">
       <div
-        class="mx-auto px-6 py-10 lg:py-14"
+        class="mx-auto px-4 sm:px-6 py-6 sm:py-10 lg:py-14"
         :class="wide ? 'max-w-6xl' : 'max-w-3xl'"
       >
         <!-- Keyed wrapper — blur entrance on route change; the sidebar and

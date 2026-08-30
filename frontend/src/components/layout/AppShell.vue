@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
@@ -45,11 +45,22 @@ const isMac =  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(naviga
 
 const mobileOpen = ref(false)
 
-/** Whether the "click me..." (Ask Anything) button shows in the sidebar (admin toggle). */
-const clickMeEnabled = ref(true)
+/** Whether the "click me..." (Ask Anything) button shows in the sidebar (admin toggle).
+ *  Default OFF + localStorage cache to prevent FOUC: when admin disables (click_me_enabled=0),
+ *  a refresh previously flashed the button visible (ref=true) then hidden after fetch.
+ *  Now it stays hidden until the API confirms enabled. Cache makes enabled case show instantly on next refresh. */
+const CLICK_ME_CACHE = 'aromin-click-me-v1'
+function readClickMeCache(): boolean {
+  try { return localStorage.getItem(CLICK_ME_CACHE) === '1' } catch { return false }
+}
+const clickMeEnabled = ref(readClickMeCache())
 
 /** Whether the "Ask Triz.ai" button shows in the sidebar (admin toggle). */
-const askTrizEnabled = ref(true)
+const ASK_TRIZ_CACHE = 'aromin-ask-triz-v1'
+function readAskTrizCache(): boolean {
+  try { return localStorage.getItem(ASK_TRIZ_CACHE) === '1' } catch { return false }
+}
+const askTrizEnabled = ref(readAskTrizCache())
 
 function openMobileMenu(): void {
   mobileOpen.value = true
@@ -79,15 +90,21 @@ function onGlobalKeydown(e: KeyboardEvent): void {
 
 onMounted(() => {
   window.addEventListener('keydown', onGlobalKeydown)
-  // Fetch sidebar button visibility settings
+  // Fetch sidebar button visibility settings — cache result to avoid flash on next refresh
   fetch('/api/v1/settings', { cache: 'no-store' })
     .then((r) => r.ok ? r.json() : null)
     .then((d) => {
       if (!d) return
-      if (typeof d.click_me_enabled === 'boolean') clickMeEnabled.value = d.click_me_enabled
-      if (typeof d.ask_triz_enabled === 'boolean') askTrizEnabled.value = d.ask_triz_enabled
+      if (typeof d.click_me_enabled === 'boolean') {
+        clickMeEnabled.value = d.click_me_enabled
+        try { localStorage.setItem(CLICK_ME_CACHE, d.click_me_enabled ? '1' : '0') } catch { /* ignore */ }
+      }
+      if (typeof d.ask_triz_enabled === 'boolean') {
+        askTrizEnabled.value = d.ask_triz_enabled
+        try { localStorage.setItem(ASK_TRIZ_CACHE, d.ask_triz_enabled ? '1' : '0') } catch { /* ignore */ }
+      }
     })
-    .catch(() => { /* fail-open: show by default */ })
+    .catch(() => { /* keep cached/default (OFF) — no flash */ })
   // Fetch active viewers immediately + poll every 30s
   void fetchActiveViewers()
   activePollTimer = setInterval(fetchActiveViewers, 30_000)
@@ -310,7 +327,7 @@ const navGroups = [
 
   <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
   <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
-    <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-4 sm:px-6 py-3">
       <RouterLink to="/" class="font-pixel text-[14px]">
         &lt; Aromin /&gt;
       </RouterLink>
@@ -330,7 +347,7 @@ const navGroups = [
     <div
       v-if="mobileOpen"
       id="mobileNav"
-      class="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden"
+      class="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden overflow-hidden"
     >
       <div class="flex items-center justify-between border-b border-gray-200 px-6 py-3">
         <RouterLink to="/" class="font-pixel text-[14px]" @click="closeMobileMenu">

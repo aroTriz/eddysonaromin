@@ -16,28 +16,27 @@ const props = defineProps<{
   project: Project
 }>()
 
-/** Ordered device views: laptop media first, then phone media. */
+/** Ordered device views: laptop media first, then phone media.
+ *  IMPORTANT: no fallback — if nothing was added in /aromin/projects
+ *  (showcase empty), render nothing. The admin "Add" is the single source
+ *  of truth; image_url fallback is intentionally removed so empty showcase
+ *  means no device mockups at all.
+ */
 const views = computed(() => {
   const show = props.project.showcase
-  const hasShow = Boolean(show?.laptops?.length || show?.phones?.length)
-
-  if (hasShow) {
-    const map = (items: ShowcaseMedia[], device: 'laptop' | 'phone') =>
-      (items ?? []).map((item) => {
-        if (typeof item === 'string') return { device, src: item, media: 'image' as const, label: '' }
-        return { device, src: item.src, media: item.kind, label: item.label ?? '' }
-      })
-    return [
-      ...map(show?.laptops ?? [], 'laptop'),
-      ...map(show?.phones ?? [], 'phone'),
-    ]
-  }
-
-  // Fallback: one laptop + one phone using image_url
-  return [
-    { device: 'laptop' as const, src: props.project.image_url ?? null, media: 'image' as const },
-    { device: 'phone' as const, src: props.project.image_url ?? null, media: 'image' as const },
-  ]
+  // Keep ALL devices added in admin — even empty src ones (they render as
+  // placeholder Monitor/Smartphone icons). "Add" is the source of truth;
+  // backend now keeps empty entries, so we must not filter by src.
+  const laptops = show?.laptops ?? []
+  const phones = show?.phones ?? []
+  const hasShow = laptops.length > 0 || phones.length > 0
+  if (!hasShow) return []
+  const map = (items: ShowcaseMedia[], device: 'laptop' | 'phone') =>
+    items.map((item) => {
+      if (typeof item === 'string') return { device, src: item, media: 'image' as const, label: '' }
+      return { device, src: item.src ?? '', media: item.kind ?? 'image', label: item.label ?? '' }
+    })
+  return [...map(laptops, 'laptop'), ...map(phones, 'phone')]
 })
 
 const index = ref(0)
@@ -71,7 +70,7 @@ function onTouchEnd(e: TouchEvent): void {
 </script>
 
 <template>
-  <div class="mt-8">
+  <div v-if="views.length > 0" class="mt-8">
     <div class="relative mx-auto flex max-w-3xl items-center gap-3 sm:gap-4">
       <!-- prev arrow -->
       <button
@@ -84,13 +83,17 @@ function onTouchEnd(e: TouchEvent): void {
         <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
       </button>
 
-      <!-- device stage — fixed height matches laptop, phone scales to same height -->
+      <!-- device stage — HEIGHT EQUAL (not width): both devices share the same
+           visual height so the phone interface height == laptop height.
+           Stage has a fixed height; laptop uses equalHeight height-driven mode
+           and phone already is h-full, so they match pixel-perfect. -->
       <div
-        class="min-w-0 flex-1"
+        class="min-w-0 flex-1 flex items-center justify-center"
+        style="height: clamp(360px, 42vw, 420px)"
         @touchstart.passive="onTouchStart"
         @touchend.passive="onTouchEnd"
       >
-        <div class="mx-auto max-w-3xl" style="height: clamp(300px, 42vw, 420px)">
+        <div class="flex h-full w-full max-w-3xl items-center justify-center">
           <LaptopMockup
             v-if="current?.device === 'laptop'"
             :key="`lap-${index}`"
@@ -98,7 +101,8 @@ function onTouchEnd(e: TouchEvent): void {
             :video="current.media === 'video'"
             :alt="`${project.title} laptop view ${index + 1}`"
             :url="project.url"
-            class="w-full"
+            :equal-height="true"
+            class="h-full w-auto max-h-full"
           />
           <PhoneMockup
             v-else-if="current?.device === 'phone'"
@@ -106,7 +110,7 @@ function onTouchEnd(e: TouchEvent): void {
             :src="current.src"
             :video="current.media === 'video'"
             :alt="`${project.title} phone view ${index + 1}`"
-            class="mx-auto"
+            class="h-full w-auto max-h-full mx-auto"
           />
         </div>
       </div>

@@ -18,7 +18,7 @@
         <span class="terminal-title">profile.sh</span>
       </div>
       <div class="face-body">
-        <div class="photo-container" style="view-transition-name: profile-video">
+        <div class="photo-container">
           <canvas ref="canvasRef" class="profile-canvas" aria-hidden="true"></canvas>
         </div>
         <div class="face-footer">
@@ -240,10 +240,8 @@ const contactRows = [
   { label: 'linkedin', value: '/in/eddyson-tristan-aromin', href: profile.linkedin, external: true },
 ]
 
-/* ── Theme listener — BULLETPROOF guard ────────────────────── */
+/* ── Theme listener ─────────────────────────────────────────── */
 let themeListener: ((e: Event) => void) | null = null
-let clickListener: ((e: Event) => void) | null = null
-let userToggled = false // Only true AFTER user explicitly clicks theme switch
 
 function currentThemeIsDark(): boolean {
   const stored = (localStorage.getItem('theme') ?? 'light') as ThemePreference
@@ -259,19 +257,15 @@ onMounted(() => {
   preload()
 
   // Draw the first frame once the canvas is mounted and the first image loads.
-  // Use a ResizeObserver to handle the case where the canvas has 0 dimensions
-  // on first mount (e.g. hidden behind another element).
   const drawInitial = (): void => {
     drawFrame(currentFrame)
   }
-  // Try drawing immediately (works if canvas has dimensions).
   requestAnimationFrame(() => drawInitial())
-  // Also try after a short delay for slow mounts.
   setTimeout(drawInitial, 100)
 
-  // THEME listener — only responds AFTER user has clicked theme switch.
+  // Theme toggle — animate on EVERY theme change (light↔dark, system timer,
+  // or admin). The initial mount is already handled above; no guard needed.
   const onThemeChange = (e: Event): void => {
-    if (!userToggled) return
     const d = (e as CustomEvent).detail?.dark
     if (typeof d === 'boolean') {
       animateTo(d ? 1 : -1)
@@ -279,15 +273,6 @@ onMounted(() => {
   }
   themeListener = onThemeChange
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
-
-  // Detect ACTUAL click on the theme switch button in the DOM.
-  const onDocClick = (e: Event): void => {
-    if ((e.target as HTMLElement).closest('.theme-switch')) {
-      userToggled = true
-    }
-  }
-  clickListener = onDocClick
-  document.addEventListener('click', onDocClick, true)
 })
 
 onUnmounted(() => {
@@ -295,10 +280,6 @@ onUnmounted(() => {
   if (themeListener) {
     window.removeEventListener(THEME_CHANGE_EVENT, themeListener)
     themeListener = null
-  }
-  if (clickListener) {
-    document.removeEventListener('click', clickListener, true)
-    clickListener = null
   }
 })
 </script>

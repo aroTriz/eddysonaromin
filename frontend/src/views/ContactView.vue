@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * Contact — message form (POST /api/v1/contact) + contact info panel.
  * Shows loading / success / error states inline on submit.
@@ -57,7 +57,7 @@ const fieldClass =
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <PageHeader
       :comment="`$ npx send-email --to ${profile.email}`"
       title="contact"

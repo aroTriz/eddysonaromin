@@ -341,7 +341,7 @@ class AdminProjectController extends Controller
 
         return $req([
             'title' => ['required', 'string', 'max:255'],
-            'category' => ['required', Rule::in(['personal', 'academic'])],
+            'category' => ['required', Rule::in(['personal', 'academic', 'professional'])],
             'type' => ['required', Rule::in(self::TYPES)],
             'summary' => ['required', 'string', 'max:1000'],
             'tagline' => ['nullable', 'string', 'max:255'],
@@ -371,11 +371,13 @@ class AdminProjectController extends Controller
     private function showcaseItemRule(): Closure
     {
         return static function (string $attribute, mixed $value, Closure $fail): void {
+            // Showcase is OPTIONAL to have media — empty src is allowed (device frame with icon).
+            // Laravel's ConvertEmptyStringsToNull turns "" into null, so allow null/empty string for src.
             $valid = is_string($value)
                 || (
                     is_array($value)
-                    && isset($value['src'])
-                    && is_string($value['src'])
+                    && array_key_exists('src', $value)
+                    && (is_string($value['src']) || is_null($value['src']))
                     && in_array($value['kind'] ?? 'image', ['image', 'video'], true)
                 );
 
@@ -418,17 +420,18 @@ class AdminProjectController extends Controller
             }
             $out = [];
             foreach ($list as $item) {
-                if (is_string($item) && trim($item) !== '') {
+                if (is_string($item)) {
                     $out[] = trim($item);
                 } elseif (
                     is_array($item)
-                    && isset($item['src'])
-                    && is_string($item['src'])
-                    && trim($item['src']) !== ''
+                    && array_key_exists('src', $item)
+                    && (is_string($item['src']) || is_null($item['src']))
                 ) {
                     $out[] = [
-                        'src' => trim($item['src']),
+                        'src' => trim((string) ($item['src'] ?? '')),
                         'kind' => ($item['kind'] ?? 'image') === 'video' ? 'video' : 'image',
+                        // keep optional label if provided so admin device names persist
+                        ...(isset($item['label']) && is_string($item['label']) && trim($item['label']) !== '' ? ['label' => trim($item['label'])] : []),
                     ];
                 }
             }

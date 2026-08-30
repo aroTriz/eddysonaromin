@@ -9,7 +9,7 @@ interface Env {
 
 /**
  * POST /api/v1/ask — proxy a question to an OpenAI-compatible AI API.
- * Uses OpenCode API (mimo v2.5) when ASK_API_KEY is set in Cloudflare secrets.
+ * Uses OpenCode API (Muse Spark 1.2 Contributor) when ASK_API_KEY is set in Cloudflare secrets.
  * Falls back to EddGPT proxy when no key is configured.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -30,7 +30,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const apiKey = env.ASK_API_KEY || ''
   const apiBase = (env.ASK_API_BASE || 'https://api.opencode.ai').replace(/\/+$/, '')
-  const apiModel = env.ASK_API_MODEL || 'opencode-go/mimo-v2.5'
+  const apiModel = env.ASK_API_MODEL || 'opencode-go/muse-spark-1.2-contributor'
 
   const maxRetries = 2
   let lastError = ''

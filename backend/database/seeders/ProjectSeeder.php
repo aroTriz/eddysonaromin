@@ -49,6 +49,10 @@ class ProjectSeeder extends Seeder
                 'source_url' => 'https://github.com/aroTriz/trizai-html',
                 'image_url' => '/images/projects/triz-ai-shot.png',
                 'favicon_url' => '/images/projects/icons/triz-ai.svg',
+                'showcase' => [
+                    'laptops' => [['src' => '/images/projects/triz-ai-shot.png', 'kind' => 'image']],
+                    'phones' => [['src' => '/images/projects/triz-ai-shot.png', 'kind' => 'image']],
+                ],
                 'sort_order' => 1,
             ],
             [
@@ -67,6 +71,10 @@ class ProjectSeeder extends Seeder
                 'source_url' => 'https://github.com/aroTriz/item-vision',
                 'image_url' => '/images/projects/itemvision-ai-shot.png',
                 'favicon_url' => '/images/projects/icons/itemvision-ai.svg',
+                'showcase' => [
+                    'laptops' => [['src' => '/images/projects/itemvision-ai-shot.png', 'kind' => 'image']],
+                    'phones' => [['src' => '/images/projects/itemvision-ai-shot.png', 'kind' => 'image']],
+                ],
                 'sort_order' => 2,
             ],
             [
@@ -85,6 +93,10 @@ class ProjectSeeder extends Seeder
                 'source_url' => 'https://github.com/aroTriz/wordle-game',
                 'image_url' => '/images/projects/wordle-shot.png',
                 'favicon_url' => '/images/projects/icons/wordle.svg',
+                'showcase' => [
+                    'laptops' => [['src' => '/images/projects/wordle-shot.png', 'kind' => 'image']],
+                    'phones' => [['src' => '/images/projects/wordle-shot.png', 'kind' => 'image']],
+                ],
                 'sort_order' => 3,
             ],
             [
@@ -103,6 +115,10 @@ class ProjectSeeder extends Seeder
                 'source_url' => null,
                 'image_url' => '/images/projects/type-monk-e-shot.png',
                 'favicon_url' => '/images/projects/icons/type-monk-e.svg',
+                'showcase' => [
+                    'laptops' => [['src' => '/images/projects/type-monk-e-shot.png', 'kind' => 'image']],
+                    'phones' => [['src' => '/images/projects/type-monk-e-shot.png', 'kind' => 'image']],
+                ],
                 'sort_order' => 4,
             ],
 

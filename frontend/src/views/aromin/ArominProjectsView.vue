@@ -553,7 +553,7 @@ onMounted(load)
 
 <template>
   <AdminLayout active="aromin-projects" wide>
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink">
           projects<span class="text-gray-400">.</span>
@@ -735,7 +735,7 @@ onMounted(load)
               v-model="form.url"
               type="text"
               class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-              placeholder="https://â€¦"
+              placeholder="https://example.com"
             />
           </div>
           <div class="flex flex-col gap-1.5">
@@ -745,7 +745,7 @@ onMounted(load)
               v-model="form.source_url"
               type="text"
               class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-              placeholder="https://github.com/â€¦"
+              placeholder="https://github.com/username/repo"
             />
           </div>
 

@@ -45,7 +45,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-4xl px-6 py-14 sm:py-20">
+  <div class="mx-auto w-full max-w-4xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- header -->
     <header class="mb-12">
       <RouterLink

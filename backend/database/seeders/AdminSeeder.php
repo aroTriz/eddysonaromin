@@ -57,15 +57,16 @@ class AdminSeeder extends Seeder
 
         // Seed the tech stack (mirrors frontend/src/data/profile.ts stackGroups).
         $stack = [
-            'Frontend' => ['Vue', 'Nuxt', 'Ionic', 'React', 'TypeScript', 'JavaScript', 'Bootstrap', 'HTML', 'CSS'],
-            'Backend' => ['Laravel', 'PHP', 'Node.js', 'MySQL', 'SQLite'],
+            'Frontend' => ['Vue', 'Nuxt', 'React', 'TypeScript', 'JavaScript', 'Bootstrap', 'HTML', 'CSS'],
+            'Backend' => ['Laravel', 'PHP', 'Node.js'],
+            'Database' => ['MySQL', 'SQLite', 'SQL', 'DBeaver'],
             'CMS' => ['WordPress', 'Joomla'],
-            'Mobile & Desktop' => ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java'],
-            'Machine Learning and Data' => ['Python', 'Machine Learning', 'Data Analytics', 'SQL', 'Anaconda', 'Jupyter'],
-            'AI & Assistant' => ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Mimo', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
+            'Mobile & Desktop' => ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java', 'Ionic', 'Android Studio'],
+            'Machine Learning and Data' => ['Python', 'Machine Learning', 'Data Analytics', 'Anaconda', 'Jupyter'],
+            'AI & Assistant' => ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Muse Spark', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
             'Version Control & CI/CD' => ['Git', 'GitHub', 'GitLab'],
-            'Developer Tools' => ['VS Code', 'Docker', 'XAMPP', 'WAMP', 'DBeaver', 'Android Studio', 'IntelliJ IDEA', 'PyCharm'],
-            'Hosting & Deployment' => ['Vercel', 'Cloudflare'],
+            'Developer Tools' => ['VS Code', 'XAMPP', 'WAMP', 'IntelliJ IDEA', 'PyCharm'],
+            'Hosting & Deployment' => ['Vercel', 'Cloudflare', 'Docker'],
             'OS' => ['Windows', 'macOS', 'Ubuntu'],
             'Networking' => ['Cisco Packet Tracer'],
             'Package Management' => ['npm', 'Composer'],

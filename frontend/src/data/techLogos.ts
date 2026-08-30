@@ -83,7 +83,7 @@ export const TECH_FALLBACK_ICON: Record<string, Component> = {
   // AI assistants without a brand icon in Simple Icons
   OpenClaw: markRaw(Bot),
   BigPickle: markRaw(Bot),
-  Mimo: markRaw(Bot),
+  'Muse Spark': markRaw(Bot),
   // Networking
   'Cisco Packet Tracer': markRaw(Network),
   // Local web dev environments without a Simple Icons brand

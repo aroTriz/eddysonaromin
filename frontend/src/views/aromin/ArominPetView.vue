@@ -93,7 +93,9 @@ const petAnimate = computed({
 
 async function toggleEnabled(): Promise<void> {
   petConfig.globalEnabled = !petConfig.globalEnabled
-  petConfig.enabled = petConfig.globalEnabled
+  // Never auto-enable the cat: admin ON only shows the "toggle pet" button,
+  // admin OFF hides button and forces cat OFF. Visitor toggles manually.
+  petConfig.enabled = false
   saved.value = false
   // Auto-save so the navbar reacts on other tabs/pages.
   await savePetConfigToApi()

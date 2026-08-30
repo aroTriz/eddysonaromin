@@ -257,9 +257,17 @@ VALUES ('portfolio', 0, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
 -- ────────────────────────────────────────────────────────────────
 INSERT INTO stack_groups (label, items, sort_order, created_at, updated_at)
 VALUES
-  ('Frontend', '["Vue","Nuxt","Ionic","TypeScript","JavaScript","Bootstrap","HTML","CSS"]', 0, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
-  ('Backend', '["Laravel","PHP","Node.js","MySQL","SQLite","WordPress","Joomla"]', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
-  ('Mobile & Desktop', '["Flutter","Kotlin","Android Studio","C#","Unity","C++","C","Java"]', 2, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
-  ('AI & Data', '["Python","Machine Learning","Data Analytics","SQL"]', 3, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
-  ('Developer Tools', '["Git","GitHub","VS Code"]', 4, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
-  ('Design', '["Figma","Canva"]', 5, '2026-08-09 00:00:00', '2026-08-09 00:00:00');
+  ('Frontend', '["Vue","Nuxt","React","TypeScript","JavaScript","Bootstrap","HTML","CSS"]', 0, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Backend', '["Laravel","PHP","Node.js"]', 1, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Database', '["MySQL","SQLite","SQL","DBeaver"]', 2, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('CMS', '["WordPress","Joomla"]', 3, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Mobile & Desktop', '["Flutter","Kotlin","C#","Unity","C++","C","Java","Ionic","Android Studio"]', 4, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Machine Learning and Data', '["Python","Machine Learning","Data Analytics","Anaconda","Jupyter"]', 5, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('AI & Assistant', '["Hermes","OpenClaw","OpenAI","DeepSeek","Grok","BigPickle","Muse Spark","Claude","Ollama","Gemini","Higgsfield"]', 6, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Version Control & CI/CD', '["Git","GitHub","GitLab"]', 7, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Developer Tools', '["VS Code","XAMPP","WAMP","IntelliJ IDEA","PyCharm"]', 8, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Hosting & Deployment', '["Vercel","Cloudflare","Docker"]', 9, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('OS', '["Windows","macOS","Ubuntu"]', 10, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Networking', '["Cisco Packet Tracer"]', 11, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Package Management', '["npm","Composer"]', 12, '2026-08-09 00:00:00', '2026-08-09 00:00:00'),
+  ('Design', '["Figma","Canva"]', 13, '2026-08-09 00:00:00', '2026-08-09 00:00:00');

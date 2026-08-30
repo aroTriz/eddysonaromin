@@ -33,10 +33,12 @@ class SiteSettingsController extends Controller
     public const CLICK_ME_KEY = 'click_me_enabled';
     public const ASK_TRIZ_KEY = 'ask_triz_enabled';
 
-    /** Default pet config — off until the visitor toggles it / admin enables it. */
+    /** Default pet config — OFF by default: toggle button hidden and cat OFF until admin enables.
+     *  Admin ON only shows the "toggle pet" button; visitor must toggle manually (enabled stays false).
+     *  Admin OFF hides button and forces cat OFF. */
     private const DEFAULT_PET = [
         'enabled' => false,
-        'globalEnabled' => true,
+        'globalEnabled' => false,
         'scale' => 0.5,
         'speed' => 1,
         'animate' => true,
@@ -133,6 +135,9 @@ class SiteSettingsController extends Controller
                 $current[$field] = $validated[$field];
             }
         }
+        // Never auto-enable the cat via admin: admin ON only shows the toggle button.
+        // Visitor must click "toggle pet" per-browser (enabled stays false).
+        $current['enabled'] = false;
         $this->set(self::PET_SETTINGS_KEY, json_encode($current));
 
         return response()->json($current);
