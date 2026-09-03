@@ -62,6 +62,13 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: d1 execute blog-db --remote --file=db/migration-showcase-2026-08-30.sql
 
+      - name: Sync stack groups to D1 (Discord, Mattermost, Hugging Face, Anthropic, Trello, Prettier, Opencode)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute blog-db --remote --file=db/migration-stack-2026-09-04.sql
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
