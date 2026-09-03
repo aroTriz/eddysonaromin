@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             BlogPostSeeder::class,
             RecommendationSeeder::class,
+            ReferenceSeeder::class,
             CensoredWordSeeder::class,
         ]);
     }

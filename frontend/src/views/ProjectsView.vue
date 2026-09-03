@@ -148,7 +148,7 @@ const paginationTotal = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             professional projects
           </p>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in professionalProjects" :key="project.slug" :project="project" />
           </div>
         </div>
@@ -160,7 +160,7 @@ const paginationTotal = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             personal projects
           </p>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in personalProjects" :key="project.slug" :project="project" />
           </div>
         </div>
@@ -172,14 +172,14 @@ const paginationTotal = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             academic projects
           </p>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in academicProjects" :key="project.slug" :project="project" />
           </div>
         </div>
       </template>
 
       <!-- Specific filter → flat grid -->
-      <div v-else class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div v-else class="mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ProjectCard v-for="project in listedProjects" :key="project.slug" :project="project" />
       </div>
 

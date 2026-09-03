@@ -18,7 +18,7 @@ class RecommendationController extends Controller
             ->whereNull('archived_at')
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get(['id', 'initials', 'quote', 'author', 'role', 'email', 'sort_order']);
+            ->get(['id', 'initials', 'quote', 'author', 'role', 'email', 'photo_url', 'sort_order']);
 
         return response()
             ->json(['data' => $recommendations])

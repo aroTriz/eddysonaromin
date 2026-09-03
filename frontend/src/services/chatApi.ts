@@ -140,3 +140,18 @@ export async function fetchAskTrizEnabled(): Promise<boolean> {
     return true
   }
 }
+
+/** Whether the "private chat" button is shown in the navbar. Fail-open (default: on). */
+export async function fetchPrivateChatEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return true
+    const data = (await res.json()) as { private_chat_enabled?: boolean }
+    return data.private_chat_enabled !== false
+  } catch {
+    return true
+  }
+}

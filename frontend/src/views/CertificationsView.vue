@@ -107,7 +107,7 @@ const paginationTotal = computed(() => {
         <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
           certifications
         </p>
-        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <RouterLink
             v-for="cert in certPage"
             :key="cert.slug"
@@ -150,7 +150,7 @@ const paginationTotal = computed(() => {
         <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
           references
         </p>
-        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <RouterLink
             v-for="reference in refPage"
             :key="reference.slug"
@@ -184,7 +184,7 @@ const paginationTotal = computed(() => {
     </template>
 
     <!-- ── Specific filter → flat grid ──────────────────────── -->
-    <div v-if="activeFilter === 'certifications' && certListed.length" class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div v-if="activeFilter === 'certifications' && certListed.length" class="mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <RouterLink
         v-for="cert in certListed"
         :key="cert.slug"
@@ -210,7 +210,7 @@ const paginationTotal = computed(() => {
       </RouterLink>
     </div>
 
-    <div v-if="activeFilter === 'references' && refListed.length" class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div v-if="activeFilter === 'references' && refListed.length" class="mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <RouterLink
         v-for="reference in refListed"
         :key="reference.slug"

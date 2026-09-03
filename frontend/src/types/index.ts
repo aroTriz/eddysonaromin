@@ -93,6 +93,23 @@ export interface Recommendation {
   author: string
   role: string
   email: string | null
+  photo_url: string | null
+  sort_order: number
+  archived_at: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Reference / referrer entry — separate CMS from recommendations & certifications. */
+export interface Reference {
+  id: number
+  slug: string
+  initials: string
+  name: string
+  title: string
+  email: string | null
+  photo_url: string | null
+  summary: string | null
   sort_order: number
   archived_at: string | null
   created_at: string | null

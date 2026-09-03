@@ -1,10 +1,10 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 /**
- * /aromin/preferences â€” unified page for ALL site settings.
+ * /aromin/preferences — unified page for ALL site settings.
  *
  * Design:
  *  - All toggles default to OFF.
- *  - Changes are staged ("draft mode") â€” nothing applies until "Save Changes".
+ *  - Changes are staged ("draft mode") — nothing applies until "Save Changes".
  *  - "Restore Default" resets the draft to all-OFF without persisting.
  *  - Navigation is blocked if there are unsaved changes.
  *  - Pet settings (size / speed / animations) live inline behind an eye icon.
@@ -15,6 +15,7 @@ import {
   EyeOff,
   LoaderCircle,
   MessageCircle,
+  MessagesSquare,
   MousePointerClick,
   PawPrint,
   RotateCcw,
@@ -43,7 +44,7 @@ const {
 
 const router = useRouter()
 
-/* â”€â”€ Pet config expansion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Pet config expansion ──────────────────────────────────────── */
 
 const petExpanded = ref(false)
 
@@ -51,13 +52,16 @@ function togglePetExpanded(): void {
   petExpanded.value = !petExpanded.value
 }
 
-/* â”€â”€ Toggle helpers (change draft only â€” nothing persists) â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Toggle helpers (change draft only — nothing persists) ─────── */
 
 function toggleRightClick(): void {
   draft.value.rightClick = !draft.value.rightClick
 }
 function toggleChat(): void {
   draft.value.chat = !draft.value.chat
+}
+function togglePrivateChat(): void {
+  draft.value.privateChat = !draft.value.privateChat
 }
 function toggleBackdrop(): void {
   draft.value.backdrop = !draft.value.backdrop
@@ -73,40 +77,45 @@ function togglePetEnabled(): void {
   if (!draft.value.petEnabled) petExpanded.value = false
 }
 
-/* â”€â”€ Status labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Status labels ─────────────────────────────────────────────── */
 
 const rightClickLabel = computed(() =>
   draft.value.rightClick
-    ? 'enabled â€” visitors can right-click'
-    : 'disabled â€” right-click is blocked',
+    ? 'enabled — visitors can right-click'
+    : 'disabled — right-click is blocked',
 )
 const chatLabel = computed(() =>
   draft.value.chat
-    ? 'on â€” visitors can post messages'
-    : 'off â€” "Community Chat has been turned off"',
+    ? 'on — visitors can post messages'
+    : 'off — "Community Chat has been turned off"',
+)
+const privateChatLabel = computed(() =>
+  draft.value.privateChat
+    ? 'on � private chat button is visible in the navbar'
+    : 'off � private chat is hidden from the navbar',
 )
 const backdropLabel = computed(() =>
   draft.value.backdrop
-    ? 'on â€” neural links in light Â· stars in dark'
-    : 'off â€” pure white / pure black backgrounds',
+    ? 'on — neural links in light · stars in dark'
+    : 'off — pure white / pure black backgrounds',
 )
 const askTrizLabel = computed(() =>
   draft.value.askTriz
-    ? 'enabled â€” "Ask Triz.ai" is active in the sidebar'
-    : 'disabled â€” chat overlay is off',
+    ? 'enabled — "Ask Triz.ai" is active in the sidebar'
+    : 'disabled — chat overlay is off',
 )
 const clickMeLabel = computed(() =>
   draft.value.clickMe
-    ? 'on â€” "click me..." button is visible in the sidebar'
-    : 'off â€” "click me..." button is hidden',
+    ? 'on — "click me..." button is visible in the sidebar'
+    : 'off — "click me..." button is hidden',
 )
 const petLabel = computed(() =>
   draft.value.petEnabled
-    ? 'on â€” the "toggle pet" button shows in the navbar for every visitor'
-    : 'off â€” "toggle pet" is hidden from the navbar',
+    ? 'on — the "toggle pet" button shows in the navbar for every visitor'
+    : 'off — "toggle pet" is hidden from the navbar',
 )
 
-/* â”€â”€ Navigation guard â€” block leaving with unsaved changes â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Navigation guard — block leaving with unsaved changes ──────── */
 
 const navGuardOpen = ref(false)
 let pendingRoute: RouteLocationNormalized | null = null
@@ -135,7 +144,7 @@ function cancelNav(): void {
   pendingRoute = null
 }
 
-/* â”€â”€ Pet preview sprite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Pet preview sprite ────────────────────────────────────────── */
 
 const FRAME_W = 192
 const FRAME_H = 208
@@ -176,7 +185,7 @@ watch(
   },
 )
 
-/* â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Lifecycle ─────────────────────────────────────────────────── */
 
 onMounted(async () => {
   await loadFromApi()
@@ -187,7 +196,7 @@ onBeforeUnmount(() => {
   stopPreviewAnim()
 })
 
-/* â”€â”€ Restore confirmation modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Restore confirmation modal ────────────────────────────────── */
 
 const restoreOpen = ref(false)
 
@@ -208,7 +217,7 @@ function cancelRestore(): void {
 
 <template>
   <AdminLayout active="aromin-preferences">
-    <!-- â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <!-- ── Header ─────────────────────────────────────────────── -->
     <div class="mb-8">
       <h1
         class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink"
@@ -220,7 +229,7 @@ function cancelRestore(): void {
       </p>
     </div>
 
-    <!-- â”€â”€ Loading skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <!-- ── Loading skeleton ───────────────────────────────────── -->
     <div v-if="!loaded" class="space-y-6">
       <div
         v-for="i in 5"
@@ -230,11 +239,11 @@ function cancelRestore(): void {
     </div>
 
     <template v-else>
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
       <!-- SETTINGS                                                -->
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
 
-      <!-- â”€â”€ Right-click protection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- ── Right-click protection ───────────────────────────── -->
       <section class="rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
@@ -291,7 +300,7 @@ function cancelRestore(): void {
         </div>
       </section>
 
-      <!-- â”€â”€ Community chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- ── Community chat ───────────────────────────────────── -->
       <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
@@ -349,8 +358,43 @@ function cancelRestore(): void {
         </div>
       </section>
 
-      <!-- â”€â”€ Animated backdrops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- ── Animated backdrops ───────────────────────────────── -->
+            <!-- -- Private chat -- -->
       <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+        <div class="flex items-start justify-between gap-6">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <MessagesSquare class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
+              <h2 class="font-mono text-[13px] font-semibold text-ink">Private Chat</h2>
+            </div>
+            <p class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500">
+              When off, the private chat button is hidden from the navbar � visitors can''t open the 1-on-1 DM (like community chat). Turn it on to show private chat in the navbar.
+            </p>
+            <p class="mt-3 font-mono text-[11px] text-gray-400">// {{ privateChatLabel }}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="draft.privateChat"
+            :aria-label="draft.privateChat ? 'Hide private chat from navbar' : 'Show private chat in navbar'"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            :class="[
+              draft.privateChat
+                ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
+                : 'border-gray-300 bg-gray-200 dark:border-gray-500 dark:bg-gray-700',
+            ]"
+            @click="togglePrivateChat"
+          >
+            <span
+              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              :class="draft.privateChat ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
+            >
+              <Check v-if="draft.privateChat" class="h-3 w-3 text-white" :stroke-width="3" aria-hidden="true" />
+            </span>
+          </button>
+        </div>
+      </section>
+<section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -410,7 +454,7 @@ function cancelRestore(): void {
         </div>
       </section>
 
-      <!-- â”€â”€ Enable/Disable Triz.ai â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- ── Enable/Disable Triz.ai ──────────────────────────── -->
       <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
@@ -471,7 +515,7 @@ function cancelRestore(): void {
         </div>
       </section>
 
-      <!-- â”€â”€ Show "Click me..." â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- ── Show "Click me..." ───────────────────────────────── -->
       <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
@@ -531,9 +575,9 @@ function cancelRestore(): void {
         </div>
       </section>
 
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
       <!-- PET SECTION                                              -->
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
       <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div class="flex items-start justify-between gap-6">
           <div class="min-w-0">
@@ -579,7 +623,7 @@ function cancelRestore(): void {
           </div>
 
           <div class="flex shrink-0 items-center gap-2">
-            <!-- Eye icon â€” configure pet (only when enabled) -->
+            <!-- Eye icon — configure pet (only when enabled) -->
             <button
               v-if="draft.petEnabled"
               type="button"
@@ -636,7 +680,7 @@ function cancelRestore(): void {
           </div>
         </div>
 
-        <!-- â”€â”€ Expanded pet config (size / speed / animations) â”€â”€ -->
+        <!-- ── Expanded pet config (size / speed / animations) ── -->
         <Transition
           enter-active-class="transition-all duration-250 ease-[cubic-bezier(.16,1,.3,1)]"
           enter-from-class="max-h-0 opacity-0"
@@ -711,9 +755,9 @@ function cancelRestore(): void {
         </Transition>
       </section>
 
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
       <!-- SAVE / RESTORE BAR                                       -->
-      <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+      <!-- ════════════════════════════════════════════════════════ -->
       <div class="mt-8 flex flex-wrap items-center gap-4 border-t border-gray-200 pt-6">
         <button
           type="button"
@@ -785,7 +829,7 @@ function cancelRestore(): void {
       </div>
     </template>
 
-    <!-- â”€â”€ Restore defaults confirmation modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <!-- ── Restore defaults confirmation modal ─────────────────── -->
     <ConfirmModal
       :open="restoreOpen"
       title="restore defaults"
@@ -796,7 +840,7 @@ function cancelRestore(): void {
       @cancel="cancelRestore"
     />
 
-    <!-- â”€â”€ Unsaved changes navigation guard modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <!-- ── Unsaved changes navigation guard modal ──────────────── -->
     <ConfirmModal
       :open="navGuardOpen"
       title="unsaved changes"

@@ -80,8 +80,21 @@ const FPS = 30
 const PREFIX = '/profile-frames/ezgif-frame-'
 const INTERVAL = 1000 / FPS
 
+/**
+ * BUG FIX: cache-bust per mount.
+ * Vite serves /profile-frames/*.jpg from `public/` with no content hash.
+ * When the frames are replaced on disk (new profile pic / new video export),
+ * the URL is identical so the browser + the module-level Image cache serve
+ * stale bytes until a hard refresh. Adding `?v=<mountId>` forces a fresh
+ * fetch on every SPA navigation to "/" — no manual refresh needed to see
+ * the pinakalast (latest) pic. The bust is per-mount (Date.now) so a single
+ * mount still benefits from HTTP cache for the 151 frames, but the next
+ * navigation always revalidates.
+ */
+let mountBust = ''
 function frameSrc(i: number): string {
-  return `${PREFIX}${String(i).padStart(3, '0')}.jpg`
+  const base = `${PREFIX}${String(i).padStart(3, '0')}.jpg`
+  return mountBust ? `${base}?v=${mountBust}` : base
 }
 
 /** Canvas-based rendering — bypasses Vue reactivity for butter-smooth 30fps. */
@@ -92,31 +105,65 @@ let firstFrameDrawn = false
 const INITIAL_FRAME = 1
 let currentFrame = INITIAL_FRAME
 
-/* ── Preload: frame 1 first, rest lazy-loaded after idle ───── */
-let preloaded = false
+/* ── Preload: current theme frame first, rest lazy-loaded after idle ───── */
 function preload(): void {
-  if (preloaded) return
-  preloaded = true
+  // On SPA revisits the module stays alive — clear stale Images and generate
+  // a new bust so the browser cannot return a cached (old) profile pic.
+  mountBust = Date.now().toString(36)
+  // Wipe the previous mount's Image objects so their `.src` does not stick.
+  frameImages.length = 0
+  loadedCount = 0
+  firstFrameDrawn = false
 
-  // 1. Load frame 1 immediately — it's the one shown on screen.
+  // 1. Load the *actual* frame that will be visible (1 for light, 151 for dark)
+  //    immediately — the old code always loaded 1 even in dark mode, so dark
+  //    visitors saw a blank/wrong pic until the idle loader finished.
+  const target = currentFrame
   const first = new Image()
-  first.src = frameSrc(1)
+  // `cache: no-store` via query param already busts; also set decoding async.
+  first.decoding = 'async'
+  first.src = frameSrc(target)
   first.onload = () => {
     loadedCount++
     if (!firstFrameDrawn) {
-      drawFrame(INITIAL_FRAME)
+      drawFrame(target)
       firstFrameDrawn = true
     }
   }
-  frameImages[1] = first
+  first.onerror = () => {
+    // Retry once on error (transient dev-server hiccup) — still shows latest.
+    setTimeout(() => { first.src = frameSrc(target) }, 300)
+  }
+  frameImages[target] = first
 
-  // 2. Load the remaining 150 frames after the browser is idle
+  // Also eagerly load the opposite pole so a first theme toggle animates instantly.
+  const opposite = target === 1 ? TOTAL : 1
+  if (opposite !== target) {
+    const opp = new Image()
+    opp.decoding = 'async'
+    opp.src = frameSrc(opposite)
+    opp.onload = () => { loadedCount++ }
+    frameImages[opposite] = opp
+  }
+
+  // 2. Load the remaining frames after the browser is idle
   //    (avoids clogging the connection pool on page load).
   const loadRest = (): void => {
-    for (let i = 2; i <= TOTAL; i++) {
+    for (let i = 1; i <= TOTAL; i++) {
+      if (frameImages[i]) continue // already eagerly loaded
       const img = new Image()
+      img.decoding = 'async'
       img.src = frameSrc(i)
-      img.onload = () => { loadedCount++ }
+      img.onload = () => {
+        loadedCount++
+        // If this is the frame we are supposed to be showing, draw it now.
+        if (i === currentFrame && !firstFrameDrawn) {
+          drawFrame(currentFrame)
+          firstFrameDrawn = true
+        } else if (i === currentFrame) {
+          drawFrame(currentFrame)
+        }
+      }
       frameImages[i] = img
     }
   }
@@ -242,6 +289,9 @@ const contactRows = [
 
 /* ── Theme listener ─────────────────────────────────────────── */
 let themeListener: ((e: Event) => void) | null = null
+let resizeHandler: (() => void) | null = null
+let pageshowHandler: ((e: Event) => void) | null = null
+let focusHandler: (() => void) | null = null
 
 function currentThemeIsDark(): boolean {
   const stored = (localStorage.getItem('theme') ?? 'light') as ThemePreference
@@ -249,19 +299,43 @@ function currentThemeIsDark(): boolean {
 }
 
 onMounted(() => {
-  // Set correct starting frame. Draw it immediately on the canvas.
+  // Set correct starting frame BEFORE preload so the right frame is busted + eager.
   const dark = currentThemeIsDark()
   currentFrame = dark ? TOTAL : 1
 
-  // Preload all frames in background.
+  // Preload with fresh bust — now shows the pinakalast pic without refresh.
   preload()
 
-  // Draw the first frame once the canvas is mounted and the first image loads.
+  // Draw the target frame as soon as the canvas + image are ready.
+  // Retry a few times because the eager image may not be `complete` on first rAF
+  // (dark mode target 151 is larger / later in sequence). This guarantees no
+  // blank canvas on first SPA arrival to "/".
+  let retries = 0
   const drawInitial = (): void => {
-    drawFrame(currentFrame)
+    const c = canvasRef.value
+    const img = frameImages[currentFrame]
+    const ok = !!c && !!img && !!img.complete && !!img.naturalWidth
+    if (ok) {
+      drawFrame(currentFrame)
+      return
+    }
+    if (retries < 20) {
+      retries++
+      requestAnimationFrame(() => setTimeout(drawInitial, 50))
+    }
   }
   requestAnimationFrame(() => drawInitial())
-  setTimeout(drawInitial, 100)
+  setTimeout(drawInitial, 80)
+  setTimeout(drawInitial, 250)
+
+  // Re-draw on resize (DPR change) and on bfcache restore / tab refocus.
+  // Stored in module vars so onUnmounted can clean them correctly.
+  resizeHandler = (): void => drawFrame(currentFrame)
+  pageshowHandler = (): void => drawFrame(currentFrame)
+  focusHandler = (): void => drawFrame(currentFrame)
+  window.addEventListener('resize', resizeHandler)
+  window.addEventListener('pageshow', pageshowHandler)
+  window.addEventListener('focus', focusHandler)
 
   // Theme toggle — animate on EVERY theme change (light↔dark, system timer,
   // or admin). The initial mount is already handled above; no guard needed.
@@ -280,6 +354,18 @@ onUnmounted(() => {
   if (themeListener) {
     window.removeEventListener(THEME_CHANGE_EVENT, themeListener)
     themeListener = null
+  }
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  if (pageshowHandler) {
+    window.removeEventListener('pageshow', pageshowHandler)
+    pageshowHandler = null
+  }
+  if (focusHandler) {
+    window.removeEventListener('focus', focusHandler)
+    focusHandler = null
   }
 })
 </script>

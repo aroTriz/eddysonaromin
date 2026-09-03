@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminBlogPostController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminExperienceController;
 use App\Http\Controllers\Api\AdminRecommendationController;
+use App\Http\Controllers\Api\AdminReferenceController;
 use App\Http\Controllers\Api\AdminStackGroupController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AskController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\GithubController;
 use App\Http\Controllers\Api\PrivateChatController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\ReferenceController;
 use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\StackController;
 use App\Http\Controllers\Api\VisitorController;
@@ -60,6 +62,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/settings/backdrop', [SiteSettingsController::class, 'updateBackdrop']);
     Route::post('/admin/settings/click-me', [SiteSettingsController::class, 'updateClickMe']);
     Route::post('/admin/settings/ask-triz', [SiteSettingsController::class, 'updateAskTriz']);
+    Route::post('/admin/settings/private-chat', [SiteSettingsController::class, 'updatePrivateChat']);
     Route::post('/admin/settings/pet', [SiteSettingsController::class, 'updatePet']);
 
     // ── Private chat (visitor ↔ admin DMs) ─────────────────────
@@ -86,6 +89,10 @@ Route::prefix('v1')->group(function (): void {
 
     // ── Public recommendations ────────────────────────────────
     Route::get('/recommendations', [RecommendationController::class, 'index']);
+
+    // ── Public references (separate CMS) ──────────────────────────
+    Route::get('/references', [ReferenceController::class, 'index']);
+    Route::get('/references/{slug}', [ReferenceController::class, 'show']);
 
     // ── Admin auth (/aromin area) ──────────────────────────────
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -138,12 +145,24 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('/admin/recommendations', [AdminRecommendationController::class, 'index']);
     Route::post('/admin/recommendations', [AdminRecommendationController::class, 'store']);
+    Route::post('/admin/recommendations/upload', [AdminRecommendationController::class, 'upload']);
     Route::delete('/admin/recommendations/bulk', [AdminRecommendationController::class, 'bulkDestroy']);
     Route::get('/admin/recommendations/{id}', [AdminRecommendationController::class, 'show']);
     Route::put('/admin/recommendations/{id}', [AdminRecommendationController::class, 'update']);
     Route::post('/admin/recommendations/{id}/archive', [AdminRecommendationController::class, 'archive']);
     Route::post('/admin/recommendations/{id}/restore', [AdminRecommendationController::class, 'restore']);
     Route::delete('/admin/recommendations/{id}', [AdminRecommendationController::class, 'destroy']);
+
+    // ── Admin references (separate CMS) ─────────────────────────────
+    Route::get('/admin/references', [AdminReferenceController::class, 'index']);
+    Route::post('/admin/references', [AdminReferenceController::class, 'store']);
+    Route::post('/admin/references/upload', [AdminReferenceController::class, 'upload']);
+    Route::delete('/admin/references/bulk', [AdminReferenceController::class, 'bulkDestroy']);
+    Route::get('/admin/references/{id}', [AdminReferenceController::class, 'show']);
+    Route::put('/admin/references/{id}', [AdminReferenceController::class, 'update']);
+    Route::post('/admin/references/{id}/archive', [AdminReferenceController::class, 'archive']);
+    Route::post('/admin/references/{id}/restore', [AdminReferenceController::class, 'restore']);
+    Route::delete('/admin/references/{id}', [AdminReferenceController::class, 'destroy']);
 
     // ── Admin experiences ──────────────────────────────────────────
     Route::get('/admin/experiences', [AdminExperienceController::class, 'index']);

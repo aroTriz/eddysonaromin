@@ -24,6 +24,7 @@ const fallbackItems: Recommendation[] = staticRecommendations.map((rec, i) => ({
   author: rec.author,
   role: rec.role,
   email: rec.email ?? null,
+  photo_url: null,
   sort_order: i,
   archived_at: null,
   created_at: null,
@@ -79,7 +80,10 @@ onMounted(async () => {
         </blockquote>
 
         <figcaption class="mt-5 flex items-start gap-3 border-t border-gray-100 pt-4">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+          <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+            <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
+          </div>
+          <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
             {{ rec.initials }}
           </div>
           <div class="min-w-0">

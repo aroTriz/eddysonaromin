@@ -11,6 +11,8 @@ import {
   ArchiveRestore,
   ArrowDown,
   ArrowUp,
+  Crop,
+  Eye,
   FolderKanban,
   Image as ImageIcon,
   ImagePlus,
@@ -18,6 +20,7 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
+  RefreshCw,
   Save,
   Smartphone,
   Star,
@@ -94,6 +97,10 @@ const cropModalOpen = ref(false)
 const cropSrc = ref('')
 const cropDevice = ref<'laptop' | 'phone'>('laptop')
 const cropIndex = ref<number>(-1)
+
+// Showcase view modal (eye icon)
+const showcaseViewOpen = ref(false)
+const viewingEntry = ref<{ device: 'laptop' | 'phone'; index: number } | null>(null)
 
 // Editor state
 const editing = ref<Project | null>(null)
@@ -294,6 +301,59 @@ function saveDeviceLabel(): void {
 
 function removeMedia(device: 'laptop' | 'phone', index: number): void {
   deviceList(device).splice(index, 1)
+}
+
+// ── Showcase view modal (eye icon) ──────────────────────────────
+
+function openShowcaseView(device: 'laptop' | 'phone', index: number): void {
+  viewingEntry.value = { device, index }
+  showcaseViewOpen.value = true
+}
+
+function closeShowcaseView(): void {
+  showcaseViewOpen.value = false
+  viewingEntry.value = null
+}
+
+function viewingItem(): ShowcaseMedia | null {
+  if (!viewingEntry.value) return null
+  const list = deviceList(viewingEntry.value.device)
+  return list[viewingEntry.value.index] ?? null
+}
+
+function viewingSrc(): string {
+  const item = viewingItem()
+  if (!item) return ''
+  return mediaSrc(item)
+}
+
+function deleteShowcaseImage(): void {
+  if (!viewingEntry.value) return
+  const { device, index } = viewingEntry.value
+  const list = deviceList(device)
+  const item = list[index]
+  if (!item) return
+  if (typeof item === 'string') {
+    list[index] = ''
+  } else {
+    ;(item as { src: string }).src = ''
+  }
+  closeShowcaseView()
+}
+
+function replaceShowcaseImage(): void {
+  if (!viewingEntry.value) return
+  const { device, index } = viewingEntry.value
+  closeShowcaseView()
+  // reuse existing replace flow: open file picker for that slot (will trigger crop modal)
+  openCropForDevice(device, index)
+}
+
+function cropShowcaseManually(): void {
+  // Same as replace — user picks a file then crop modal handles the 9:16 / 16:9 crop.
+  // If an image already exists we still require a new pick so the crop has source data;
+  // we close the view modal and open the file picker.
+  replaceShowcaseImage()
 }
 
 // â”€â”€ Card image / favicon uploads (instead of typing URLs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -877,18 +937,18 @@ onMounted(load)
           </p>
 
                     <!-- Device cards grid -->
-          <div v-if="showcaseItems.length" class="flex flex-wrap gap-3">
+          <div v-if="showcaseItems.length" class="flex flex-wrap items-start gap-3">
             <div
               v-for="entry in showcaseItems"
               :key="`${entry.device}-${entry.index}`"
               class="group relative flex flex-col items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 p-2"
               :class="entry.device === 'phone' ? 'w-24' : 'w-36'"
             >
-              <!-- Image or device icon -->
+              <!-- Image — laptop stays fixed, phone thins to match laptop height (no laptop jump) -->
               <div
-                class="flex w-full items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
-                :class="entry.device === 'phone' ? 'aspect-[9/16]' : 'aspect-video'"
+                class="group/card relative flex h-20 w-full items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white shrink-0"
               >
+                <div :class="entry.device === 'phone' ? 'h-full aspect-[9/16] w-auto' : 'h-full aspect-[16/9] w-auto max-w-full'">
                 <img
                   v-if="mediaSrc(entry.item)"
                   :src="mediaSrc(entry.item)"
@@ -896,10 +956,23 @@ onMounted(load)
                   :alt="`${entry.device} media`"
                   loading="lazy"
                 />
-                <div v-else class="flex flex-col items-center gap-1 text-gray-300">
+                <div v-else class="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-50 text-gray-300">
                   <component :is="entry.device === 'phone' ? Smartphone : Laptop" class="h-6 w-6" :stroke-width="1.5" />
                   <span class="font-mono text-[8px] text-gray-400">no image</span>
                 </div>
+                </div>
+
+                <!-- Center eye — view modal (the image that reflects on the web) -->
+                <button
+                  type="button"
+                  class="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover/card:bg-black/35 group-hover/card:opacity-100"
+                  :aria-label="`View ${entry.device} showcase`"
+                  @click="openShowcaseView(entry.device, entry.index)"
+                >
+                  <span class="rounded-full bg-white p-2 shadow-md ring-1 ring-black/5">
+                    <Eye class="h-4 w-4 text-ink" :stroke-width="1.8" />
+                  </span>
+                </button>
               </div>
 
               <!-- Device label -->
@@ -1210,6 +1283,92 @@ onMounted(load)
     </div>
 
     
+    <!-- Showcase view modal — eye icon (center of laptop/phone card) -->
+    <Teleport to="body">
+      <div
+        v-if="showcaseViewOpen && viewingEntry"
+        class="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`View ${viewingEntry.device} showcase`"
+        @click.self="closeShowcaseView"
+      >
+        <div class="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+          <!-- header -->
+          <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+            <p class="flex items-center gap-2 font-mono text-[12px] text-gray-600">
+              <component :is="viewingEntry.device === 'phone' ? Smartphone : Laptop" class="h-4 w-4" :stroke-width="1.7" />
+              {{ viewingEntry.device === 'phone' ? 'Phone' : 'Laptop' }} showcase
+              <span class="text-gray-400">#{{ viewingEntry.index + 1 }}</span>
+              <span v-if="typeof viewingItem() !== 'string' && (viewingItem() as any)?.label" class="text-gray-400">· {{ (viewingItem() as any).label }}</span>
+            </p>
+            <button type="button" class="rounded p-1 text-gray-400 hover:text-ink" aria-label="Close view" @click="closeShowcaseView">
+              <X class="h-4 w-4" :stroke-width="1.7" />
+            </button>
+          </div>
+
+          <!-- preview — same image that reflects on the public project page -->
+          <div class="flex-1 overflow-auto bg-gray-50 p-6 flex items-center justify-center">
+            <div
+              class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+              :class="viewingEntry.device === 'phone' ? 'w-48 aspect-[9/16]' : 'w-full aspect-video max-w-md'"
+            >
+              <img
+                v-if="viewingSrc()"
+                :src="viewingSrc()"
+                class="h-full w-full object-cover"
+                :alt="`${viewingEntry.device} view`"
+              />
+              <div v-else class="flex h-full w-full flex-col items-center justify-center gap-2 text-gray-300">
+                <component :is="viewingEntry.device === 'phone' ? Smartphone : Laptop" class="h-8 w-8" :stroke-width="1.5" />
+                <span class="font-mono text-[11px] text-gray-400">no image yet</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- actions: delete image / replace / crop manually / remove device -->
+          <div class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white px-5 py-3">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-2 font-mono text-[11px] text-gray-600 hover:border-gray-300 hover:text-ink disabled:opacity-50"
+              :disabled="!viewingSrc()"
+              @click="deleteShowcaseImage"
+            >
+              <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
+              Delete image
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-2 font-mono text-[11px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              @click="replaceShowcaseImage"
+            >
+              <RefreshCw class="h-3.5 w-3.5" :stroke-width="1.7" />
+              Replace
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-2 font-mono text-[11px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              @click="cropShowcaseManually"
+            >
+              <Crop class="h-3.5 w-3.5" :stroke-width="1.7" />
+              Crop manually
+            </button>
+            <button
+              type="button"
+              class="ml-auto inline-flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-2 font-mono text-[11px] font-medium text-red-600 hover:bg-red-100"
+              @click="removeMedia(viewingEntry.device, viewingEntry.index); closeShowcaseView()"
+            >
+              <X class="h-3.5 w-3.5" :stroke-width="1.7" />
+              Remove device
+            </button>
+          </div>
+          <p class="px-5 pb-3 font-mono text-[10px] text-gray-400">
+            // this is the image that appears in the laptop/phone mockup on the public site
+          </p>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Image crop modal -->
     <ImageCropModal
       :open="cropModalOpen"

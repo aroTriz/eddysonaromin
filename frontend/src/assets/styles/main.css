@@ -433,25 +433,23 @@ body {
 /* ── Spotlight card deck (home showcase) ───────────────────────── */
 .deck {
   position: relative;
-  height: 19rem;
-  margin-inline: calc(50% - 50vw);
-  overflow-x: clip;
-  overflow-y: visible;
-}
-@supports not (overflow-x: clip) {
-  .deck {
-    overflow-x: hidden;
-  }
+  height: 18rem;
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+  overflow: visible;
+  padding-inline: 0;
 }
 @media (min-width: 640px) {
   .deck {
     height: 17rem;
+    max-width: 24rem;
   }
 }
 @media (min-width: 768px) {
   .deck {
+    max-width: none;
     margin-inline: 0;
-    overflow: visible;
   }
 }
 .deck-card {
@@ -507,6 +505,15 @@ body {
 .deck-card.is-center:hover {
   transform: translateY(-7px) scale(1.015);
   box-shadow: 0 34px 65px -22px rgba(10, 10, 10, 0.34);
+}
+
+@media (min-width: 640px) {
+  .deck-card.is-left {
+    transform: translateX(-40%) translateY(14px) rotate(-16deg) scale(0.88);
+  }
+  .deck-card.is-right {
+    transform: translateX(40%) translateY(14px) rotate(16deg) scale(0.88);
+  }
 }
 .deck-card.is-left:hover {
   transform: translateX(-45%) translateY(2px) rotate(-12deg) scale(0.92);

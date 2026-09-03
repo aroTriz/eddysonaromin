@@ -220,10 +220,8 @@ const fieldClass =
     </div>
 
     <!-- ── Map (Google Maps embed — current location) ─────────── -->
-    <!-- Themed with the site (the classic invert()+hue-rotate() map
-         trick): light mode shows the native light map, dark mode shows
-         a dark/black map. -->
-    <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <!-- Wider on desktop (extends beyond the 3xl content column) — height stays 320px as requested. Mobile stays w-full. -->
+    <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white lg:-mx-16 lg:w-[calc(100%+8rem)] lg:max-w-none">
       <div class="map-theme">
         <iframe
           title="Victoria Sports Tower, Quezon City"

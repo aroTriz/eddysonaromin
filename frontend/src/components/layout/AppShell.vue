@@ -3,7 +3,7 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Bot, Command, Github, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { Award, Bot, Briefcase, Command, FolderKanban, Github, Layers, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import EmailModal from '@/components/home/EmailModal.vue'
@@ -55,6 +55,13 @@ function readClickMeCache(): boolean {
 }
 const clickMeEnabled = ref(readClickMeCache())
 
+/** Whether the "private chat" button shows in the navbar (admin toggle). */
+const PRIVATE_CHAT_CACHE = 'aromin-private-chat-v1'
+function readPrivateChatCache(): boolean {
+  try { return localStorage.getItem(PRIVATE_CHAT_CACHE) === '1' } catch { return true }
+}
+const privateChatEnabled = ref(readPrivateChatCache())
+
 /** Whether the "Ask Triz.ai" button shows in the sidebar (admin toggle). */
 const ASK_TRIZ_CACHE = 'aromin-ask-triz-v1'
 function readAskTrizCache(): boolean {
@@ -95,6 +102,10 @@ onMounted(() => {
     .then((r) => r.ok ? r.json() : null)
     .then((d) => {
       if (!d) return
+      if (typeof d.private_chat_enabled === 'boolean') {
+        privateChatEnabled.value = d.private_chat_enabled
+        try { localStorage.setItem(PRIVATE_CHAT_CACHE, d.private_chat_enabled ? '1' : '0') } catch { /* ignore */ }
+      }
       if (typeof d.click_me_enabled === 'boolean') {
         clickMeEnabled.value = d.click_me_enabled
         try { localStorage.setItem(CLICK_ME_CACHE, d.click_me_enabled ? '1' : '0') } catch { /* ignore */ }
@@ -133,11 +144,11 @@ const navGroups = [
   {
     label: 'g2',
     links: [
-      { label: 'Projects', to: '/projects', name: 'projects', icon: undefined },
-      { label: 'Experience', to: '/experience', name: 'experience', icon: undefined },
-      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: undefined },
-      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: undefined },
-      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: undefined },
+      { label: 'Projects', to: '/projects', name: 'projects', icon: FolderKanban },
+      { label: 'Experience', to: '/experience', name: 'experience', icon: Briefcase },
+      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: Layers },
+      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: Award },
+      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: Quote },
     ],
   },
   {
@@ -275,6 +286,7 @@ const navGroups = [
         community chat
       </button>
       <button
+        v-if="privateChatEnabled"
         type="button"
         class="mt-2 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         @click="privateChatRef?.openChat()"
@@ -363,50 +375,51 @@ const navGroups = [
         </button>
       </div>
 
-      <div class="flex flex-1 flex-col overflow-y-auto px-7 py-8 font-mono text-[16px]">
-        <div
-          v-for="(group, gi) in navGroups"
-          :key="group.label"
-          class="mnav-group flex flex-col gap-4"
-          :style="{ transitionDelay: `${0.05 + gi * 0.06}s` }"
-        >
-          <RouterLink
-            v-for="link in group.links"
-            :key="link.name"
-            :to="link.to"
-            class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink"
-            :class="{ 'pl-6 text-ink': active === link.name }"
-            @click="closeMobileMenu"
+      <div class="flex flex-1 flex-col overflow-y-auto px-7 py-8 font-mono text-[12px]">
+        <template v-for="(group, gi) in navGroups" :key="group.label">
+          <div
+            class="mnav-group flex flex-col gap-2.5"
+            :style="{ transitionDelay: `${0.05 + gi * 0.06}s` }"
           >
-            <component
-              :is="link.icon"
-              v-if="link.icon"
-              class="h-[1.15em] w-[1.15em] shrink-0"
-            />
-            <svg
-              v-if="active === link.name"
-              class="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
+            <RouterLink
+              v-for="link in group.links"
+              :key="link.name"
+              :to="link.to"
+              class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+              :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
+              @click="closeMobileMenu"
             >
-              <path
-                d="M5 12h14M13 6l6 6-6 6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+              <component
+                :is="link.icon"
+                v-if="link.icon"
+                class="h-[1.15em] w-[1.15em] shrink-0"
               />
-            </svg>
-            {{ link.label }}
-          </RouterLink>
-        </div>
-        <div class="my-5 h-px bg-gray-200" />
-        <div class="mnav-group flex flex-col gap-5" style="transition-delay: 0.29s">
-          <div>
+              <svg
+                v-if="active === link.name"
+                class="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12h14M13 6l6 6-6 6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              {{ link.label }}
+            </RouterLink>
+          </div>
+          <div v-if="gi < navGroups.length - 1" class="my-4 h-px bg-gray-200 dark:bg-gray-300" />
+        </template>
+        <div class="my-4 h-px bg-gray-200 dark:bg-gray-300" />
+        <div class="mnav-group flex flex-col gap-2.5" style="transition-delay: 0.29s">
+          <div class="flex flex-col gap-2.5">
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-500 hover:text-ink"
               aria-label="Ask Triz.ai — AI chat assistant"
               @click="closeMobileMenu(); askTrizRef?.openAsk()"
             >
@@ -422,7 +435,7 @@ const navGroups = [
             <button
               v-if="clickMeEnabled"
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-500 hover:text-ink"
               @click="closeMobileMenu(); askRef?.openAsk()"
             >
               <Command class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
@@ -437,15 +450,16 @@ const navGroups = [
             </button>
             <button
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); chatRef?.openChat()"
             >
               <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               community chat
             </button>
             <button
+              v-if="privateChatEnabled"
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
+              class="mb-3 inline-flex w-fit items-center gap-2 text-[12px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); privateChatRef?.openChat()"
             >
               <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
@@ -454,7 +468,7 @@ const navGroups = [
             <button
               v-if="petConfig.globalEnabled"
               type="button"
-              class="mb-5 inline-flex w-fit items-center gap-2 text-[14px] transition-colors"
+              class="mb-3 inline-flex w-fit items-center gap-2 text-[12px] transition-colors"
               :class="petConfig.enabled ? 'text-ink' : 'text-gray-600 hover:text-ink'"
               @click="togglePetLocal"
             >

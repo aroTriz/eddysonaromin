@@ -15,14 +15,15 @@ import { computed, ref } from 'vue'
 
 import { isRightClickAllowed, RIGHT_CLICK_KEY } from './useSiteBehavior'
 import { bootPetConfig, petConfig, savePetConfigToApi } from './usePetConfig'
-import { setAskTrizEnabled, setBackdropEnabled, setClickMeEnabled, setCommunityChatEnabled } from '@/services/adminApi'
-import { fetchAskTrizEnabled, fetchBackdropEnabled, fetchClickMeEnabled, fetchCommunityChatEnabled } from '@/services/chatApi'
+import { setAskTrizEnabled, setBackdropEnabled, setClickMeEnabled, setCommunityChatEnabled, setPrivateChatEnabled } from '@/services/adminApi'
+import { fetchAskTrizEnabled, fetchBackdropEnabled, fetchClickMeEnabled, fetchCommunityChatEnabled, fetchPrivateChatEnabled } from '@/services/chatApi'
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
 export interface PrefDraft {
   rightClick: boolean
   chat: boolean
+  privateChat: boolean
   backdrop: boolean
   askTriz: boolean
   clickMe: boolean
@@ -37,6 +38,7 @@ export interface PrefDraft {
 export const PREF_DEFAULTS: PrefDraft = {
   rightClick: false,
   chat: false,
+  privateChat: false,
   backdrop: false,
   askTriz: false,
   clickMe: false,
@@ -64,8 +66,9 @@ const hasChanges = computed(
 export function usePreferences() {
   /** Load all settings from API + localStorage into draft + savedSnapshot. */
   async function loadFromApi(): Promise<void> {
-    const [chat, backdrop, clickMe, askTriz] = await Promise.all([
+    const [chat, privateChat, backdrop, clickMe, askTriz] = await Promise.all([
       fetchCommunityChatEnabled(),
+      fetchPrivateChatEnabled(),
       fetchBackdropEnabled(),
       fetchClickMeEnabled(),
       fetchAskTrizEnabled(),
@@ -77,6 +80,7 @@ export function usePreferences() {
     const snap: PrefDraft = {
       rightClick: isRightClickAllowed(),
       chat,
+      privateChat,
       backdrop,
       askTriz,
       clickMe,
@@ -107,6 +111,7 @@ export function usePreferences() {
       // 2. Server-side settings → API (parallel)
       await Promise.all([
         setCommunityChatEnabled(draft.value.chat),
+        setPrivateChatEnabled(draft.value.privateChat),
         setBackdropEnabled(draft.value.backdrop),
         setClickMeEnabled(draft.value.clickMe),
         setAskTrizEnabled(draft.value.askTriz),

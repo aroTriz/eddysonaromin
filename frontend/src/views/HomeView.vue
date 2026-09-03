@@ -40,6 +40,7 @@ const fallbackRecs: Recommendation[] = staticRecommendations.map((rec, i) => ({
   author: rec.author,
   role: rec.role,
   email: rec.email ?? null,
+  photo_url: null,
   sort_order: i,
   archived_at: null,
   created_at: null,
@@ -329,7 +330,7 @@ const socials = [
     </section>
 
     <!-- -- Projects spotlight deck (bryllim-style, personal only) -- -->
-    <section id="projects" aria-label="Projects" class="py-14">
+    <section id="projects" aria-label="Projects" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">02 — projects</h2>
         <RouterLink
@@ -344,7 +345,7 @@ const socials = [
     </section>
 
     <!-- -- Experience (bryllim-style rows) --------------------- -->
-    <section id="experience" aria-label="Experience" class="py-14">
+    <section id="experience" aria-label="Experience" class="py-8 sm:py-14">
       <div class="mb-6 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">03 — experience</h2>
         <RouterLink
@@ -359,10 +360,10 @@ const socials = [
         <div
           v-for="job in experiences"
           :key="job.title"
-          class="group grid grid-cols-12 items-baseline gap-3 py-2.5 hover:bg-gray-50/80"
+          class="group grid grid-cols-12 items-baseline gap-2 sm:gap-3 py-2.5 hover:bg-gray-50/80"
         >
-          <div class="col-span-2 font-mono text-[11px] text-gray-400">{{ job.year }}</div>
-          <div class="col-span-10 text-[14px] font-medium text-ink sm:col-span-6">{{ job.title }}</div>
+          <div class="col-span-4 whitespace-nowrap font-mono text-[11px] text-gray-400 sm:col-span-2">{{ job.year }}</div>
+          <div class="col-span-8 text-[14px] font-medium leading-tight text-ink sm:col-span-6">{{ job.title }}</div>
           <div class="col-span-12 text-[13px] text-gray-500 sm:col-span-4 sm:text-right">
             {{ job.company }}
           </div>
@@ -371,7 +372,7 @@ const socials = [
     </section>
 
     <!-- -- Certifications (bryllim-style grid) ----------------- -->
-    <section id="certifications" aria-label="Certifications" class="py-14">
+    <section id="certifications" aria-label="Certifications" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">04 — certifications</h2>
         <RouterLink
@@ -382,12 +383,12 @@ const socials = [
         </RouterLink>
       </div>
 
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <RouterLink
           v-for="cert in certifications"
           :key="cert.slug"
           :to="`/certifications/${cert.slug}`"
-          class="group relative flex flex-col items-center rounded-xl bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)]"
+          class="group relative flex shrink-0 w-[78%] snap-center flex-col items-center rounded-xl bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)] sm:w-auto sm:shrink sm:snap-align-none"
         >
           <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-lg border border-gray-200/70"></span>
           <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
@@ -405,7 +406,7 @@ const socials = [
     </section>
 
     <!-- -- Recommendations (bryllim 3-card grid) ---------------- -->
-    <section id="recommendations" aria-label="Recommendations" class="py-14">
+    <section id="recommendations" aria-label="Recommendations" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
         <RouterLink
@@ -416,12 +417,12 @@ const socials = [
         </RouterLink>
       </div>
 
-      <div v-if="recs.length > 0" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div v-if="recs.length > 0" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <RouterLink
-          v-for="rec in recs.slice(0, 3)"
+          v-for="rec in recs"
           :key="rec.id"
           to="/recommendations"
-          class="group flex flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
+          class="group flex shrink-0 w-[85%] snap-center flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)] sm:w-auto sm:shrink sm:snap-align-none"
         >
           <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M9 7H6a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2H4v2h1a4 4 0 004-4V7zm11 0h-3a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2h-1v2h1a4 4 0 004-4V7z" />
@@ -432,7 +433,10 @@ const socials = [
           </p>
 
           <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
-            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
+            <div v-if="rec.photo_url" class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+              <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
+            </div>
+            <div v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
               {{ rec.initials }}
             </div>
             <div class="min-w-0">
@@ -447,7 +451,7 @@ const socials = [
     </section>
 
     <!-- -- GitHub (bryllim-style halftone graph) ---------------- -->
-    <section id="github" aria-label="GitHub" class="py-14">
+    <section id="github" aria-label="GitHub" class="py-8 sm:py-14">
       <div class="mb-6 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-500 dark:text-gray-400">06 — github</h2>
         <a

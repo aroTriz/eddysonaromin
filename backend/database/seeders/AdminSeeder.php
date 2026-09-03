@@ -59,18 +59,20 @@ class AdminSeeder extends Seeder
         $stack = [
             'Frontend' => ['Vue', 'Nuxt', 'React', 'TypeScript', 'JavaScript', 'Bootstrap', 'HTML', 'CSS'],
             'Backend' => ['Laravel', 'PHP', 'Node.js'],
-            'Database' => ['MySQL', 'SQLite', 'SQL', 'DBeaver'],
+            'Database' => ['MySQL', 'SQLite'],
             'CMS' => ['WordPress', 'Joomla'],
             'Mobile & Desktop' => ['Flutter', 'Kotlin', 'C#', 'Unity', 'C++', 'C', 'Java', 'Ionic', 'Android Studio'],
             'Machine Learning and Data' => ['Python', 'Machine Learning', 'Data Analytics', 'Anaconda', 'Jupyter'],
-            'AI & Assistant' => ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Muse Spark', 'Claude', 'Ollama', 'Gemini', 'Higgsfield'],
+            'AI & Assistant' => ['Hermes', 'OpenClaw', 'OpenAI', 'DeepSeek', 'Grok', 'BigPickle', 'Muse Spark', 'Claude', 'Ollama', 'Gemini', 'Higgsfield', 'Hugging Face', 'Anthropic', 'Opencode'],
             'Version Control & CI/CD' => ['Git', 'GitHub', 'GitLab'],
-            'Developer Tools' => ['VS Code', 'XAMPP', 'WAMP', 'IntelliJ IDEA', 'PyCharm'],
+            'Developer Tools' => ['VS Code', 'IntelliJ IDEA', 'PyCharm', 'DBeaver', 'Prettier', 'XAMPP', 'WAMP'],
             'Hosting & Deployment' => ['Vercel', 'Cloudflare', 'Docker'],
             'OS' => ['Windows', 'macOS', 'Ubuntu'],
             'Networking' => ['Cisco Packet Tracer'],
             'Package Management' => ['npm', 'Composer'],
             'Design' => ['Figma', 'Canva'],
+            'Communication' => ['Discord', 'Mattermost'],
+            'Project Management' => ['Trello'],
         ];
 
         foreach ($stack as $label => $items) {

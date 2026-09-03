@@ -1,5 +1,5 @@
 ﻿import { getToken } from '@/composables/useAuth'
-import type { BlogPost, ExperienceEntry, Project, ProjectShowcase, Recommendation } from '@/types'
+import type { BlogPost, ExperienceEntry, Project, ProjectShowcase, Recommendation, Reference } from '@/types'
 /**
  * Authenticated API client for the /aromin admin area.
  * Every call attaches the admin Bearer token.
@@ -538,11 +538,12 @@ export async function restoreAdminProject(id: number): Promise<Project> {
 }
 
 export interface RecommendationInput {
-  initials: string
+  initials?: string
   quote: string
   author: string
   role: string
   email?: string | null
+  photo_url?: string | null
   sort_order?: number
 }
 
@@ -621,6 +622,26 @@ export async function deleteAdminRecommendations(ids: number[]): Promise<{ delet
     body: JSON.stringify({ ids }),
   })
   return handle<{ deleted: number }>(res)
+}
+
+/** Upload a photo for a recommendation (avatar). Returns base64 data-URL. */
+export async function uploadRecommendationPhoto(file: File): Promise<{ url: string }> {
+  const token = getToken()
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+  const res = await fetch(`${API_BASE}/admin/recommendations/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ image: dataUrl }),
+  })
+  return handle<{ url: string }>(res)
 }
 
 // ── Account management (registered site accounts) ────────────────────
@@ -881,6 +902,16 @@ export async function setCommunityChatEnabled(enabled: boolean): Promise<void> {
   await handle<void>(res)
 }
 
+/** Show/hide the private chat button in the navbar (admin only). */
+export async function setPrivateChatEnabled(enabled: boolean): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/settings/private-chat`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ enabled }),
+  })
+  await handle<void>(res)
+}
+
 /**
  * Turn the animated backdrops on/off site-wide (admin only).
  * ON (default) → neural link in light mode + star sphere in dark mode.
@@ -1041,4 +1072,115 @@ export async function restoreAdminExperience(id: number): Promise<ExperienceEntr
     headers: authHeaders(),
   })
   return handle<ExperienceEntry>(res)
+}
+
+// ── References / Referrers CMS (separate from recommendations) ──
+
+/** Fields the admin can edit on a reference (mirrors the backend rules). */
+export interface ReferenceInput {
+  slug?: string
+  initials: string
+  name: string
+  title: string
+  email?: string | null
+  photo_url?: string | null
+  summary?: string | null
+  sort_order?: number
+}
+
+/** All references (active by default). Pass archived=true for archived ones. */
+export function fetchAdminReferences(archived = false): Promise<Reference[]> {
+  const key = `admin:references:${archived ? 'archived' : 'active'}`
+  return cachedAdmin(key, async () => {
+    const res = await fetch(`${API_BASE}/admin/references${archived ? '?archived=1' : ''}`, {
+      headers: authHeaders(),
+    })
+    return handle<Reference[]>(res)
+  })
+}
+
+/** Create a reference. */
+export async function createAdminReference(input: ReferenceInput): Promise<Reference> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Reference>(res)
+}
+
+/** Update a reference by id. */
+export async function updateAdminReference(
+  id: number,
+  input: Partial<ReferenceInput>,
+): Promise<Reference> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Reference>(res)
+}
+
+/** Delete a reference permanently. */
+export async function deleteAdminReference(id: number): Promise<void> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
+}
+
+/** Bulk delete references by ids. */
+export async function deleteAdminReferences(ids: number[]): Promise<{ deleted: number }> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  })
+  return handle<{ deleted: number }>(res)
+}
+
+/** Archive a reference (hides from the site; restorable). */
+export async function archiveAdminReference(id: number): Promise<Reference> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references/${id}/archive`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Reference>(res)
+}
+
+/** Restore an archived reference. */
+export async function restoreAdminReference(id: number): Promise<Reference> {
+  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/references/${id}/restore`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Reference>(res)
+}
+
+/** Upload a photo for a reference (avatar / logo). Returns base64 data-URL. */
+export async function uploadReferencePhoto(file: File): Promise<{ url: string }> {
+  const token = getToken()
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+  const res = await fetch(`${API_BASE}/admin/references/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ image: dataUrl }),
+  })
+  return handle<{ url: string }>(res)
 }

@@ -32,6 +32,7 @@ class SiteSettingsController extends Controller
     public const PET_SETTINGS_KEY = 'pet_settings';
     public const CLICK_ME_KEY = 'click_me_enabled';
     public const ASK_TRIZ_KEY = 'ask_triz_enabled';
+    public const PRIVATE_CHAT_KEY = 'private_chat_enabled';
 
     /** Default pet config — OFF by default: toggle button hidden and cat OFF until admin enables.
      *  Admin ON only shows the "toggle pet" button; visitor must toggle manually (enabled stays false).
@@ -52,6 +53,7 @@ class SiteSettingsController extends Controller
             'backdrop_enabled' => $this->backdropEnabled(),
             'click_me_enabled' => $this->clickMeEnabled(),
             'ask_triz_enabled' => $this->askTrizEnabled(),
+            'private_chat_enabled' => $this->privateChatEnabled(),
             'pet' => $this->petSettings(),
         ]);
     }
@@ -112,6 +114,19 @@ class SiteSettingsController extends Controller
         $this->set(self::ASK_TRIZ_KEY, $enabled ? '1' : '0');
 
         return response()->json(['ask_triz_enabled' => $enabled]);
+    }
+
+    /** Show/hide the "private chat" button in the navbar. Body: { enabled: bool }. */
+    public function updatePrivateChat(Request $request): JsonResponse
+    {
+        if (app(AuthController::class)->adminFromRequest($request) === null) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $enabled = (bool) $request->input('enabled', false);
+        $this->set(self::PRIVATE_CHAT_KEY, $enabled ? '1' : '0');
+
+        return response()->json(['private_chat_enabled' => $enabled]);
     }
 
     /** Save the pet config. Body: { enabled, scale, speed, animate }. */
@@ -180,6 +195,16 @@ class SiteSettingsController extends Controller
     {
         $value = DB::table('site_settings')
             ->where('key', self::ASK_TRIZ_KEY)
+            ->value('value');
+
+        return $value !== '0';
+    }
+
+    /** Whether the "private chat" button is shown in the navbar. Missing row → enabled. */
+    public function privateChatEnabled(): bool
+    {
+        $value = DB::table('site_settings')
+            ->where('key', self::PRIVATE_CHAT_KEY)
             ->value('value');
 
         return $value !== '0';

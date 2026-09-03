@@ -1,8 +1,9 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 /**
- * /aromin/recommendations — testimonials CMS. List, create, edit, delete,
- * archive & restore. Confirms destructive/save actions with a themed
- * blur modal (ConfirmModal). Bulk selection with select-all / delete-selected.
+ * /aromin/references — referrers / references CMS. Separate from
+ * recommendations & certifications — own table, own routes.
+ * List, create, edit, delete, archive & restore. Mirrors the
+ * recommendations CMS pattern exactly (as checked on web).
  */
 import { Archive, ArchiveRestore, FileText, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
@@ -10,34 +11,19 @@ import { computed, onMounted, ref } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
-  archiveAdminRecommendation,
-  createAdminRecommendation,
-  deleteAdminRecommendation,
-  deleteAdminRecommendations,
-  fetchAdminRecommendations,
-  restoreAdminRecommendation,
-  updateAdminRecommendation,
-  uploadRecommendationPhoto,
-  type RecommendationInput,
+  archiveAdminReference,
+  createAdminReference,
+  deleteAdminReference,
+  deleteAdminReferences,
+  fetchAdminReferences,
+  restoreAdminReference,
+  updateAdminReference,
+  uploadReferencePhoto,
+  type ReferenceInput,
 } from '@/services/adminApi'
-import type { Recommendation } from '@/types'
+import type { Reference } from '@/types'
 
-function generateInitials(author: string): string {
-  const parts = author.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '??'
-  if (parts.length === 1) {
-    const word = parts[0].replace(/[^A-Za-z0-9]/g, '')
-    return (word.slice(0, 2) || '??').toUpperCase()
-  }
-  const first = parts[0].replace(/[^A-Za-z0-9]/g, '')
-  const last = parts[parts.length - 1].replace(/[^A-Za-z0-9]/g, '')
-  const a = first[0] ?? ''
-  let b = last[0] ?? ''
-  if (!b && parts[1]) b = parts[1].replace(/[^A-Za-z0-9]/g, '')[0] ?? ''
-  return (a + b || '??').toUpperCase()
-}
-
-const items = ref<Recommendation[]>([])
+const items = ref<Reference[]>([])
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
@@ -45,12 +31,11 @@ const deleting = ref(false)
 const showArchived = ref(false)
 
 // Editor state
-const editing = ref<Recommendation | null>(null)
+const editing = ref<Reference | null>(null)
 const editorOpen = ref(false)
-const form = ref<RecommendationInput & { photo_url: string | null }>({ quote: '', author: '', role: '', email: null, photo_url: null })
+const form = ref<ReferenceInput & { slug: string; summary: string; photo_url: string | null }>({ slug: '', initials: '', name: '', title: '', email: null, photo_url: null, summary: '', sort_order: 0 })
 const photoUploading = ref(false)
 const photoInputRef = ref<HTMLInputElement | null>(null)
-const autoInitials = computed(() => generateInitials(form.value.author || ''))
 
 // Bulk selection state
 const selectionMode = ref(false)
@@ -80,9 +65,9 @@ async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    items.value = await fetchAdminRecommendations(showArchived.value)
+    items.value = await fetchAdminReferences(showArchived.value)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load recommendations'
+    error.value = e instanceof Error ? e.message : 'Failed to load references'
   } finally {
     loading.value = false
   }
@@ -99,22 +84,29 @@ function askConfirm(opts: {
 }
 
 // -- Editor -------------------------------------------------------
+function slugify(input: string): string {
+  return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)
+}
+
 function startNew(): void {
   editing.value = null
   editorOpen.value = true
-  form.value = { quote: '', author: '', role: '', email: null, photo_url: null }
+  form.value = { slug: '', initials: '', name: '', title: '', email: null, photo_url: null, summary: '', sort_order: items.value.length }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function startEdit(rec: Recommendation): void {
-  editing.value = rec
+function startEdit(refItem: Reference): void {
+  editing.value = refItem
   editorOpen.value = true
   form.value = {
-    quote: rec.quote,
-    author: rec.author,
-    role: rec.role,
-    email: rec.email ?? null,
-    photo_url: rec.photo_url ?? null,
+    slug: refItem.slug,
+    initials: refItem.initials,
+    name: refItem.name,
+    title: refItem.title,
+    email: refItem.email ?? null,
+    photo_url: refItem.photo_url ?? null,
+    summary: refItem.summary ?? '',
+    sort_order: refItem.sort_order,
   }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -122,7 +114,7 @@ function startEdit(rec: Recommendation): void {
 function cancelEdit(): void {
   editing.value = null
   editorOpen.value = false
-  form.value = { quote: '', author: '', role: '', email: null, photo_url: null }
+  form.value = { slug: '', initials: '', name: '', title: '', email: null, photo_url: null, summary: '', sort_order: 0 }
 }
 
 async function onPhotoPicked(event: Event): Promise<void> {
@@ -132,7 +124,7 @@ async function onPhotoPicked(event: Event): Promise<void> {
   photoUploading.value = true
   error.value = ''
   try {
-    const { url } = await uploadRecommendationPhoto(file)
+    const { url } = await uploadReferencePhoto(file)
     form.value.photo_url = url
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to upload photo'
@@ -148,15 +140,15 @@ function removePhoto(): void {
 
 /** Validate the form, then ask for confirmation before saving. */
 function requestSave(): void {
-  if (!form.value.quote.trim() || !form.value.author.trim() || !form.value.role.trim()) {
-    error.value = 'Quote, author and role are required.'
+  if (!form.value.initials.trim() || !form.value.name.trim() || !form.value.title.trim()) {
+    error.value = 'Initials, name and title are required.'
     return
   }
   askConfirm({
     title: 'Save changes',
     message: editing.value
-      ? `Update the recommendation from "${editing.value.author}"?`
-      : 'Add this recommendation to the wall?',
+      ? `Update reference "${editing.value.name}"?`
+      : 'Add this reference to the site?',
     confirmLabel: 'save',
     danger: false,
     action: save,
@@ -167,24 +159,26 @@ async function save(): Promise<void> {
   saving.value = true
   error.value = ''
   try {
-    const payload: RecommendationInput = {
-      initials: generateInitials(form.value.author.trim()),
-      quote: form.value.quote.trim(),
-      author: form.value.author.trim(),
-      role: form.value.role.trim(),
+    const payload: ReferenceInput = {
+      slug: form.value.slug.trim() ? slugify(form.value.slug) : undefined,
+      initials: form.value.initials.trim().toUpperCase(),
+      name: form.value.name.trim(),
+      title: form.value.title.trim(),
       email: form.value.email?.trim() ? form.value.email.trim() : null,
       photo_url: form.value.photo_url || null,
+      summary: form.value.summary?.trim() ? form.value.summary.trim() : null,
+      sort_order: Number.isFinite(form.value.sort_order) ? form.value.sort_order : 0,
     }
     if (editing.value) {
-      await updateAdminRecommendation(editing.value.id, payload)
+      await updateAdminReference(editing.value.id, payload)
     } else {
-      await createAdminRecommendation(payload)
+      await createAdminReference(payload)
     }
     confirm.value = null
     await load()
     cancelEdit()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to save recommendation'
+    error.value = e instanceof Error ? e.message : 'Failed to save reference'
     confirm.value = null
   } finally {
     saving.value = false
@@ -192,21 +186,21 @@ async function save(): Promise<void> {
 }
 
 // -- Archive / restore --------------------------------------------
-async function archiveItem(rec: Recommendation): Promise<void> {
+async function archiveItem(refItem: Reference): Promise<void> {
   try {
-    await archiveAdminRecommendation(rec.id)
+    await archiveAdminReference(refItem.id)
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to archive recommendation'
+    error.value = e instanceof Error ? e.message : 'Failed to archive reference'
   }
 }
 
-async function restoreItem(rec: Recommendation): Promise<void> {
+async function restoreItem(refItem: Reference): Promise<void> {
   try {
-    await restoreAdminRecommendation(rec.id)
+    await restoreAdminReference(refItem.id)
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to restore recommendation'
+    error.value = e instanceof Error ? e.message : 'Failed to restore reference'
   }
 }
 
@@ -218,27 +212,27 @@ function toggleArchived(): void {
 }
 
 // -- Delete (single + bulk) ---------------------------------------
-function askDelete(rec: Recommendation): void {
+function askDelete(refItem: Reference): void {
   askConfirm({
-    title: 'Delete recommendation',
-    message: `Delete "${rec.author}"'s recommendation permanently?`,
+    title: 'Delete reference',
+    message: `Delete "${refItem.name}" permanently?`,
     confirmLabel: 'delete',
     danger: true,
-    action: () => remove(rec),
+    action: () => remove(refItem),
   })
 }
 
-async function remove(rec: Recommendation): Promise<void> {
+async function remove(refItem: Reference): Promise<void> {
   deleting.value = true
   try {
-    await deleteAdminRecommendation(rec.id)
+    await deleteAdminReference(refItem.id)
     const next = new Set(selected.value)
-    next.delete(rec.id)
+    next.delete(refItem.id)
     selected.value = next
     confirm.value = null
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to delete recommendation'
+    error.value = e instanceof Error ? e.message : 'Failed to delete reference'
     confirm.value = null
   } finally {
     deleting.value = false
@@ -249,7 +243,7 @@ function askDeleteSelected(): void {
   const count = selected.value.size
   askConfirm({
     title: 'Delete selected',
-    message: `Delete ${count} selected recommendation${count > 1 ? 's' : ''} permanently?`,
+    message: `Delete ${count} selected reference${count > 1 ? 's' : ''} permanently?`,
     confirmLabel: 'delete',
     danger: true,
     action: removeSelected,
@@ -259,12 +253,12 @@ function askDeleteSelected(): void {
 async function removeSelected(): Promise<void> {
   deleting.value = true
   try {
-    await deleteAdminRecommendations([...selected.value])
+    await deleteAdminReferences([...selected.value])
     confirm.value = null
     exitSelection()
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to delete recommendations'
+    error.value = e instanceof Error ? e.message : 'Failed to delete references'
     confirm.value = null
   } finally {
     deleting.value = false
@@ -304,14 +298,14 @@ onMounted(load)
 </script>
 
 <template>
-  <AdminLayout active="aromin-recommendations">
+  <AdminLayout active="aromin-references">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h1 class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink">
-          recommendations<span class="text-gray-400">.</span>
+          references<span class="text-gray-400">.</span>
         </h1>
         <p class="mt-1.5 font-mono text-[12px] text-gray-500">
-          // manage testimonials from your network
+          // manage referrers — separate from recommendations
         </p>
       </div>
       <button
@@ -320,7 +314,7 @@ onMounted(load)
         @click="startNew"
       >
         <Plus class="h-3.5 w-3.5" :stroke-width="2" />
-        New recommendation
+        New reference
       </button>
     </div>
 
@@ -332,7 +326,7 @@ onMounted(load)
     <div v-if="editorOpen" class="mb-8 rounded-xl border border-gray-200 bg-white p-6">
       <div class="mb-5 flex items-center justify-between">
         <p class="font-mono text-[11px] text-gray-500">
-          // {{ editing ? `edit_recommendation — #${editing.id}` : 'new_recommendation' }}
+          // {{ editing ? `edit_reference — #${editing.id}` : 'new_reference' }}
         </p>
         <button
           type="button"
@@ -345,16 +339,40 @@ onMounted(load)
       </div>
 
       <div class="flex flex-col gap-4">
-        <!-- Photo + Author + auto initials -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-initials">initials *</label>
+            <input
+              id="ref-initials"
+              v-model="form.initials"
+              type="text"
+              maxlength="8"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="e.g. LF"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-name">name *</label>
+            <input
+              id="ref-name"
+              v-model="form.name"
+              type="text"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="Full name"
+            />
+          </div>
+        </div>
+
+        <!-- Photo -->
         <div class="flex items-start gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="font-mono text-[11px] text-gray-500">photo</label>
             <div class="flex items-center gap-3">
-              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1.5">
                 <img :src="form.photo_url" alt="preview" class="h-full w-full object-contain" />
               </div>
-              <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[13px] font-semibold text-gray-600">
-                {{ autoInitials }}
+              <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-dashed border-gray-300 bg-gray-50 font-mono text-[13px] font-semibold text-gray-400">
+                {{ form.initials || '?' }}
               </div>
               <div class="flex flex-col gap-1.5">
                 <input ref="photoInputRef" type="file" accept="image/*" class="hidden" @change="onPhotoPicked" />
@@ -376,54 +394,67 @@ onMounted(load)
                   <Trash2 class="h-3 w-3" :stroke-width="1.7" />
                   Remove photo
                 </button>
-                <span class="font-mono text-[10.5px] text-gray-400">If no photo, initials auto: {{ autoInitials }}</span>
               </div>
             </div>
+            <p class="font-mono text-[10.5px] text-gray-400">PNG/JPG max ~3 MB. PRAXXYS uses /images/logos/praxxys-logo.png</p>
           </div>
-          <div class="flex flex-1 flex-col gap-1.5">
-            <label class="font-mono text-[11px] text-gray-500" for="rec-author">author *</label>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-title">title / role *</label>
             <input
-              id="rec-author"
-              v-model="form.author"
+              id="ref-title"
+              v-model="form.title"
               type="text"
               class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-              placeholder="Full name or team"
+              placeholder="e.g. University Instructor — Saint Louis University"
             />
-            <p class="font-mono text-[10.5px] text-gray-400">Initials auto-generated: <span class="font-semibold text-gray-600">{{ autoInitials }}</span></p>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-slug">slug (auto)</label>
+            <input
+              id="ref-slug"
+              v-model="form.slug"
+              type="text"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="auto from name"
+            />
           </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] text-gray-500" for="rec-role">role</label>
-          <input
-            id="rec-role"
-            v-model="form.role"
-            type="text"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="e.g. Instructor, SLU · Founder, MyVirtual Learning"
-          />
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] text-gray-500" for="rec-quote">quote</label>
+          <label class="font-mono text-[11px] text-gray-500" for="ref-summary">summary</label>
           <textarea
-            id="rec-quote"
-            v-model="form.quote"
-            rows="4"
+            id="ref-summary"
+            v-model="form.summary"
+            rows="3"
             class="w-full resize-y rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] leading-relaxed text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="&quot;What they said about working with me...&quot;"
+            placeholder="Short bio — can speak to..."
           ></textarea>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] text-gray-500" for="rec-email">email (optional)</label>
-          <input
-            id="rec-email"
-            v-model="form.email"
-            type="email"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="contact@example.com"
-          />
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-email">email (optional)</label>
+            <input
+              id="ref-email"
+              v-model="form.email"
+              type="email"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="contact@example.com"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="ref-order">sort order</label>
+            <input
+              id="ref-order"
+              v-model.number="form.sort_order"
+              type="number"
+              min="0"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+            />
+          </div>
         </div>
 
         <div class="flex gap-2">
@@ -439,7 +470,7 @@ onMounted(load)
               :stroke-width="1.7"
             />
             <Save v-else class="h-4 w-4" :stroke-width="1.7" />
-            {{ saving ? 'Saving...' : editing ? 'Update recommendation' : 'Add recommendation' }}
+            {{ saving ? 'Saving...' : editing ? 'Update reference' : 'Add reference' }}
           </button>
           <button
             v-if="editing"
@@ -458,7 +489,7 @@ onMounted(load)
       <template v-if="selectionMode">
         <label
           class="flex cursor-pointer select-none items-center gap-2"
-          :title="allSelected ? 'Deselect all' : 'Select all recommendations'"
+          :title="allSelected ? 'Deselect all' : 'Select all references'"
         >
           <input
             type="checkbox"
@@ -471,7 +502,7 @@ onMounted(load)
         </label>
       </template>
       <p class="font-mono text-[11px] text-gray-500">
-        // {{ showArchived ? 'archived' : 'recommendations' }} ({{ items.length }})
+        // {{ showArchived ? 'archived' : 'references' }} ({{ items.length }})
       </p>
       <div class="ml-auto flex items-center gap-2">
         <button
@@ -485,8 +516,8 @@ onMounted(load)
           v-if="!selectionMode"
           type="button"
           class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          aria-label="Select recommendations to delete"
-          title="Delete recommendations"
+          aria-label="Select references to delete"
+          title="Delete references"
           @click="enterSelection"
         >
           <Trash2 class="h-4 w-4" :stroke-width="1.7" />
@@ -534,38 +565,38 @@ onMounted(load)
 
     <div v-else-if="sorted.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
       <p class="font-mono text-[12px] text-gray-500">
-        {{ showArchived ? 'Nothing archived yet.' : 'No recommendations yet. Add your first one above!' }}
+        {{ showArchived ? 'Nothing archived yet.' : 'No references yet. Add your first one above!' }}
       </p>
     </div>
 
     <div v-else class="space-y-2">
       <div
-        v-for="rec in sorted"
-        :key="rec.id"
+        v-for="refItem in sorted"
+        :key="refItem.id"
         class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-gray-300"
-        :class="{ 'border-gray-300': selected.has(rec.id), 'opacity-60': showArchived }"
+        :class="{ 'border-gray-300': selected.has(refItem.id), 'opacity-60': showArchived }"
       >
         <input
           v-if="selectionMode"
           type="checkbox"
           class="h-4 w-4 shrink-0 cursor-pointer accent-ink"
-          :checked="selected.has(rec.id)"
-          :aria-label="`Select ${rec.author}'s recommendation`"
-          @change="toggleSelect(rec.id)"
+          :checked="selected.has(refItem.id)"
+          :aria-label="`Select ${refItem.name}'s reference`"
+          @change="toggleSelect(refItem.id)"
         />
-        <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
-          <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
+        <div v-if="refItem.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+          <img :src="refItem.photo_url" :alt="refItem.name" class="h-full w-full object-contain" loading="lazy" />
         </div>
         <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
-          {{ rec.initials }}
+          {{ refItem.initials }}
         </div>
-        <div class="min-w-0 flex-1">
-          <p class="truncate font-mono text-[13px] font-semibold text-ink">{{ rec.author }}</p>
+        <div class="min-w-0 flex-1 overflow-hidden">
+          <p class="truncate font-mono text-[13px] font-semibold text-ink" :title="refItem.name">{{ refItem.name }}</p>
           <span
             class="mt-1 inline-flex max-w-full items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-mono text-[10.5px] text-gray-500"
-            :title="rec.role"
+            :title="refItem.title"
           >
-            <span class="truncate">{{ rec.role }}</span>
+            <span class="truncate">{{ refItem.title }}</span>
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-1.5">
@@ -573,8 +604,8 @@ onMounted(load)
             v-if="showArchived"
             type="button"
             class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
-            :aria-label="`Restore ${rec.author}'s recommendation`"
-            @click="restoreItem(rec)"
+            :aria-label="`Restore ${refItem.name}'s reference`"
+            @click="restoreItem(refItem)"
           >
             <ArchiveRestore class="h-3.5 w-3.5" :stroke-width="1.7" />
             Restore
@@ -583,25 +614,25 @@ onMounted(load)
             <button
               type="button"
               class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
-              :aria-label="`Edit ${rec.author}'s recommendation`"
-              @click="startEdit(rec)"
+              :aria-label="`Edit ${refItem.name}'s reference`"
+              @click="startEdit(refItem)"
             >
               <Pencil class="h-3.5 w-3.5" :stroke-width="1.7" />
             </button>
             <button
               type="button"
               class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
-              :aria-label="`Archive ${rec.author}'s recommendation`"
+              :aria-label="`Archive ${refItem.name}'s reference`"
               title="Archive"
-              @click="archiveItem(rec)"
+              @click="archiveItem(refItem)"
             >
               <Archive class="h-3.5 w-3.5" :stroke-width="1.7" />
             </button>
             <button
               type="button"
               class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-ink"
-              :aria-label="`Delete ${rec.author}'s recommendation`"
-              @click="askDelete(rec)"
+              :aria-label="`Delete ${refItem.name}'s reference`"
+              @click="askDelete(refItem)"
             >
               <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
             </button>
@@ -612,7 +643,7 @@ onMounted(load)
 
     <div class="mt-8 flex items-center gap-2 font-mono text-[10.5px] text-gray-400">
       <FileText class="h-3.5 w-3.5" :stroke-width="1.7" />
-      edits appear instantly on /recommendations
+      edits appear instantly on /certifications → references
     </div>
 
     <!-- -- Themed confirm dialog (delete / save) ----------------- -->

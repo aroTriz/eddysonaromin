@@ -177,10 +177,23 @@ export async function sessionForUser(
 
 /** Shape a D1 project row to match the Laravel `Project` model JSON. */
 export function mapProject(row: Record<string, unknown>): Record<string, unknown> {
+  let showcase: unknown = null
+  if (row.showcase !== null && row.showcase !== undefined && String(row.showcase).trim() !== '') {
+    try {
+      showcase = JSON.parse(String(row.showcase))
+      // Guard: empty object/array string → treat as null
+      if (showcase === null || (typeof showcase === 'object' && Object.keys(showcase as object).length === 0)) {
+        showcase = null
+      }
+    } catch {
+      showcase = null
+    }
+  }
   return {
     ...row,
     featured: Boolean(row.featured),
     technologies: JSON.parse(String(row.technologies ?? '[]')),
+    showcase,
   }
 }
 

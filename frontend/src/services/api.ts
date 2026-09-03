@@ -5,6 +5,7 @@ import type {
   ExperienceEntry,
   Project,
   Recommendation,
+  Reference,
   StackGroup,
 } from '@/types'
 import { profile } from '@/data/profile'
@@ -132,6 +133,20 @@ export function fetchExperiences(): Promise<ExperienceEntry[]> {
     const response = await fetch(`${API_BASE}/experiences`)
     return parse<ExperienceEntry[]>(response)
   })
+}
+
+/** Fetch references / referrers (public, non-archived). */
+export function fetchReferences(): Promise<Reference[]> {
+  return cached('references:', async () => {
+    const response = await fetch(`${API_BASE}/references`)
+    return parse<Reference[]>(response)
+  })
+}
+
+/** Fetch a single reference by slug. */
+export async function fetchReference(slug: string): Promise<Reference> {
+  const response = await fetch(`${API_BASE}/references/${encodeURIComponent(slug)}`)
+  return parse<Reference>(response)
 }
 
 /** Submit a contact message. Returns the created message id. */
