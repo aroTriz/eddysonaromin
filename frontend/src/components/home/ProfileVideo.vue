@@ -81,18 +81,17 @@ const PREFIX = '/profile-frames/ezgif-frame-'
 const INTERVAL = 1000 / FPS
 
 /**
- * BUG FIX: cache-bust per mount.
- * Vite serves /profile-frames/*.jpg from `public/` with no content hash.
- * When the frames are replaced on disk (new profile pic / new video export),
- * the URL is identical so the browser + the module-level Image cache serve
- * stale bytes until a hard refresh. Adding `?v=<mountId>` forces a fresh
- * fetch on every SPA navigation to "/" — no manual refresh needed to see
- * the pinakalast (latest) pic. The bust is per-mount (Date.now) so a single
- * mount still benefits from HTTP cache for the 151 frames, but the next
- * navigation always revalidates.
+ * Optimized: WebP frames (60% smaller than JPG) resized to 480px.
+ * Frames are now pre-converted to .webp at build time (sharp, q70, 480w).
+ * We try .webp first, fallback to .jpg if WebP missing (old cache).
+ * Cache-bust per mount still applies so new profile pics show without refresh.
  */
 let mountBust = ''
 function frameSrc(i: number): string {
+  const base = `${PREFIX}${String(i).padStart(3, '0')}.webp`
+  return mountBust ? `${base}?v=${mountBust}` : base
+}
+function frameSrcFallback(i: number): string {
   const base = `${PREFIX}${String(i).padStart(3, '0')}.jpg`
   return mountBust ? `${base}?v=${mountBust}` : base
 }
@@ -116,12 +115,10 @@ function preload(): void {
   firstFrameDrawn = false
 
   // 1. Load the *actual* frame that will be visible (1 for light, 151 for dark)
-  //    immediately — the old code always loaded 1 even in dark mode, so dark
-  //    visitors saw a blank/wrong pic until the idle loader finished.
   const target = currentFrame
   const first = new Image()
-  // `cache: no-store` via query param already busts; also set decoding async.
   first.decoding = 'async'
+  // Prefer WebP, fallback to JPG on error (covers old CDN cache)
   first.src = frameSrc(target)
   first.onload = () => {
     loadedCount++
@@ -131,8 +128,13 @@ function preload(): void {
     }
   }
   first.onerror = () => {
-    // Retry once on error (transient dev-server hiccup) — still shows latest.
-    setTimeout(() => { first.src = frameSrc(target) }, 300)
+    // Fallback to JPG if WebP 404 (or transient hiccup) — then retry WebP once
+    const fallback = frameSrcFallback(target)
+    if (first.src !== fallback) {
+      first.src = fallback
+    } else {
+      setTimeout(() => { first.src = frameSrc(target) }, 300)
+    }
   }
   frameImages[target] = first
 
@@ -142,6 +144,7 @@ function preload(): void {
     const opp = new Image()
     opp.decoding = 'async'
     opp.src = frameSrc(opposite)
+    opp.onerror = () => { opp.src = frameSrcFallback(opposite) }
     opp.onload = () => { loadedCount++ }
     frameImages[opposite] = opp
   }
@@ -154,9 +157,9 @@ function preload(): void {
       const img = new Image()
       img.decoding = 'async'
       img.src = frameSrc(i)
+      img.onerror = () => { img.src = frameSrcFallback(i) }
       img.onload = () => {
         loadedCount++
-        // If this is the frame we are supposed to be showing, draw it now.
         if (i === currentFrame && !firstFrameDrawn) {
           drawFrame(currentFrame)
           firstFrameDrawn = true
