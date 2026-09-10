@@ -159,6 +159,13 @@ const paginationTotal = computed(() => {
           >
             <div class="flex items-start gap-3">
               <div
+                v-if="reference.photo_url"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1"
+              >
+                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" loading="lazy" />
+              </div>
+              <div
+                v-else
                 class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
               >
                 {{ reference.initials }}
@@ -219,10 +226,17 @@ const paginationTotal = computed(() => {
       >
         <div class="flex items-start gap-3">
           <div
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
-          >
-            {{ reference.initials }}
-          </div>
+                v-if="reference.photo_url"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1"
+              >
+                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" loading="lazy" />
+              </div>
+              <div
+                v-else
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
+              >
+                {{ reference.initials }}
+              </div>
           <div class="min-w-0">
             <h3 class="flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
               <UserRound class="h-3.5 w-3.5 text-gray-500" :stroke-width="1.6" />

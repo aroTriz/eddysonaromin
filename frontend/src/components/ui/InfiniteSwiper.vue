@@ -238,23 +238,30 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="relative">
-    <!-- arrows — theme-aligned (bare, no circle) like ServicesView/DeviceShowcase: p-2 text-gray-400 hover:text-ink -->
-    <!-- placed adjacent to window as flex siblings (same pattern as ServicesView) but bare style -->
-    <div class="flex items-center gap-1 sm:gap-2">
-      <button
-        v-if="arrows && (needsLoop || items.length > 3)"
-        type="button"
-        aria-label="Previous"
-        class="hidden sm:inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
-        @click="slide(-1)"
-      >
-        <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
-      </button>
+    <!-- desktop arrows - outside the viewport so cards consume full width -->
+    <button
+      v-if="arrows && (needsLoop || items.length > 3)"
+      type="button"
+      aria-label="Previous"
+      class="hidden sm:inline-flex absolute -left-12 top-1/2 -translate-y-1/2 z-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
+      @click="slide(-1)"
+    >
+      <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
+    </button>
+    <button
+      v-if="arrows && (needsLoop || items.length > 3)"
+      type="button"
+      aria-label="Next"
+      class="hidden sm:inline-flex absolute -right-12 top-1/2 -translate-y-1/2 z-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
+      @click="slide(1)"
+    >
+      <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
+    </button>
 
-      <!-- viewport — py-2/-my-2 lets card shadows show while still clipping X -->
-      <div
-        ref="container"
-        class="min-w-0 flex-1 overflow-hidden py-2 -my-2"
+    <!-- viewport - py-2/-my-2 lets card shadows show while still clipping X; now full width -->
+    <div
+      ref="container"
+      class="overflow-hidden py-2 -my-2"
         :class="{ 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden': !needsLoop }"
       >
         <!-- track — transforms when looping, scrolls naturally when not -->
@@ -284,18 +291,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
-
-      <button
-        v-if="arrows && (needsLoop || items.length > 3)"
-        type="button"
-        aria-label="Next"
-        class="hidden sm:inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
-        @click="slide(1)"
-      >
-        <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
-      </button>
-    </div>
-
     <!-- mobile arrows — SYMMETRIC: line - arrow - line - swipe - line - arrow - line (center = swipe) -->
     <div v-if="needsLoop || items.length > 3" class="mt-3 flex items-center justify-center gap-3 sm:hidden">
       <button

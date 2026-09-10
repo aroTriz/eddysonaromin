@@ -177,9 +177,12 @@ const router = createRouter({
       redirect: '/',
     },
   ],
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    // Pagination query changes stay on same path - keep scroll where it is.
+    // Without this every ?page= push triggered { top: 0 } and jumped to top.
+    if (from && to.path === from.path) return false
     return { top: 0 }
   },
 })

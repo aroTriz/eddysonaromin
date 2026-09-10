@@ -16,12 +16,34 @@ const API_BASE = '/api/v1'
  * Promise cache — the same in-flight request is shared by every caller, so
  * the loading screen can prefetch the home page's data and the components
  * resolve instantly from the same promise (everything appears at once).
- * Entries expire after CACHE_TTL_MS so CMS edits (made in /aromin) show up
+ * Entries expire after CACHE_TTL_MS and are busted immediately via invalidatePublic() so CMS edits (made in /aromin) show up
  * on the public site within a few minutes without a hard refresh.
  */
 const requestCache = new Map<string, { promise: Promise<unknown>; at: number }>()
 
-const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_TTL_MS = 30 * 1000 // 30s so admin edits appear quickly even without explicit invalidation
+
+export function invalidatePublic(prefix?: string): void {
+  if (!prefix) {
+    requestCache.clear();
+    try { localStorage.setItem('__api_cache_bust', Date.now().toString()); } catch {}
+    return;
+  }
+  for (const k of [...requestCache.keys()]) if (k.startsWith(prefix)) requestCache.delete(k);
+  try { localStorage.setItem('__api_cache_bust:'+prefix, Date.now().toString()); } catch {}
+}
+
+// Cross-tab: when admin in another tab busts cache, clear matching entries here
+try {
+  window.addEventListener('storage', (e) => {
+    if (!e.key) return;
+    if (e.key === '__api_cache_bust') requestCache.clear();
+    else if (e.key.startsWith('__api_cache_bust:')) {
+      const pref = e.key.slice('__api_cache_bust:'.length);
+      for (const k of [...requestCache.keys()]) if (k.startsWith(pref)) requestCache.delete(k);
+    }
+  });
+} catch {}
 
 function cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const hit = requestCache.get(key)

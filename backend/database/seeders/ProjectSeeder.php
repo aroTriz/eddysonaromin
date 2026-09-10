@@ -29,6 +29,7 @@ class ProjectSeeder extends Seeder
                 'url' => 'https://injoy.com.ph',
                 'source_url' => null,
                 'image_url' => null,
+                'favicon_url' => '/images/projects/icons/injoy.ico',
                 'sort_order' => 0,
             ],
 

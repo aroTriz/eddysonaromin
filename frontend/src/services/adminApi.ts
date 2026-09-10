@@ -1,4 +1,5 @@
 ﻿import { getToken } from '@/composables/useAuth'
+import { invalidatePublic } from '@/services/api'
 import type { BlogPost, ExperienceEntry, Project, ProjectShowcase, Recommendation, Reference } from '@/types'
 /**
  * Authenticated API client for the /aromin admin area.
@@ -238,7 +239,7 @@ export function fetchAdminPosts(archived = false): Promise<BlogPost[]> {
 
 /** Archive a post (hides it from the site + active list; restorable). */
 export async function archiveAdminPost(id: number): Promise<BlogPost> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts/${id}/archive`, {
     method: 'POST',
     headers: authHeaders(),
@@ -248,7 +249,7 @@ export async function archiveAdminPost(id: number): Promise<BlogPost> {
 
 /** Restore an archived post. */
 export async function restoreAdminPost(id: number): Promise<BlogPost> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts/${id}/restore`, {
     method: 'POST',
     headers: authHeaders(),
@@ -258,7 +259,7 @@ export async function restoreAdminPost(id: number): Promise<BlogPost> {
 
 /** Create a post. */
 export async function createAdminPost(input: BlogPostInput): Promise<BlogPost> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts`, {
     method: 'POST',
     headers: authHeaders(),
@@ -269,7 +270,7 @@ export async function createAdminPost(input: BlogPostInput): Promise<BlogPost> {
 
 /** Update a post by id. */
 export async function updateAdminPost(id: number, input: Partial<BlogPostInput>): Promise<BlogPost> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
@@ -280,7 +281,7 @@ export async function updateAdminPost(id: number, input: Partial<BlogPostInput>)
 
 /** Delete a post by id. */
 export async function deleteAdminPost(id: number): Promise<void> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -290,7 +291,7 @@ export async function deleteAdminPost(id: number): Promise<void> {
 
 /** Bulk delete posts by ids. */
 export async function deleteAdminPosts(ids: number[]): Promise<{ deleted: number }> {
-  invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
+  invalidatePublic('blog'); invalidatePublic('blog-posts'); invalidateAdmin('admin:posts:active', 'admin:posts:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/blog/posts/bulk`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -476,7 +477,7 @@ export async function uploadProjectImage(
 
 /** Create a project. */
 export async function createAdminProject(input: ProjectInput): Promise<Project> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects`, {
     method: 'POST',
     headers: authHeaders(),
@@ -487,7 +488,7 @@ export async function createAdminProject(input: ProjectInput): Promise<Project> 
 
 /** Update a project by id. */
 export async function updateAdminProject(id: number, input: Partial<ProjectInput>): Promise<Project> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
@@ -498,7 +499,7 @@ export async function updateAdminProject(id: number, input: Partial<ProjectInput
 
 /** Delete a project permanently. */
 export async function deleteAdminProject(id: number): Promise<void> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -508,7 +509,7 @@ export async function deleteAdminProject(id: number): Promise<void> {
 
 /** Bulk delete projects by ids. */
 export async function deleteAdminProjects(ids: number[]): Promise<{ deleted: number }> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects/bulk`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -519,7 +520,7 @@ export async function deleteAdminProjects(ids: number[]): Promise<{ deleted: num
 
 /** Archive a project (hides it from the site + active list; restorable). */
 export async function archiveAdminProject(id: number): Promise<Project> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects/${id}/archive`, {
     method: 'POST',
     headers: authHeaders(),
@@ -529,7 +530,7 @@ export async function archiveAdminProject(id: number): Promise<Project> {
 
 /** Restore an archived project. */
 export async function restoreAdminProject(id: number): Promise<Project> {
-  invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
+  invalidatePublic('projects'); invalidateAdmin('admin:projects:active', 'admin:projects:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/projects/${id}/restore`, {
     method: 'POST',
     headers: authHeaders(),
@@ -560,7 +561,7 @@ export function fetchAdminRecommendations(archived = false): Promise<Recommendat
 
 /** Archive a testimonial (hides it from the site + active list; restorable). */
 export async function archiveAdminRecommendation(id: number): Promise<Recommendation> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations/${id}/archive`, {
     method: 'POST',
     headers: authHeaders(),
@@ -570,7 +571,7 @@ export async function archiveAdminRecommendation(id: number): Promise<Recommenda
 
 /** Restore an archived testimonial. */
 export async function restoreAdminRecommendation(id: number): Promise<Recommendation> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations/${id}/restore`, {
     method: 'POST',
     headers: authHeaders(),
@@ -580,7 +581,7 @@ export async function restoreAdminRecommendation(id: number): Promise<Recommenda
 
 /** Create a testimonial. */
 export async function createAdminRecommendation(input: RecommendationInput): Promise<Recommendation> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations`, {
     method: 'POST',
     headers: authHeaders(),
@@ -594,7 +595,7 @@ export async function updateAdminRecommendation(
   id: number,
   input: Partial<RecommendationInput>,
 ): Promise<Recommendation> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
@@ -605,7 +606,7 @@ export async function updateAdminRecommendation(
 
 /** Delete a testimonial by id. */
 export async function deleteAdminRecommendation(id: number): Promise<void> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -615,7 +616,7 @@ export async function deleteAdminRecommendation(id: number): Promise<void> {
 
 /** Bulk delete testimonials by ids. */
 export async function deleteAdminRecommendations(ids: number[]): Promise<{ deleted: number }> {
-  invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
+  invalidatePublic('recommendations'); invalidateAdmin('admin:recs:active', 'admin:recs:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/recommendations/bulk`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -1010,7 +1011,7 @@ export async function uploadExperienceImage(
 
 /** Create an experience entry. */
 export async function createAdminExperience(input: ExperienceInput): Promise<ExperienceEntry> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences`, {
     method: 'POST',
     headers: authHeaders(),
@@ -1024,7 +1025,7 @@ export async function updateAdminExperience(
   id: number,
   input: Partial<ExperienceInput>,
 ): Promise<ExperienceEntry> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
@@ -1035,7 +1036,7 @@ export async function updateAdminExperience(
 
 /** Delete an experience entry permanently. */
 export async function deleteAdminExperience(id: number): Promise<void> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -1045,7 +1046,7 @@ export async function deleteAdminExperience(id: number): Promise<void> {
 
 /** Bulk delete experience entries by ids. */
 export async function deleteAdminExperiences(ids: number[]): Promise<{ deleted: number }> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences/bulk`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -1056,7 +1057,7 @@ export async function deleteAdminExperiences(ids: number[]): Promise<{ deleted: 
 
 /** Archive an experience entry (hides from the site; restorable). */
 export async function archiveAdminExperience(id: number): Promise<ExperienceEntry> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences/${id}/archive`, {
     method: 'POST',
     headers: authHeaders(),
@@ -1066,7 +1067,7 @@ export async function archiveAdminExperience(id: number): Promise<ExperienceEntr
 
 /** Restore an archived experience entry. */
 export async function restoreAdminExperience(id: number): Promise<ExperienceEntry> {
-  invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
+  invalidatePublic('experiences'); invalidateAdmin('admin:experiences:active', 'admin:experiences:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/experiences/${id}/restore`, {
     method: 'POST',
     headers: authHeaders(),
@@ -1101,7 +1102,7 @@ export function fetchAdminReferences(archived = false): Promise<Reference[]> {
 
 /** Create a reference. */
 export async function createAdminReference(input: ReferenceInput): Promise<Reference> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references`, {
     method: 'POST',
     headers: authHeaders(),
@@ -1115,7 +1116,7 @@ export async function updateAdminReference(
   id: number,
   input: Partial<ReferenceInput>,
 ): Promise<Reference> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
@@ -1126,7 +1127,7 @@ export async function updateAdminReference(
 
 /** Delete a reference permanently. */
 export async function deleteAdminReference(id: number): Promise<void> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -1136,7 +1137,7 @@ export async function deleteAdminReference(id: number): Promise<void> {
 
 /** Bulk delete references by ids. */
 export async function deleteAdminReferences(ids: number[]): Promise<{ deleted: number }> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references/bulk`, {
     method: 'DELETE',
     headers: authHeaders(),
@@ -1147,7 +1148,7 @@ export async function deleteAdminReferences(ids: number[]): Promise<{ deleted: n
 
 /** Archive a reference (hides from the site; restorable). */
 export async function archiveAdminReference(id: number): Promise<Reference> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references/${id}/archive`, {
     method: 'POST',
     headers: authHeaders(),
@@ -1157,7 +1158,7 @@ export async function archiveAdminReference(id: number): Promise<Reference> {
 
 /** Restore an archived reference. */
 export async function restoreAdminReference(id: number): Promise<Reference> {
-  invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
+  invalidatePublic('references'); invalidateAdmin('admin:references:active', 'admin:references:archived', 'admin:stats')
   const res = await fetch(`${API_BASE}/admin/references/${id}/restore`, {
     method: 'POST',
     headers: authHeaders(),

@@ -19,8 +19,8 @@ VALUES (
   'https://injoy.com.ph',
   NULL,
   NULL,
-  NULL,
-  NULL,
+  '/images/projects/icons/injoy.ico',
+  '{"laptops":[],"phones":[{"src":"/uploads/project-media/phone/NniiyP2LyP0w4o0YtYUvqiMX.png","kind":"image","label":"Phone"}]}',
   0,
   '2026-08-17 18:20:04',
   '2026-08-17 18:20:04',
@@ -39,3 +39,9 @@ UPDATE projects SET tagline = 'A real-time video platform supporting both sequen
 UPDATE projects SET tagline = 'An employee time-in/time-out tracker that makes attendance management accurate — log hours, monitor work, and report easily.' WHERE slug = 'kronos';
 UPDATE projects SET tagline = 'A competitive word game where players race to build the longest valid word from a shared set of letters to win the round.' WHERE slug = 'wordy';
 UPDATE projects SET tagline = 'A client-server LAN chat application for real-time messaging — connect multiple clients and exchange messages instantly.' WHERE slug = 'chat-system';
+
+-- Fix inJoy favicon + showcase for existing D1 row (idempotent)
+UPDATE projects SET favicon_url='/images/projects/icons/injoy.ico', showcase='{"laptops":[],"phones":[{"src":"/uploads/project-media/phone/NniiyP2LyP0w4o0YtYUvqiMX.png","kind":"image","label":"Phone"}]}' WHERE slug='injoy';
+
+-- Cleanup test data (was used to verify infinite swiper)
+DELETE FROM recommendations WHERE author='Test Client';

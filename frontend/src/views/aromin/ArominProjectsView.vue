@@ -490,7 +490,8 @@ async function save(): Promise<void> {
     }
     confirm.value = null
     await load()
-    cancelEdit()
+    // Stay in editor after update so admin can continue editing - dont exit to list (fix per user request)
+    if (!editing.value) cancelEdit()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to save project'
     confirm.value = null
@@ -975,9 +976,9 @@ onMounted(load)
                 </button>
               </div>
 
-              <!-- Device label -->
-              <div class="flex w-full items-center justify-center">
-                <template v-if="editingDeviceLabel?.device === entry.device && editingDeviceLabel?.index === entry.index">
+              <!-- Device label - laptop editable, phone fixed (image only, no name needed) -->
+              <div v-if="entry.device === 'laptop'" class="flex w-full items-center justify-center">
+                <template v-if="editingDeviceLabel?.device === 'laptop' && editingDeviceLabel?.index === entry.index">
                   <input
                     v-model="deviceLabelInput"
                     type="text"
@@ -992,10 +993,13 @@ onMounted(load)
                   type="button"
                   class="w-full truncate text-center font-mono text-[10px] text-gray-500 hover:text-ink"
                   title="Click to rename"
-                  @click="startEditLabel(entry.device, entry.index)"
+                  @click="startEditLabel('laptop', entry.index)"
                 >
-                  {{ typeof entry.item === 'string' ? entry.device : (entry.item as any).label || entry.device }}
+                  {{ typeof entry.item === 'string' ? 'laptop' : (entry.item as any).label || 'laptop' }}
                 </button>
+              </div>
+              <div v-else class="w-full truncate text-center font-mono text-[10px] text-gray-400">
+                phone
               </div>
 
               <!-- Actions -->

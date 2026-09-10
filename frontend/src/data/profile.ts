@@ -411,16 +411,6 @@ export const certifications: Certification[] = [
     summary:
       'QA credential from NOAH Business Application covering the full quality assurance discipline — test case authoring, bug and regression tracking, and documentation review for release readiness.',
   },
-  // TEST — additional to verify infinite swiper (remove when done testing)
-  {
-    slug: 'test-additional-certification',
-    title: 'Test Additional — Cloud & DevOps Essentials',
-    issuer: 'Test Issuer · Demo',
-    year: '2026',
-    category: 'certification',
-    summary:
-      'Additional test certification to verify the infinite swiper stays on one line when data exceeds three items — swipe should loop without creating a new row.',
-  },
 ]
 
 export interface Affiliation {
@@ -454,6 +444,7 @@ export interface Reference {
   name: string
   title: string
   email: string | null
+  photo_url?: string | null
   summary: string
 }
 
@@ -464,6 +455,7 @@ export const references: Reference[] = [
     name: 'Britannyy Baldovino',
     title: 'University Instructor — Saint Louis University',
     email: 'bmbaldovino@slu.edu.ph',
+    photo_url: null,
     summary:
       'University instructor at Saint Louis University who supervised and mentored academic work — can speak to technical skill, attention to detail, and consistent delivery.',
   },
@@ -473,6 +465,7 @@ export const references: Reference[] = [
     name: 'Lambert Famorca',
     title: 'University Instructor — Saint Louis University',
     email: 'support@myvirtuallearning.org',
+    photo_url: null,
     summary:
       'University instructor at Saint Louis University and founder of MyVirtual Learning — connected through the ISakay capstone mentorship community.',
   },
@@ -482,6 +475,7 @@ export const references: Reference[] = [
     name: 'PRAXXYS Solutions Inc.',
     title: 'Junior Front-End Developer — Agile Development Team',
     email: null,
+    photo_url: '/images/logos/praxxys-logo.png',
     summary:
       'PRAXXYS Solutions Inc. — agile web & mobile engineering team where I served as Junior Front-End Developer. Can speak to clean API integration, consistent quality under fast-paced deadlines, and proactive ownership of shipped features.',
   },
@@ -538,14 +532,6 @@ export const recommendations: Recommendation[] = [
       '"Bringing ARventure to life took real grit — offline AR navigation is hard. Eddyson pushed through every tracking issue and shipped a working demo."',
     author: 'ARventure Team',
     role: 'Augmented Reality Project — Unity',
-  },
-  // TEST — additional to verify infinite swiper (remove when done testing)
-  {
-    initials: 'TC',
-    quote:
-      '"Test recommendation — verifying the infinite carousel handles more than three cards without creating a new line. Swipe stays on one row and loops forever."',
-    author: 'Test Client',
-    role: 'Product Manager · Test Company',
   },
 ]
 

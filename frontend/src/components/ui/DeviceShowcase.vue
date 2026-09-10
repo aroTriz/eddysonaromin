@@ -114,8 +114,8 @@ function onTouchEnd(e: TouchEvent): void {
 
       <!-- device stage â€” fixed height so phone === laptop visually -->
       <div
-        class="min-w-0 flex-1 flex items-center justify-center overflow-visible px-1 sm:px-0"
-        style="min-height: clamp(280px, 70vw, 420px); height: auto"
+        class="min-w-0 flex-1 flex items-center justify-center overflow-visible px-4 sm:px-0"
+        style="min-height: auto; height: auto;"
         @touchstart.passive="onTouchStart"
         @touchmove.passive="onTouchMove"
         @touchend.passive="onTouchEnd"
@@ -140,7 +140,7 @@ function onTouchEnd(e: TouchEvent): void {
               :src="current.src"
               :video="current.media === 'video'"
               :alt="`${project.title} phone view ${index + 1}`"
-              class="device-mockup-phone w-auto max-h-full mx-auto"
+              class="device-mockup-phone w-full max-w-[240px] mx-auto"
             />
           </div>
         </Transition>

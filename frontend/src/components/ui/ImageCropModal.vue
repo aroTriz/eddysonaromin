@@ -29,7 +29,7 @@ const imgRef = ref<HTMLImageElement | null>(null)
 let cropper: Cropper | null = null
 
 /** Reactive — phone 9:16 portrait, laptop 16:9 landscape; sakto sa web crop */
-const aspectRatio = computed(() => (props.device === 'phone' ? 9 / 16 : 16 / 9))
+const aspectRatio = computed(() => (props.device === 'phone' ? 9 / 19.5 : 16 / 9))
 
 function initCropper(): void {
   if (!imgRef.value) return
@@ -70,7 +70,7 @@ watch(
 watch(
   () => props.device,
   (newDevice) => {
-    const newRatio = newDevice === 'phone' ? 9 / 16 : 16 / 9
+    const newRatio = newDevice === 'phone' ? 9 / 19.5 : 16 / 9
     if (cropper) {
       cropper.setAspectRatio(newRatio)
     }
