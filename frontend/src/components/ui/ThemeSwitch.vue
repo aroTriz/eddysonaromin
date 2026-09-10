@@ -23,7 +23,7 @@ function pick(option: ThemePreference, event: MouseEvent): void {
 
 <template>
   <div
-    class="theme-switch inline-flex items-center gap-px rounded-full border border-gray-200 p-0.5"
+    class="theme-switch inline-flex items-center gap-px rounded-md border border-gray-200 p-0.5"
     role="group"
     aria-label="Theme"
   >
@@ -31,7 +31,7 @@ function pick(option: ThemePreference, event: MouseEvent): void {
       v-for="option in options"
       :key="option.value"
       type="button"
-      class="theme-opt inline-flex items-center justify-center rounded-full text-gray-400 transition-colors hover:text-ink"
+      class="theme-opt inline-flex items-center justify-center rounded-md text-gray-400 transition-colors hover:text-ink"
       :class="{ 'is-active': preference === option.value }"
       :title="option.label"
       :aria-label="option.label"

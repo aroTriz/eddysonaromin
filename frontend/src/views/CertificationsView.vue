@@ -14,8 +14,8 @@ import Pagination from '@/components/ui/Pagination.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import { certifications, references } from '@/data/profile'
 
-/** Items per category per page (matches the projects page). */
-const ITEMS_PER_PAGE = 8
+/** Items per category per page — 4 before pagination. */
+const ITEMS_PER_PAGE = 4
 
 const filters = [
   { label: 'All', value: '' },
@@ -83,13 +83,13 @@ const paginationTotal = computed(() => {
       description="Credentials, affiliations & references."
     />
 
-    <!-- ── Filters (rounded-full pill chips) ────────────────── -->
+    <!-- ── Filters (rounded-md pill chips) ────────────────── -->
     <Reveal :delay="1" class="mt-8 flex flex-wrap gap-2">
       <button
         v-for="filter in filters"
         :key="filter.value"
         type="button"
-        class="rounded-full border px-4 py-2 font-mono text-[12.5px] shadow-sm transition-colors"
+        class="rounded-md border px-4 py-2 min-h-[44px] font-mono text-[12.5px] shadow-sm transition-colors"
         :class="
           activeFilter === filter.value
             ? 'border-gray-900 bg-gray-900 text-white'
@@ -159,7 +159,7 @@ const paginationTotal = computed(() => {
           >
             <div class="flex items-start gap-3">
               <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
               >
                 {{ reference.initials }}
               </div>
@@ -219,7 +219,7 @@ const paginationTotal = computed(() => {
       >
         <div class="flex items-start gap-3">
           <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600"
           >
             {{ reference.initials }}
           </div>

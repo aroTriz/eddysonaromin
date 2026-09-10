@@ -88,7 +88,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside))
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 font-mono text-[11.5px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink"
+      class="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink"
       :aria-label="label"
       :aria-expanded="open"
       @click="toggle"
@@ -123,7 +123,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside))
         <li>
           <button
             type="button"
-            class="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[12px] transition-colors hover:bg-gray-50"
+            class="flex w-full items-center gap-2 px-3 min-h-[44px] py-2 text-left font-mono text-[12px] transition-colors hover:bg-gray-50"
             :class="modelValue === '' ? 'text-ink' : 'text-gray-500'"
             role="option"
             :aria-selected="modelValue === ''"
@@ -140,7 +140,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside))
         <li v-for="opt in filtered" :key="opt.value">
           <button
             type="button"
-            class="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[12px] transition-colors hover:bg-gray-50"
+            class="flex w-full items-center gap-2 px-3 min-h-[44px] py-2 text-left font-mono text-[12px] transition-colors hover:bg-gray-50"
             :class="modelValue === opt.value ? 'text-ink' : 'text-gray-500'"
             role="option"
             :aria-selected="modelValue === opt.value"

@@ -60,7 +60,7 @@ const fallbackGroups: StackGroup[] = staticGroups.map((g, i) => ({
             <span
               v-for="tech in group.items"
               :key="tech"
-              class="inline-flex items-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-1.5 font-mono text-[13px] text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:bg-gray-50 hover:text-ink dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500 dark:hover:bg-gray-200 dark:hover:text-gray-950"
+              class="inline-flex items-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white px-3 min-h-[44px] py-2 font-mono text-[13px] text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:bg-gray-50 hover:text-ink dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500 dark:hover:bg-gray-200 dark:hover:text-gray-950"
             >
               <TechLogo :name="tech" :size="18" />
               {{ tech }}

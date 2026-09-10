@@ -206,7 +206,7 @@ function formatDate(iso: string | null): string {
             <p class="mt-3 text-[16px] leading-relaxed text-gray-500">{{ post.excerpt }}</p>
 
             <div class="mt-5 flex items-center gap-2.5 border-t border-gray-200 pt-5">
-              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
                 EA
               </div>
               <div class="text-[13px] font-medium text-ink">{{ profile.fullName }}</div>

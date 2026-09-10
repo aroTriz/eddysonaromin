@@ -91,7 +91,7 @@ const tipViews = computed(() => (hovered.value == null ? 0 : props.points[hovere
     <!-- ── Hover tooltip ── -->
     <div
       v-if="hovered != null && points[hovered]"
-      class="pointer-events-none absolute z-10 -translate-x-1/2 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 font-mono text-[10.5px] leading-relaxed text-ink shadow-md dark:border-gray-300"
+      class="pointer-events-none absolute z-10 -translate-x-1/2 rounded-md border border-gray-200 bg-white px-2.5 min-h-[44px] py-2 font-mono text-[10.5px] leading-relaxed text-ink shadow-md dark:border-gray-300"
       :style="{ left: `${(xFor(hovered) / W) * 100}%`, top: '0' }"
     >
       <span class="text-gray-500">{{ tipDate }}</span><br />

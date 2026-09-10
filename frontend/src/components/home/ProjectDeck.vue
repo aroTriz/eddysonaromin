@@ -96,7 +96,7 @@ function openProject(index: number): void {
       @keydown.space.prevent="openProject(i)"
     >
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white">
+        <span class="inline-flex items-center gap-1.5 rounded-md bg-ink px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white">
           {{ projectTypeLabel(projects[idx].type) }}
         </span>
       </div>

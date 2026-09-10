@@ -16,8 +16,8 @@ import Reveal from '@/components/ui/Reveal.vue'
 import { fetchProjects } from '@/services/api'
 import type { Project } from '@/types'
 
-/** Items per category per page (4 columns × 2 rows). */
-const PROJECTS_PER_PAGE = 8
+/** Items per category per page — 4 before pagination. */
+const PROJECTS_PER_PAGE = 4
 
 const filters = [
   { label: 'All', value: '' },
@@ -116,13 +116,13 @@ const paginationTotal = computed(() => {
       </p>
     </Reveal>
 
-    <!-- ── Filters (rounded-full pill chips) ────────────────── -->
+    <!-- ── Filters (rounded-md pill chips) ────────────────── -->
     <Reveal :delay="1" class="mt-8 flex flex-wrap gap-2">
       <button
         v-for="filter in filters"
         :key="filter.value"
         type="button"
-        class="rounded-full border px-4 py-2 font-mono text-[12.5px] shadow-sm transition-colors"
+        class="rounded-md border px-4 py-2 min-h-[44px] font-mono text-[12.5px] shadow-sm transition-colors"
         :class="
           activeFilter === filter.value
             ? 'border-gray-900 bg-gray-900 text-white'

@@ -81,7 +81,7 @@ onMounted(async () => {
               :href="project.url"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 font-mono text-[12.5px] text-bg hover:opacity-80"
+              class="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 font-mono text-[12.5px] text-bg hover:opacity-80"
             >
               view live
               <ExternalLink class="h-3.5 w-3.5" :stroke-width="1.8" />

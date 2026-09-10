@@ -73,7 +73,7 @@ const info = [
             :href="RESUME_URL"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
+            class="inline-flex items-center gap-2 rounded-md bg-ink px-5 py-3 min-h-[44px] font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
           >
             <Eye class="h-4 w-4" :stroke-width="1.8" />
             View Resume
@@ -81,7 +81,7 @@ const info = [
           <a
             :href="RESUME_URL"
             download="AROMIN-Resume.pdf"
-            class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink"
+            class="inline-flex items-center gap-2 rounded-md border border-gray-200 px-5 py-3 min-h-[44px] font-mono text-[13px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink"
           >
             <Download class="h-4 w-4" :stroke-width="1.8" />
             Download Resume
@@ -121,7 +121,7 @@ const info = [
           <span
             v-for="tech in row"
             :key="tech"
-            class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-md dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500"
+            class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-md dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500"
           >
             <TechLogo :name="tech" :size="15" />
             {{ tech }}
@@ -134,7 +134,7 @@ const info = [
         <span
           v-for="tech in allTechnologies"
           :key="tech"
-          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
         >
           <TechLogo :name="tech" :size="15" />
           {{ tech }}
@@ -146,7 +146,7 @@ const info = [
         <span
           v-for="tech in restStack"
           :key="tech"
-          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-md dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-md dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500 dark:hover:border-gray-500"
         >
           <TechLogo :name="tech" :size="15" />
           {{ tech }}
@@ -161,11 +161,11 @@ const info = [
         title="beyond the code"
         blurb="Things I enjoy when I'm not programming"
       />
-      <Reveal :delay="1" class="mt-6 flex flex-wrap gap-2.5">
+      <Reveal :delay="1" class="mt-6 flex flex-wrap justify-center gap-2.5">
         <span
           v-for="interest in interests"
           :key="interest"
-          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white shadow-sm px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white shadow-sm px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-gray-300" aria-hidden="true" />
           {{ interest }}

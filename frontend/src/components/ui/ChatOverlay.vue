@@ -565,7 +565,7 @@ function deviceSvg(label: string | null): string {
             class="chat-item flex max-w-[92%] items-end gap-2"
           >
             <img
-              class="mb-0.5 ml-1 h-7 w-7 shrink-0 rounded-full bg-gray-100 shadow-[0_0_0_1px_rgba(10,10,10,0.08)]"
+              class="mb-0.5 ml-1 h-7 w-7 shrink-0 rounded-md bg-gray-100 shadow-[0_0_0_1px_rgba(10,10,10,0.08)]"
               :src="avatarUrl(m.name)"
               :alt="`${m.name} avatar`"
               loading="lazy"

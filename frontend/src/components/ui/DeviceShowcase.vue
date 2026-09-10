@@ -1,10 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
- * DeviceShowcase — greyfolio-style device swiper for a project detail page.
+ * DeviceShowcase â€” greyfolio-style device swiper for a project detail page.
  * Shows ONE device at a time in a horizontal swiper sequence:
- *   laptop 1 → phone 1 → laptop 2 → phone 2 → …
+ *   laptop 1 â†’ phone 1 â†’ laptop 2 â†’ phone 2 â†’ â€¦
  * Arrows, dots, and touch-swipe cycle through views.
- * Swipe has buhay — slide + scale + drag follow.
+ * Swipe has buhay â€” slide + scale + drag follow.
  */
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -100,22 +100,22 @@ function onTouchEnd(e: TouchEvent): void {
 
 <template>
   <div v-if="views.length > 0" class="mt-8">
-    <div class="relative mx-auto flex max-w-3xl items-center gap-3 sm:gap-4">
-      <!-- prev arrow — hidden when only one device -->
+    <div class="relative flex w-screen -mx-4 sm:mx-auto sm:w-full sm:max-w-3xl items-center gap-2 sm:gap-4">
+      <!-- prev arrow â€” hidden when only one device -->
       <button
         v-if="views.length > 1"
         type="button"
         aria-label="Previous view"
-        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
+        class="z-20 hidden sm:inline-flex shrink-0 p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
         @click="prev"
       >
         <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
       </button>
 
-      <!-- device stage — fixed height so phone === laptop visually -->
+      <!-- device stage â€” fixed height so phone === laptop visually -->
       <div
-        class="min-w-0 flex-1 flex items-center justify-center overflow-hidden"
-        style="height: clamp(360px, 42vw, 420px)"
+        class="min-w-0 flex-1 flex items-center justify-center overflow-visible px-1 sm:px-0"
+        style="min-height: clamp(280px, 70vw, 420px); height: auto"
         @touchstart.passive="onTouchStart"
         @touchmove.passive="onTouchMove"
         @touchend.passive="onTouchEnd"
@@ -133,32 +133,32 @@ function onTouchEnd(e: TouchEvent): void {
               :alt="`${project.title} laptop view ${index + 1}`"
               :url="project.url"
               :equal-height="true"
-              class="h-full w-auto max-h-full"
+              class="device-mockup-laptop w-auto max-h-full"
             />
             <PhoneMockup
               v-else-if="current?.device === 'phone'"
               :src="current.src"
               :video="current.media === 'video'"
               :alt="`${project.title} phone view ${index + 1}`"
-              class="h-full w-auto max-h-full mx-auto"
+              class="device-mockup-phone w-auto max-h-full mx-auto"
             />
           </div>
         </Transition>
       </div>
 
-      <!-- next arrow — hidden when only one device -->
+      <!-- next arrow â€” hidden when only one device -->
       <button
         v-if="views.length > 1"
         type="button"
         aria-label="Next view"
-        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
+        class="z-20 hidden sm:inline-flex shrink-0 p-2 text-gray-400 transition-colors hover:text-ink active:scale-95"
         @click="next"
       >
         <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
       </button>
     </div>
 
-    <!-- indicator dots — hidden when only one device -->
+    <!-- indicator dots â€” hidden when only one device -->
     <div v-if="views.length > 1" class="mt-4 flex justify-center gap-1.5">
       <button
         v-for="(view, i) in views"
@@ -177,7 +177,7 @@ function onTouchEnd(e: TouchEvent): void {
 </template>
 
 <style scoped>
-/* Swipe slide — may buhay, not instant.
+/* Swipe slide â€” may buhay, not instant.
    Next: new enters from right (30% + fade + scale), old exits to left.
    Prev: mirrored. Uses same easing as theme ViewTransition for consistency. */
 .swipe-next-enter-active,
@@ -205,3 +205,6 @@ function onTouchEnd(e: TouchEvent): void {
   opacity: 0;
 }
 </style>
+
+
+

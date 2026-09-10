@@ -4,7 +4,7 @@
  * name + intro paragraphs + social links right; stats grid, tech
  * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, GraduationCap, Mail } from 'lucide-vue-next'
+import { ArrowUpRight, GraduationCap } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BlogSection from '@/components/home/BlogSection.vue'
@@ -12,6 +12,7 @@ import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
+import InfiniteSwiper from '@/components/ui/InfiniteSwiper.vue'
 import TechLogo from '@/components/ui/TechLogo.vue'
 import { useTypewriter } from '@/composables/useTypewriter'
 import { fetchProjects, fetchRecommendations, fetchStackGroups } from '@/services/api'
@@ -165,8 +166,8 @@ const socials = [
 
 <template>
   <div class="mx-auto w-full max-w-2xl px-4 sm:px-6">
-    <!-- -- Hero ----------------------------------------------- -->
-    <section class="relative py-16 sm:py-24">
+    <!-- -- Hero — tightened after CTA removal, aligned to bryllim.com rhythm -- -->
+    <section class="relative pt-16 sm:pt-24 pb-10 sm:pb-14">
       <div class="grid gap-9 sm:grid-cols-[16rem_1fr] sm:items-start sm:gap-10">
         <!-- Video column (left) — fixed aspect so the phone doesn't collapse -->
         <div class="reveal d1 mx-auto w-full max-w-[18rem] sm:mx-0">
@@ -209,9 +210,9 @@ const socials = [
             {{ paragraph }}
           </p>
 
-          <!-- links below the intro -->
+          <!-- links below the intro — keep in one line at 320 (tight gap, no wrap) -->
           <div
-            class="reveal d4 mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[12px] text-gray-500"
+            class="reveal d4 mt-6 flex flex-nowrap items-center justify-center gap-x-2 font-mono text-[12px] text-gray-500 overflow-hidden"
           >
             <a
               v-for="social in socials"
@@ -219,13 +220,13 @@ const socials = [
               :href="social.href"
               target="_blank"
               rel="noopener noreferrer"
-              class="-my-1.5 inline-flex items-center gap-1 py-1.5 hover:text-ink"
+              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1.5 py-1.5 hover:text-ink"
             >
-              {{ social.label }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
+              {{ social.label }}<ArrowUpRight class="inline h-3 w-3 shrink-0" :stroke-width="2" />
             </a>
             <button
               type="button"
-              class="-my-1.5 inline-flex items-center gap-1 py-1.5 hover:text-ink"
+              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1.5 py-1.5 hover:text-ink"
               aria-haspopup="dialog"
               @click="emailModalRef?.openModal()"
             >
@@ -233,24 +234,7 @@ const socials = [
             </button>
           </div>
 
-          <div class="reveal d5 mt-8 flex flex-wrap items-center justify-center gap-4">
-            <RouterLink
-              to="/projects"
-              class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80"
-            >
-              View My Work
-              <ArrowUpRight class="h-4 w-4" :stroke-width="1.8" />
-            </RouterLink>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
-              aria-haspopup="dialog"
-              @click="emailModalRef?.openModal()"
-            >
-              Get In Touch
-              <Mail class="h-4 w-4" :stroke-width="1.8" />
-            </button>
-          </div>
+
         </div>
       </div>
     </section>
@@ -283,29 +267,29 @@ const socials = [
         <p class="terminal-comment text-[13px]">// tech stack</p>
         <RouterLink
           to="/stack"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all stack <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
       </div>
-      <div class="marquee-clip overflow-hidden py-1.5">
+      <div class="marquee-clip overflow-hidden min-h-[44px] py-2">
         <div class="marquee-strip flex w-max animate-marquee">
           <span
             v-for="(tech, i) in marqueeList"
             :key="`${tech}-${i}`"
-            class="mr-3 inline-flex items-center gap-2 rounded-full border border-dashed border-gray-300 bg-white px-4 py-1.5 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
+            class="mr-3 inline-flex items-center gap-2 rounded-md border border-dashed border-gray-300 bg-white px-4 min-h-[44px] py-2 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
           >
             <TechLogo :name="tech" :size="15" />
             {{ tech }}
           </span>
         </div>
       </div>
-      <div class="marquee-clip overflow-hidden py-1.5">
+      <div class="marquee-clip overflow-hidden min-h-[44px] py-2">
         <div class="marquee-strip marquee-reverse flex w-max">
           <span
             v-for="(tech, i) in marqueeList"
             :key="`rev-${tech}-${i}`"
-            class="mr-3 inline-flex items-center gap-2 rounded-full border border-dashed border-gray-300 bg-white px-4 py-1.5 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
+            class="mr-3 inline-flex items-center gap-2 rounded-md border border-dashed border-gray-300 bg-white px-4 min-h-[44px] py-2 font-mono text-[13px] text-gray-700 shadow-sm dark:border-gray-300 dark:bg-gray-100 dark:text-gray-500"
           >
             <TechLogo :name="tech" :size="15" />
             {{ tech }}
@@ -320,7 +304,7 @@ const socials = [
         <h2 class="font-pixel text-sm text-gray-400">01 — blog</h2>
         <RouterLink
           to="/blog"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all posts <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -335,7 +319,7 @@ const socials = [
         <h2 class="font-pixel text-sm text-gray-400">02 — projects</h2>
         <RouterLink
           to="/projects"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all projects <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -350,7 +334,7 @@ const socials = [
         <h2 class="font-pixel text-sm text-gray-400">03 — experience</h2>
         <RouterLink
           to="/experience"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           full history <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
@@ -371,83 +355,83 @@ const socials = [
       </div>
     </section>
 
-    <!-- -- Certifications (bryllim-style grid) ----------------- -->
+    <!-- -- Certifications — infinite swiper (single line, never wraps) - -->
     <section id="certifications" aria-label="Certifications" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">04 — certifications</h2>
         <RouterLink
           to="/certifications"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all certifications <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
       </div>
 
-      <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <RouterLink
-          v-for="cert in certifications"
-          :key="cert.slug"
-          :to="`/certifications/${cert.slug}`"
-          class="group relative flex shrink-0 w-[78%] snap-center flex-col items-center rounded-xl bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)] sm:w-auto sm:shrink sm:snap-align-none"
-        >
-          <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-lg border border-gray-200/70"></span>
-          <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
-            <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
-          </div>
-          <h3 class="relative mt-3 text-[13px] font-semibold leading-snug text-ink">{{ cert.title }}</h3>
-          <p class="relative mt-1 font-mono text-[9.5px] uppercase tracking-wider text-gray-400">{{ cert.issuer }}</p>
-          <div class="relative mt-3 flex items-center gap-1.5 text-gray-300 group-hover:text-ink">
-            <span class="font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 group-hover:text-ink">
-              {{ cert.year }}
-            </span>
-          </div>
-        </RouterLink>
-      </div>
+      <InfiniteSwiper :items="(certifications as unknown[])" :gap="16">
+        <template #default="{ item }">
+          <RouterLink
+            :to="`/certifications/${(item as typeof certifications[number]).slug}`"
+            class="group relative flex h-full min-h-[156px] w-full flex-col items-center rounded-md bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)]"
+          >
+            <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-md border border-gray-200/70"></span>
+            <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
+              <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
+            </div>
+            <h3 class="relative mt-3 min-h-[2.6rem] text-[13px] font-semibold leading-snug text-ink break-words text-center">{{ (item as typeof certifications[number]).title }}</h3>
+            <p class="relative mt-1 font-mono text-[9.5px] uppercase tracking-wider text-gray-400 break-words text-center">{{ (item as typeof certifications[number]).issuer }}</p>
+            <div class="relative mt-3 flex items-center gap-1.5 text-gray-300 group-hover:text-ink">
+              <span class="font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 group-hover:text-ink">
+                {{ (item as typeof certifications[number]).year }}
+              </span>
+            </div>
+          </RouterLink>
+        </template>
+      </InfiniteSwiper>
     </section>
 
-    <!-- -- Recommendations (bryllim 3-card grid) ---------------- -->
+    <!-- -- Recommendations — infinite swiper (single line, never wraps) -->
     <section id="recommendations" aria-label="Recommendations" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
         <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
         <RouterLink
           to="/recommendations"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
         >
           all recommendations <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </RouterLink>
       </div>
 
-      <div v-if="recs.length > 0" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <RouterLink
-          v-for="rec in recs"
-          :key="rec.id"
-          to="/recommendations"
-          class="group flex shrink-0 w-[85%] snap-center flex-col rounded-xl bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)] sm:w-auto sm:shrink sm:snap-align-none"
-        >
-          <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M9 7H6a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2H4v2h1a4 4 0 004-4V7zm11 0h-3a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2h-1v2h1a4 4 0 004-4V7z" />
-          </svg>
+      <InfiniteSwiper v-if="recs.length > 0" :items="(recs as unknown[])" :gap="16">
+        <template #default="{ item }">
+          <RouterLink
+            to="/recommendations"
+            class="group flex w-full flex-col rounded-md bg-gradient-to-b from-gray-50 to-white p-5 shadow-[0_8px_22px_-16px_rgba(10,10,10,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.35)]"
+          >
+            <svg class="h-5 w-5 text-gray-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M9 7H6a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2H4v2h1a4 4 0 004-4V7zm11 0h-3a3 3 0 00-3 3v1a3 3 0 003 3h1v1a2 2 0 01-2 2h-1v2h1a4 4 0 004-4V7z" />
+            </svg>
 
-          <p class="rec-quote mt-2 line-clamp-5 text-[13.5px] leading-relaxed text-gray-700">
-            {{ rec.quote }}
-          </p>
+            <p class="rec-quote mt-2 line-clamp-5 min-h-[6.8rem] text-[13.5px] leading-relaxed text-gray-700">
+              {{ (item as Recommendation).quote }}
+            </p>
 
-          <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
-            <div v-if="rec.photo_url" class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
-              <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
-            </div>
-            <div v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
-              {{ rec.initials }}
-            </div>
-            <div class="min-w-0">
-              <div class="truncate text-[12px] font-semibold text-ink">{{ rec.author }}</div>
-              <div class="truncate font-mono text-[9px] uppercase tracking-wider text-gray-400">
-                {{ rec.role }}
+            <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
+              <div v-if="(item as Recommendation).photo_url" class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
+                <img :src="(item as Recommendation).photo_url!" :alt="(item as Recommendation).author" class="h-full w-full object-contain" loading="lazy" />
+              </div>
+              <div v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
+                {{ (item as Recommendation).initials }}
+              </div>
+              <div class="min-w-0">
+                <div class="truncate text-[12px] font-semibold text-ink">{{ (item as Recommendation).author }}</div>
+                <div class="truncate font-mono text-[9px] uppercase tracking-wider text-gray-400">
+                  {{ (item as Recommendation).role }}
+                </div>
               </div>
             </div>
-          </div>
-        </RouterLink>
-      </div>
+          </RouterLink>
+        </template>
+      </InfiniteSwiper>
     </section>
 
     <!-- -- GitHub (bryllim-style halftone graph) ---------------- -->
@@ -458,7 +442,7 @@ const socials = [
           :href="profile.github"
           target="_blank"
           rel="noopener noreferrer"
-          class="-my-1.5 inline-flex items-center gap-1 py-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-600 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+          class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-600 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         >
           {{ profile.github.replace('https://', '') }} <ArrowUpRight class="inline h-3 w-3" :stroke-width="2" />
         </a>

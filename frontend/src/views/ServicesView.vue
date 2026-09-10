@@ -237,11 +237,11 @@ onBeforeUnmount(() => {
     <!-- services ring: 3 full cards visible (sides blurred, center clear) -->
     <!-- Arrows sit adjacent to the window (flex siblings) — never covering the slides. -->
     <div class="relative mx-auto flex w-full max-w-[1060px] items-center gap-3 sm:gap-4">
-      <!-- prev arrow -->
+      <!-- prev arrow — 44px touch target -->
       <button
         type="button"
         aria-label="Previous service"
-        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink"
+        class="z-20 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink"
         @click="slide(-1)"
       >
         <ArrowLeft class="h-5 w-5" :stroke-width="1.8" />
@@ -289,7 +289,7 @@ onBeforeUnmount(() => {
             <div class="flex items-start justify-between gap-3">
               <h2 class="text-[16px] font-semibold tracking-tight text-ink">{{ at(i).title }}</h2>
               <span
-                class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-[11px] text-ink"
+                class="shrink-0 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-[11px] text-ink"
               >
                 {{ at(i).price }}
               </span>
@@ -327,11 +327,11 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- next arrow -->
+      <!-- next arrow — 44px touch target -->
       <button
         type="button"
         aria-label="Next service"
-        class="z-20 shrink-0 p-2 text-gray-400 transition-colors hover:text-ink"
+        class="z-20 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:text-ink"
         @click="slide(1)"
       >
         <ArrowRight class="h-5 w-5" :stroke-width="1.8" />
@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
                 <h2 class="text-[18px] font-semibold tracking-tight text-ink">
                   {{ activeService.title }}
                 </h2>
-                <span class="mt-0.5 inline-block rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 font-mono text-[11px] text-ink">
+                <span class="mt-0.5 inline-block rounded-md border border-gray-200 bg-gray-50 px-2.5 py-0.5 font-mono text-[11px] text-ink">
                   {{ activeService.price }}
                 </span>
               </div>

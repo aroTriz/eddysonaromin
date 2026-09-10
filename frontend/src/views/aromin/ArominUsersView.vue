@@ -497,7 +497,7 @@ onMounted(load)
       <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
         @click="askDeleteSelected"
       >
         <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -529,16 +529,16 @@ onMounted(load)
 
     <div v-else class="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[640px] text-left font-mono text-[12px]">
+        <table class="w-full min-w-[520px] sm:min-w-[640px] text-left font-mono text-[11px] sm:text-[12px]">
           <thead>
             <tr class="border-b border-gray-200 text-[10px] uppercase tracking-wide text-gray-400 dark:border-gray-300">
-              <th v-if="selectionMode" class="w-10 px-4 py-3 font-normal"></th>
-              <th class="px-4 py-3 font-normal">name</th>
-              <th class="px-3 py-3 font-normal">email</th>
-              <th class="px-3 py-3 font-normal">password <span class="normal-case text-gray-300">(sha-256)</span></th>
-              <th class="px-3 py-3 font-normal">created</th>
-              <th class="px-3 py-3 text-right font-normal">chats</th>
-              <th class="px-4 py-3 text-right font-normal">actions</th>
+              <th v-if="selectionMode" class="w-10 px-3 sm:px-4 py-3 font-normal"></th>
+              <th class="px-3 sm:px-4 py-3 font-normal">name</th>
+              <th class="px-2 sm:px-3 py-3 font-normal">email</th>
+              <th class="hidden sm:table-cell px-3 py-3 font-normal">password <span class="normal-case text-gray-300">(sha-256)</span></th>
+              <th class="hidden sm:table-cell px-3 py-3 font-normal">created</th>
+              <th class="px-2 sm:px-3 py-3 text-right font-normal">chats</th>
+              <th class="px-3 sm:px-4 py-3 text-right font-normal">actions</th>
             </tr>
           </thead>
           <tbody>
@@ -557,13 +557,13 @@ onMounted(load)
                   @change="toggleSelect(user.id)"
                 />
               </td>
-              <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-2 truncate font-medium text-ink">
+              <td class="px-3 sm:px-4 py-3">
+                <span class="inline-flex items-center gap-2 truncate font-medium text-ink max-w-[90px] sm:max-w-none">
                   {{ user.name }}
                 </span>
               </td>
-              <td class="max-w-[180px] truncate px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
-              <td class="px-3 py-3">
+              <td class="max-w-[120px] sm:max-w-[180px] truncate px-2 sm:px-3 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
+              <td class="hidden sm:table-cell px-3 py-3">
                 <span class="inline-flex items-center gap-1.5">
                   <span
                     class="max-w-[140px] truncate rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10.5px] text-gray-500"
@@ -583,9 +583,9 @@ onMounted(load)
                   </button>
                 </span>
               </td>
-              <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ createdLabel(user.created_at) }}</td>
-              <td class="px-3 py-3 text-right text-gray-500">{{ user.conversations }}</td>
-              <td class="px-4 py-3">
+              <td class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-gray-500">{{ createdLabel(user.created_at) }}</td>
+              <td class="px-2 sm:px-3 py-3 text-right text-gray-500">{{ user.conversations }}</td>
+              <td class="px-3 sm:px-4 py-3">
                 <div class="flex items-center justify-end gap-1">
                   <button
                     type="button"
@@ -655,13 +655,13 @@ onMounted(load)
 
       <div v-else class="overflow-hidden rounded-xl border border-red-100 bg-white">
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[640px] text-left font-mono text-[12px]">
+          <table class="w-full min-w-[460px] sm:min-w-[640px] text-left font-mono text-[11px] sm:text-[12px]">
             <thead>
               <tr class="border-b border-red-100 text-[10px] uppercase tracking-wide text-red-400">
-                <th class="px-4 py-3 font-normal">name</th>
-                <th class="px-3 py-3 font-normal">email</th>
-                <th class="px-3 py-3 font-normal">banned</th>
-                <th class="px-4 py-3 text-right font-normal">actions</th>
+                <th class="px-3 sm:px-4 py-3 font-normal">name</th>
+                <th class="px-2 sm:px-3 py-3 font-normal">email</th>
+                <th class="px-2 sm:px-3 py-3 font-normal">banned</th>
+                <th class="px-3 sm:px-4 py-3 text-right font-normal">actions</th>
               </tr>
             </thead>
             <tbody>

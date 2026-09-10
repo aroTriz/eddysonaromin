@@ -366,7 +366,7 @@ onMounted(load)
       <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-red-500 transition-colors hover:bg-red-50"
+        class="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-red-500 transition-colors hover:bg-red-50"
         @click="askDeleteSelected"
       >
         <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -389,7 +389,7 @@ onMounted(load)
     >
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
         @click="askDeleteAll"
       >
         <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -403,7 +403,7 @@ onMounted(load)
           role="switch"
           :aria-checked="allScheduled"
           :aria-label="'Delete all after 72 hours'"
-          class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors duration-200"
+          class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-md border transition-colors duration-200"
           :class="[
             allScheduled
               ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -412,7 +412,7 @@ onMounted(load)
           @click="toggleAll72h"
         >
           <span
-            class="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+            class="inline-flex h-3.5 w-3.5 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
             :class="allScheduled ? 'translate-x-[1.125rem]' : 'translate-x-0.5'"
           >
             <Check
@@ -496,7 +496,7 @@ onMounted(load)
               <div class="flex items-center justify-end gap-1">
                 <button
                   type="button"
-                  class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+                  class="rounded-md min-h-[44px] min-w-[44px] p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
                   :aria-label="`View full message from ${m.name}`"
                   title="View message"
                   @click="viewing = m"
@@ -506,7 +506,7 @@ onMounted(load)
                 <button
                   v-if="showArchived"
                   type="button"
-                  class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+                  class="rounded-md min-h-[44px] min-w-[44px] p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
                   :aria-label="`Restore message from ${m.name}`"
                   title="Restore"
                   @click="restoreItem(m)"
@@ -516,7 +516,7 @@ onMounted(load)
                 <template v-else>
                   <button
                     type="button"
-                    class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+                    class="rounded-md min-h-[44px] min-w-[44px] p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
                     :aria-label="`Archive message from ${m.name}`"
                     title="Archive"
                     @click="archiveItem(m)"
@@ -526,7 +526,7 @@ onMounted(load)
                 </template>
                 <button
                   type="button"
-                  class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-500"
+                  class="rounded-md min-h-[44px] min-w-[44px] p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-500"
                   :aria-label="`Delete message from ${m.name}`"
                   title="Delete"
                   @click="askDelete(m)"

@@ -56,7 +56,7 @@ const readTime = computed(() => readingTime(props.post.content))
       <time class="font-mono text-[11.5px] text-gray-400">{{ posted }}</time>
       <span v-if="edited" class="ml-1.5 font-mono text-[10.5px] text-gray-400">· {{ edited }}</span>
       <h2
-        class="post-title mt-1 line-clamp-2 h-[2.75em] font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500"
+        class="post-title mt-1 truncate font-serif text-[18px] font-semibold leading-snug text-ink transition-colors group-hover:text-gray-500"
       >
         {{ post.title }}
       </h2>

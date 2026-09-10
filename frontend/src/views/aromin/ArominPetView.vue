@@ -187,7 +187,7 @@ async function save(): Promise<void> {
           role="switch"
           :aria-checked="petConfig.globalEnabled"
           :aria-label="petConfig.globalEnabled ? 'Hide salary cat from navbar' : 'Show salary cat in navbar'"
-          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
           :class="[
             petConfig.globalEnabled
               ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -196,7 +196,7 @@ async function save(): Promise<void> {
           @click="toggleEnabled"
         >
           <span
-            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+            class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
             :class="petConfig.globalEnabled ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
           >
             <Check

@@ -130,7 +130,7 @@ const fieldClass =
           <button
             type="submit"
             :disabled="submitting"
-            class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 font-mono text-[13px] text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-5 py-3 min-h-[44px] font-mono text-[13px] text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
           >
             <LoaderCircle v-if="submitting" class="h-4 w-4 animate-spin" :stroke-width="1.8" />
             <Send v-else class="h-4 w-4" :stroke-width="1.8" />
@@ -176,7 +176,7 @@ const fieldClass =
                 <button
                   v-if="item.modal"
                   type="button"
-                  class="-my-1.5 break-all py-1.5 text-left text-[13.5px] text-ink hover:text-gray-500"
+                  class="-my-1.5 break-all min-h-[44px] py-2 text-left text-[13.5px] text-ink hover:text-gray-500"
                   aria-haspopup="dialog"
                   @click="emailModalRef?.openModal()"
                 >
@@ -185,7 +185,7 @@ const fieldClass =
                 <a
                   v-else-if="item.href"
                   :href="item.href"
-                  class="-my-1.5 inline-block break-all py-1.5 text-[13.5px] text-ink hover:text-gray-500"
+                  class="-my-1.5 inline-block break-all min-h-[44px] py-2 text-[13.5px] text-ink hover:text-gray-500"
                 >
                   {{ item.value }}
                 </a>
@@ -202,7 +202,7 @@ const fieldClass =
               :href="profile.github"
               target="_blank"
               rel="noopener noreferrer"
-              class="rounded-full border border-gray-200 px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              class="rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
             >
               GitHub
             </a>
@@ -210,7 +210,7 @@ const fieldClass =
               :href="profile.linkedin"
               target="_blank"
               rel="noopener noreferrer"
-              class="rounded-full border border-gray-200 px-3.5 py-1.5 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              class="rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
             >
               LinkedIn
             </a>
@@ -219,9 +219,8 @@ const fieldClass =
       </Reveal>
     </div>
 
-    <!-- ── Map (Google Maps embed — current location) ─────────── -->
-    <!-- Wider on desktop (extends beyond the 3xl content column) — height stays 320px as requested. Mobile stays w-full. -->
-    <Reveal :delay="3" class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white lg:-mx-16 lg:w-[calc(100%+8rem)] lg:max-w-none">
+    <!-- ── Map — same width as content (max-w-3xl), not wider — 2D with pin ── -->
+    <Reveal :delay="3" class="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white">
       <div class="map-theme">
         <iframe
           title="Victoria Sports Tower, Quezon City"

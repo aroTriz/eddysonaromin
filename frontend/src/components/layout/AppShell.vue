@@ -3,7 +3,7 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Award, Bot, Briefcase, Command, FolderKanban, Github, Layers, Linkedin, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { Award, Bot, Briefcase, Command, FolderKanban, Layers, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import EmailModal from '@/components/home/EmailModal.vue'
@@ -55,6 +55,18 @@ function readClickMeCache(): boolean {
 }
 const clickMeEnabled = ref(readClickMeCache())
 
+/** Whether the "community chat" button shows in the navbar (admin toggle) — when off it's HIDDEN, not disabled. */
+const COMMUNITY_CHAT_CACHE = 'aromin-community-chat-v1'
+function readCommunityChatCache(): boolean {
+  try {
+    const v = localStorage.getItem(COMMUNITY_CHAT_CACHE)
+    // no cache yet → default ON (show) to avoid FOUC hide, matches DB default '1'
+    if (v === null) return true
+    return v === '1'
+  } catch { return true }
+}
+const communityChatEnabled = ref(readCommunityChatCache())
+
 /** Whether the "private chat" button shows in the navbar (admin toggle). */
 const PRIVATE_CHAT_CACHE = 'aromin-private-chat-v1'
 function readPrivateChatCache(): boolean {
@@ -102,6 +114,10 @@ onMounted(() => {
     .then((r) => r.ok ? r.json() : null)
     .then((d) => {
       if (!d) return
+      if (typeof d.community_chat_enabled === 'boolean') {
+        communityChatEnabled.value = d.community_chat_enabled
+        try { localStorage.setItem(COMMUNITY_CHAT_CACHE, d.community_chat_enabled ? '1' : '0') } catch { /* ignore */ }
+      }
       if (typeof d.private_chat_enabled === 'boolean') {
         privateChatEnabled.value = d.private_chat_enabled
         try { localStorage.setItem(PRIVATE_CHAT_CACHE, d.private_chat_enabled ? '1' : '0') } catch { /* ignore */ }
@@ -214,35 +230,35 @@ const navGroups = [
 
     <button
       type="button"
-      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
+      class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
       aria-label="Ask Triz.ai — AI chat assistant"
       @click="askTrizRef?.openAsk()"
     >
       <Bot class="h-3.5 w-3.5" :stroke-width="1.8" />
       <span>Ask Triz.ai</span>
       <span class="inline-flex items-center gap-1">
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
-        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">K</kbd>
+        <span class="font-mono text-[10px] text-gray-400">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">K</kbd>
       </span>
     </button>
 
     <button
       v-if="clickMeEnabled"
       type="button"
-      class="mt-3 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink dark:hover:text-gray-950"
+      class="mt-3 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
       @click="askRef?.openAsk()"
     >
       <Command class="h-3.5 w-3.5" :stroke-width="1.8" />
       <span>Command</span>
       <span class="inline-flex items-center gap-1">
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
-        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">J</kbd>
+        <span class="font-mono text-[10px] text-gray-400">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">J</kbd>
       </span>
     </button>
 
@@ -250,9 +266,7 @@ const navGroups = [
       v-if="petConfig.globalEnabled"
       type="button"
       class="mt-3 inline-flex w-fit items-center gap-2 whitespace-nowrap text-[12px] transition-colors"
-      :class="petConfig.enabled
-        ? 'text-gray-700 hover:text-ink dark:text-gray-300 dark:hover:text-gray-950'
-        : 'text-gray-400 hover:text-ink dark:text-gray-500 dark:hover:text-gray-950'"
+      :class="petConfig.enabled ? 'text-ink' : 'text-gray-400 hover:text-ink'"
       :aria-pressed="petConfig.enabled"
       :aria-label="petConfig.enabled ? 'Hide pet' : 'Show pet'"
       @click="togglePetLocal"
@@ -260,15 +274,15 @@ const navGroups = [
       <PawPrint
         class="h-3.5 w-3.5"
         :stroke-width="1.8"
-        :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : 'text-gray-400'"
+        :class="petConfig.enabled ? 'text-ink' : 'text-gray-400'"
       />
-      <span :class="petConfig.enabled ? 'text-ink dark:text-gray-950' : ''">toggle pet</span>
+      <span :class="petConfig.enabled ? 'text-ink' : ''">toggle pet</span>
       <span class="inline-flex items-center gap-1">
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">
           {{ isMac ? '⌘' : 'Alt' }}
         </kbd>
-        <span class="font-mono text-[10px] text-gray-400 dark:text-gray-500">+</span>
-        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-400">P</kbd>
+        <span class="font-mono text-[10px] text-gray-400">+</span>
+        <kbd class="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-gray-500">P</kbd>
       </span>
     </button>
 
@@ -278,6 +292,7 @@ const navGroups = [
         {{ activeCount === 1 ? 'person' : 'people' }} viewing now
       </p>
       <button
+        v-if="communityChatEnabled"
         type="button"
         class="mt-3 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         @click="chatRef?.openChat()"
@@ -300,28 +315,6 @@ const navGroups = [
       <div class="mb-4">
         <ThemeSwitch />
       </div>
-      <div class="mb-3 flex items-center gap-2">
-        <a
-          :href="profile.github"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink dark:border-gray-500 dark:text-gray-400 dark:hover:text-gray-950"
-          :aria-label="`GitHub — ${profile.github.replace('https://', '')}`"
-          :title="`GitHub — ${profile.github.replace('https://', '')}`"
-        >
-          <Github class="h-3.5 w-3.5" :stroke-width="1.7" />
-        </a>
-        <a
-          :href="profile.linkedin"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink dark:border-gray-500 dark:text-gray-400 dark:hover:text-gray-950"
-          aria-label="LinkedIn profile"
-          title="LinkedIn"
-        >
-          <Linkedin class="h-3.5 w-3.5" :stroke-width="1.7" />
-        </a>
-      </div>
       <p class="text-[12px] leading-relaxed text-gray-500 dark:text-gray-400">
         For work, collabs &amp; everything else, reach me at
       </p>
@@ -338,8 +331,9 @@ const navGroups = [
   </nav>
 
   <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
+  <!-- Exact bryllim.com mobile bar: max-w-3xl / px-6 / py-3 / font-pixel 14px / -mr-1 p-1 button -->
   <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
-    <div class="mx-auto flex max-w-3xl items-center justify-between px-4 sm:px-6 py-3">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
       <RouterLink to="/" class="font-pixel text-[14px]">
         &lt; Aromin /&gt;
       </RouterLink>
@@ -375,17 +369,17 @@ const navGroups = [
         </button>
       </div>
 
-      <div class="flex flex-1 flex-col overflow-y-auto px-7 py-8 font-mono text-[12px]">
+      <div class="flex flex-1 flex-col overflow-y-auto px-7 py-8 font-mono text-[16px]">
         <template v-for="(group, gi) in navGroups" :key="group.label">
           <div
-            class="mnav-group flex flex-col gap-2.5"
+            class="mnav-group flex flex-col gap-4"
             :style="{ transitionDelay: `${0.05 + gi * 0.06}s` }"
           >
             <RouterLink
               v-for="link in group.links"
               :key="link.name"
               :to="link.to"
-              class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+              class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
               :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
               @click="closeMobileMenu"
             >
@@ -412,14 +406,14 @@ const navGroups = [
               {{ link.label }}
             </RouterLink>
           </div>
-          <div v-if="gi < navGroups.length - 1" class="my-4 h-px bg-gray-200 dark:bg-gray-300" />
+          <div v-if="gi < navGroups.length - 1" class="my-5 h-px bg-gray-200 dark:bg-gray-300" />
         </template>
-        <div class="my-4 h-px bg-gray-200 dark:bg-gray-300" />
-        <div class="mnav-group flex flex-col gap-2.5" style="transition-delay: 0.29s">
-          <div class="flex flex-col gap-2.5">
+        <div class="my-5 h-px bg-gray-200 dark:bg-gray-300" />
+        <div class="mnav-group flex flex-col gap-5" style="transition-delay: 0.23s">
+          <div class="flex flex-col gap-5">
             <button
               type="button"
-              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-500 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
               aria-label="Ask Triz.ai — AI chat assistant"
               @click="closeMobileMenu(); askTrizRef?.openAsk()"
             >
@@ -435,7 +429,7 @@ const navGroups = [
             <button
               v-if="clickMeEnabled"
               type="button"
-              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-500 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[14px] text-gray-500 hover:text-ink"
               @click="closeMobileMenu(); askRef?.openAsk()"
             >
               <Command class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
@@ -449,8 +443,9 @@ const navGroups = [
               </span>
             </button>
             <button
+              v-if="communityChatEnabled"
               type="button"
-              class="inline-flex w-fit items-center gap-2 text-[12px] text-gray-600 hover:text-ink"
+              class="inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); chatRef?.openChat()"
             >
               <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
@@ -459,7 +454,7 @@ const navGroups = [
             <button
               v-if="privateChatEnabled"
               type="button"
-              class="mb-3 inline-flex w-fit items-center gap-2 text-[12px] text-gray-600 hover:text-ink"
+              class="mb-3 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); privateChatRef?.openChat()"
             >
               <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
@@ -468,52 +463,30 @@ const navGroups = [
             <button
               v-if="petConfig.globalEnabled"
               type="button"
-              class="mb-3 inline-flex w-fit items-center gap-2 text-[12px] transition-colors"
+              class="mb-3 inline-flex w-fit items-center gap-2 text-[14px] transition-colors"
               :class="petConfig.enabled ? 'text-ink' : 'text-gray-600 hover:text-ink'"
               @click="togglePetLocal"
             >
               <PawPrint class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               toggle pet
               <span
-                class="rounded-full px-1.5 py-0.5 text-[10px] leading-none"
+                class="rounded-md px-1.5 py-0.5 text-[10px] leading-none"
                 :class="petConfig.enabled ? 'bg-ink text-bg' : 'bg-gray-200 text-gray-500'"
               >{{ petConfig.enabled ? 'on' : 'off' }}</span>
             </button>
             <div class="mb-4">
               <ThemeSwitch />
             </div>
-            <div class="mb-3 flex items-center gap-2">
-              <a
-                :href="profile.github"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
-                aria-label="GitHub profile"
-                title="GitHub"
-              >
-                <Github class="h-4 w-4" :stroke-width="1.7" />
-              </a>
-              <a
-                :href="profile.linkedin"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-ink"
-                aria-label="LinkedIn profile"
-                title="LinkedIn"
-              >
-                <Linkedin class="h-4 w-4" :stroke-width="1.7" />
-              </a>
-            </div>
-            <p class="text-[12px] leading-relaxed text-gray-500">
+            <p class="text-[12px] leading-relaxed text-gray-400">
               For work, collabs &amp; everything else, reach me at
             </p>
             <button
               type="button"
-              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 text-[11px] text-ink hover:text-gray-500"
+              class="mt-1.5 inline-flex w-fit max-w-full items-center gap-2 text-[14px] text-ink hover:text-gray-500"
               aria-haspopup="dialog"
               @click="closeMobileMenu(); emailRef?.openModal()"
             >
-              <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
+              <Mail class="h-[1.15em] w-[1.15em] shrink-0" />
               <span class="whitespace-nowrap">{{ profile.email }}</span>
             </button>
           </div>

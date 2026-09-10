@@ -65,6 +65,15 @@ class RecommendationSeeder extends Seeder
                 'email' => null,
                 'sort_order' => 5,
             ],
+            // TEST — makes 7 items so infinite swiper (>3) is verifiable on home
+            [
+                'initials' => 'TC',
+                'quote' => '"Test recommendation — verifying the infinite carousel handles more than three cards without creating a new line. Swipe stays on one row and loops forever."',
+                'author' => 'Test Client',
+                'role' => 'Product Manager · Test Company',
+                'email' => null,
+                'sort_order' => 6,
+            ],
         ];
 
         foreach ($recommendations as $rec) {

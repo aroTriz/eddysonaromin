@@ -350,17 +350,17 @@ onMounted(load)
           <div class="flex flex-col gap-1.5">
             <label class="font-mono text-[11px] text-gray-500">photo</label>
             <div class="flex items-center gap-3">
-              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
                 <img :src="form.photo_url" alt="preview" class="h-full w-full object-contain" />
               </div>
-              <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[13px] font-semibold text-gray-600">
+              <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600">
                 {{ autoInitials }}
               </div>
               <div class="flex flex-col gap-1.5">
                 <input ref="photoInputRef" type="file" accept="image/*" class="hidden" @change="onPhotoPicked" />
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink disabled:opacity-50"
+                  class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink disabled:opacity-50"
                   :disabled="photoUploading"
                   @click="photoInputRef?.click()"
                 >
@@ -476,7 +476,7 @@ onMounted(load)
       <div class="ml-auto flex items-center gap-2">
         <button
           type="button"
-          class="rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+          class="rounded-md border border-gray-200 px-2.5 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
           @click="toggleArchived"
         >
           {{ showArchived ? 'Show active' : 'Show archived' }}
@@ -511,7 +511,7 @@ onMounted(load)
       <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
         @click="askDeleteSelected"
       >
         <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -553,10 +553,10 @@ onMounted(load)
           :aria-label="`Select ${rec.author}'s recommendation`"
           @change="toggleSelect(rec.id)"
         />
-        <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+        <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
           <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
         </div>
-        <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+        <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
           {{ rec.initials }}
         </div>
         <div class="min-w-0 flex-1">
@@ -572,7 +572,7 @@ onMounted(load)
           <button
             v-if="showArchived"
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+            class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 min-h-[44px] py-2 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
             :aria-label="`Restore ${rec.author}'s recommendation`"
             @click="restoreItem(rec)"
           >

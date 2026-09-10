@@ -51,7 +51,7 @@ onMounted(async () => {
     <header class="mb-12">
       <RouterLink
         to="/"
-        class="mb-6 inline-flex items-center gap-1.5 font-mono text-[12px] text-gray-400 hover:text-ink"
+        class="mb-6 inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2 font-mono text-[12px] text-gray-400 hover:text-ink"
       >
         <ArrowLeft class="h-3.5 w-3.5" :stroke-width="1.8" />
         home
@@ -80,10 +80,10 @@ onMounted(async () => {
         </blockquote>
 
         <figcaption class="mt-5 flex items-start gap-3 border-t border-gray-100 pt-4">
-          <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+          <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
             <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
           </div>
-          <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+          <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
             {{ rec.initials }}
           </div>
           <div class="min-w-0">

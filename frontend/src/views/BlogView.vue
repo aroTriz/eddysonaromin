@@ -13,7 +13,8 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { fetchBlogPosts } from '@/services/api'
 import type { BlogPost } from '@/types'
 
-const POSTS_PER_PAGE = 9
+const LIST_PER_PAGE = 3
+const GRID_PER_PAGE = 6
 
 const posts = ref<BlogPost[]>([])
 const loading = ref(true)
@@ -21,6 +22,8 @@ const error = ref<string | null>(null)
 const view = ref<'list' | 'grid'>('list')
 
 const route = useRoute()
+
+const postsPerPage = computed(() => (view.value === 'grid' ? GRID_PER_PAGE : LIST_PER_PAGE))
 
 async function load(): Promise<void> {
   loading.value = true
@@ -36,18 +39,19 @@ async function load(): Promise<void> {
 
 onMounted(load)
 
-/** Posts on the current page (page from the `?page=` query). */
+/** Posts on the current page (page from the `?page=` query) — 3 for list, 6 for grid. */
 const pagedPosts = computed(() => {
   const raw = Number(route.query.page)
   const page = Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1
-  const start = (page - 1) * POSTS_PER_PAGE
-  return posts.value.slice(start, start + POSTS_PER_PAGE)
+  const size = postsPerPage.value
+  const start = (page - 1) * size
+  return posts.value.slice(start, start + size)
 })
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-4xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
-    <!-- Header (bryllim-style with view toggle) -->
+  <div class="mx-auto w-full max-w-4xl px-6 py-14 sm:py-20">
+    <!-- Header — bryllim.com/blog exact -->
     <header class="mb-10 flex items-start justify-between gap-4">
       <div>
         <h1 class="font-pixel text-2xl leading-none">blog</h1>
@@ -56,11 +60,11 @@ const pagedPosts = computed(() => {
         </p>
       </div>
 
-      <div class="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
+      <div class="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5">
         <button
           type="button"
           class="rounded-md p-1.5 transition"
-          :class="view === 'list' ? 'text-ink' : 'text-gray-400 hover:text-ink'"
+          :class="view === 'list' ? 'bg-gray-100 text-ink' : 'text-gray-400 hover:text-ink'"
           title="List view"
           aria-label="List view"
           @click="view = 'list'"
@@ -75,7 +79,7 @@ const pagedPosts = computed(() => {
         <button
           type="button"
           class="rounded-md p-1.5 transition"
-          :class="view === 'grid' ? 'text-ink' : 'text-gray-400 hover:text-ink'"
+          :class="view === 'grid' ? 'bg-gray-100 text-ink' : 'text-gray-400 hover:text-ink'"
           title="Grid view"
           aria-label="Grid view"
           @click="view = 'grid'"
@@ -108,8 +112,8 @@ const pagedPosts = computed(() => {
         <BlogCard v-for="post in pagedPosts" :key="post.slug" :post="post" layout="grid" />
       </div>
 
-      <!-- Pagination (bryllim-exact: ← prev · N / M · next →) -->
-      <Pagination :total="posts.length" :page-size="POSTS_PER_PAGE" />
+      <!-- Pagination (bryllim-exact: ← prev · N / M · next →) — 3 list / 6 grid -->
+      <Pagination :total="posts.length" :page-size="postsPerPage" />
     </AsyncState>
   </div>
 </template>

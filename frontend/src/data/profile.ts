@@ -161,7 +161,7 @@ export const stackGroups: StackGroup[] = [
   },
   {
     label: 'CMS',
-    items: ['WordPress', 'Joomla'],
+    items: ['WordPress', 'Joomla', 'Elementor'],
   },
   {
     label: 'Mobile & Desktop',
@@ -185,6 +185,8 @@ export const stackGroups: StackGroup[] = [
       'Ollama',
       'Gemini',
       'Higgsfield',
+      'Mimo',
+      'Kimi',
       'Hugging Face',
       'Anthropic',
       'Opencode',
@@ -245,6 +247,7 @@ export const allTechnologies: string[] = [
   'SQLite',
   'WordPress',
   'Joomla',
+  'Elementor',
   'Flutter',
   'Kotlin',
   'C#',
@@ -270,6 +273,8 @@ export const allTechnologies: string[] = [
   'Ollama',
   'Gemini',
   'Higgsfield',
+  'Mimo',
+  'Kimi',
   'Hugging Face',
   'Anthropic',
   'Opencode',
@@ -406,6 +411,16 @@ export const certifications: Certification[] = [
     summary:
       'QA credential from NOAH Business Application covering the full quality assurance discipline — test case authoring, bug and regression tracking, and documentation review for release readiness.',
   },
+  // TEST — additional to verify infinite swiper (remove when done testing)
+  {
+    slug: 'test-additional-certification',
+    title: 'Test Additional — Cloud & DevOps Essentials',
+    issuer: 'Test Issuer · Demo',
+    year: '2026',
+    category: 'certification',
+    summary:
+      'Additional test certification to verify the infinite swiper stays on one line when data exceeds three items — swipe should loop without creating a new row.',
+  },
 ]
 
 export interface Affiliation {
@@ -524,6 +539,14 @@ export const recommendations: Recommendation[] = [
     author: 'ARventure Team',
     role: 'Augmented Reality Project — Unity',
   },
+  // TEST — additional to verify infinite swiper (remove when done testing)
+  {
+    initials: 'TC',
+    quote:
+      '"Test recommendation — verifying the infinite carousel handles more than three cards without creating a new line. Swipe stays on one row and loops forever."',
+    author: 'Test Client',
+    role: 'Product Manager · Test Company',
+  },
 ]
 
 /** Legacy single-recommendation export kept for compatibility. */
@@ -535,7 +558,7 @@ export const stats = [
   { value: '11', label: 'Projects Built' },
   { value: '1', label: 'Internship Completed' },
   { value: '1+', label: 'Years of Experience' },
-  { value: '67', label: 'Technologies' },
+  { value: '70', label: 'Technologies' },
 ]
 
 /** Interests — beyond the code. */

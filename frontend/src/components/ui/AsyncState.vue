@@ -47,7 +47,7 @@ withDefaults(
     <button
       v-if="onRetry"
       type="button"
-      class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 font-mono text-[12px] text-gray-600 hover:border-gray-300 hover:text-ink"
+      class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[12px] text-gray-600 hover:border-gray-300 hover:text-ink"
       @click="onRetry"
     >
       <RotateCcw class="h-3.5 w-3.5" :stroke-width="1.8" />

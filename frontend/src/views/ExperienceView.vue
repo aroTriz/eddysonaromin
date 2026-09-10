@@ -178,7 +178,7 @@ function onKeydown(e: KeyboardEvent): void {
             <div class="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} photos`"
                 :aria-label="`Open ${job.company} album`"
                 @click="openModal(`${job.company} — photos`, job.albums ?? [], job.logo_url)"
@@ -187,7 +187,7 @@ function onKeydown(e: KeyboardEvent): void {
               </button>
               <button
                 type="button"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${job.company} certificates`"
                 :aria-label="`Open ${job.company} certificates`"
                 @click="openModal(`${job.company} — certificates`, job.certificates ?? [], job.logo_url)"
@@ -302,7 +302,7 @@ function onKeydown(e: KeyboardEvent): void {
             <div class="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${edu.company} photos`"
                 :aria-label="`Open ${edu.company} album`"
                 @click="openModal(`${edu.company} — photos`, edu.albums ?? [], edu.logo_url)"
@@ -311,7 +311,7 @@ function onKeydown(e: KeyboardEvent): void {
               </button>
               <button
                 type="button"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-ink sm:h-11 sm:w-11"
                 :title="`${edu.company} certificates`"
                 :aria-label="`Open ${edu.company} certificates`"
                 @click="openModal(`${edu.company} — certificates`, edu.certificates ?? [], edu.logo_url)"
@@ -390,7 +390,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="modal.items.length > 1"
                 type="button"
-                class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+                class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
                 aria-label="Previous image"
                 @click="prevImage"
               >
@@ -399,7 +399,7 @@ function onKeydown(e: KeyboardEvent): void {
               <button
                 v-if="modal.items.length > 1"
                 type="button"
-                class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
+                class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white/90 text-gray-600 shadow-sm transition hover:text-ink"
                 aria-label="Next image"
                 @click="nextImage"
               >
@@ -416,7 +416,7 @@ function onKeydown(e: KeyboardEvent): void {
                 class="max-h-32 max-w-[60%] object-contain"
               />
               <div v-else class="flex flex-col items-center gap-2 text-gray-300">
-                <Images class="h-10 w-10" :stroke-width="1.2" />
+                <Images class="h-11 w-11" :stroke-width="1.2" />
                 <span class="font-mono text-[11px] text-gray-400">no image</span>
               </div>
             </div>
@@ -431,7 +431,7 @@ function onKeydown(e: KeyboardEvent): void {
               v-for="(item, j) in modal.items"
               :key="item"
               type="button"
-              class="h-1.5 rounded-full transition-all"
+              class="h-1.5 rounded-md transition-all"
               :class="j === modal.index ? 'w-5 bg-ink' : 'w-1.5 bg-gray-300'"
               :aria-label="`Go to image ${j + 1}`"
               @click="modal.index = j"

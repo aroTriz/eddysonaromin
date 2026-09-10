@@ -535,7 +535,7 @@ onBeforeUnmount(() => {
         </p>
         <button
           type="button"
-          class="mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-ink px-5 py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80"
+          class="mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-ink px-5 py-3 min-h-[44px] font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80"
           @click="retrySession"
         >
           Try again
@@ -562,7 +562,7 @@ onBeforeUnmount(() => {
       <div class="mb-5 grid grid-cols-2 gap-1 rounded-lg border border-gray-200 p-1 dark:border-gray-300">
         <button
           type="button"
-          class="rounded-md py-1.5 font-mono text-[12px] transition-colors"
+          class="rounded-md min-h-[44px] py-2 font-mono text-[12px] transition-colors"
           :class="mode === 'login'
             ? 'bg-ink font-semibold text-bg'
             : 'text-gray-500 hover:text-ink'"
@@ -572,7 +572,7 @@ onBeforeUnmount(() => {
         </button>
         <button
           type="button"
-          class="rounded-md py-1.5 font-mono text-[12px] transition-colors"
+          class="rounded-md min-h-[44px] py-2 font-mono text-[12px] transition-colors"
           :class="mode === 'register'
             ? 'bg-ink font-semibold text-bg'
             : 'text-gray-500 hover:text-ink'"
@@ -630,7 +630,7 @@ onBeforeUnmount(() => {
             />
             <button
               type="button"
-              class="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:text-ink"
+              class="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:text-ink"
               :aria-label="showPass ? 'Hide password' : 'Show password'"
               @click="showPass = !showPass"
             >
@@ -656,7 +656,7 @@ onBeforeUnmount(() => {
             />
             <button
               type="button"
-              class="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:text-ink"
+              class="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:text-ink"
               :aria-label="showConfirm ? 'Hide password' : 'Show password'"
               @click="showConfirm = !showConfirm"
             >
@@ -695,7 +695,7 @@ onBeforeUnmount(() => {
       <!-- chat header -->
       <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-300">
         <img
-          class="h-9 w-9 shrink-0 rounded-full bg-gray-100"
+          class="h-9 w-9 shrink-0 rounded-md bg-gray-100"
           :src="avatarUrl(admin?.name ?? 'admin')"
           :alt="`${admin?.name ?? 'admin'} avatar`"
           loading="lazy"
@@ -732,7 +732,7 @@ onBeforeUnmount(() => {
           <p class="font-mono text-[11.5px] leading-relaxed text-red-500">// {{ threadError }}</p>
           <button
             type="button"
-            class="mt-2.5 rounded-md border border-gray-200 px-3.5 py-1.5 font-mono text-[11px] text-ink transition-colors hover:bg-gray-100 dark:border-gray-300 dark:hover:bg-gray-200"
+            class="mt-2.5 rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[11px] text-ink transition-colors hover:bg-gray-100 dark:border-gray-300 dark:hover:bg-gray-200"
             @click="initThread"
           >
             try again
@@ -747,7 +747,7 @@ onBeforeUnmount(() => {
           <!-- day divider -->
           <div
             v-if="i === 0 || dayLabel(m.created_at) !== dayLabel(messages[i - 1].created_at)"
-            class="my-2 self-center rounded-full border border-gray-200 bg-white px-3 py-1 font-mono text-[9.5px] text-gray-400 dark:border-gray-300 dark:bg-gray-100"
+            class="my-2 self-center rounded-md border border-gray-200 bg-white px-3 py-1 font-mono text-[9.5px] text-gray-400 dark:border-gray-300 dark:bg-gray-100"
           >
             {{ dayLabel(m.created_at) }}
           </div>
@@ -800,7 +800,7 @@ onBeforeUnmount(() => {
             v-if="pendingFile.kind === 'image'"
             :src="pendingFile.data"
             :alt="pendingFile.name"
-            class="h-10 w-10 rounded object-cover"
+            class="h-11 w-11 rounded object-cover"
           />
           <FileImage v-else class="h-5 w-5 shrink-0 text-gray-400" :stroke-width="1.7" />
           <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-gray-600 dark:text-gray-400">
@@ -827,7 +827,7 @@ onBeforeUnmount(() => {
           />
           <button
             type="button"
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink dark:border-gray-300"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink dark:border-gray-300"
             aria-label="Attach a file or image"
             title="Attach a file or image (max 2.5MB)"
             @click="fileInput?.click()"
@@ -842,14 +842,14 @@ onBeforeUnmount(() => {
             autocomplete="off"
             autocorrect="off"
             placeholder="Message the admin…"
-            class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[14px] sm:text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
+            class="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-4 py-2.5 font-mono text-[14px] sm:text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
             @input="onInput"
             @blur="stopTyping"
           />
           <button
             type="submit"
             :disabled="(!input.trim() && !pendingFile) || sending"
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
             aria-label="Send message"
           >
             <Send class="h-4 w-4" :stroke-width="1.8" />

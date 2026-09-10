@@ -15,7 +15,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 
     <RouterLink
       to="/"
-      class="mt-8 inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
+      class="mt-8 inline-flex items-center gap-2 rounded-md border border-gray-200 px-5 py-3 min-h-[44px] font-mono text-[13px] text-gray-600 hover:border-gray-300 hover:text-ink"
     >
       <ArrowLeft class="h-4 w-4" :stroke-width="1.8" />
       back home

@@ -53,12 +53,12 @@ watch(() => route.params.slug, load)
     <template v-else-if="reference">
       <header class="mt-6">
         <div class="flex items-center gap-3">
-          <div v-if="reference.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white p-2">
+          <div v-if="reference.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-2">
             <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" />
           </div>
           <div
             v-else
-            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 font-mono text-[16px] font-semibold text-gray-600"
+            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[16px] font-semibold text-gray-600"
           >
             {{ reference.initials }}
           </div>

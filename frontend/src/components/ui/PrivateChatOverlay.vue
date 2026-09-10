@@ -468,7 +468,7 @@ defineExpose({ openChat })
         <div class="mb-5 grid grid-cols-2 gap-1 rounded-lg border border-gray-200 p-1 dark:border-gray-300">
           <button
             type="button"
-            class="rounded-md py-1.5 font-mono text-[12px] transition-colors"
+            class="rounded-md min-h-[44px] py-2 font-mono text-[12px] transition-colors"
             :class="mode === 'login'
               ? 'bg-ink font-semibold text-bg'
               : 'text-gray-500 hover:text-ink'"
@@ -478,7 +478,7 @@ defineExpose({ openChat })
           </button>
           <button
             type="button"
-            class="rounded-md py-1.5 font-mono text-[12px] transition-colors"
+            class="rounded-md min-h-[44px] py-2 font-mono text-[12px] transition-colors"
             :class="mode === 'register'
               ? 'bg-ink font-semibold text-bg'
               : 'text-gray-500 hover:text-ink'"
@@ -566,7 +566,7 @@ defineExpose({ openChat })
         <!-- chat header -->
         <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-300">
           <img
-            class="h-9 w-9 shrink-0 rounded-full bg-gray-100"
+            class="h-9 w-9 shrink-0 rounded-md bg-gray-100"
             :src="avatarUrl(admin?.name ?? 'admin')"
             :alt="`${admin?.name ?? 'admin'} avatar`"
             loading="lazy"
@@ -632,12 +632,12 @@ defineExpose({ openChat })
               autocomplete="off"
               autocorrect="off"
               placeholder="Message the admin…"
-              class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
+              class="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-4 py-2.5 font-mono text-[13px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
             />
             <button
               type="submit"
               :disabled="!input.trim()"
-              class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-full bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
+              class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-md bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
               aria-label="Send message"
             >
               <Send class="h-4 w-4" :stroke-width="1.8" />

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * /aromin/preferences — unified page for ALL site settings.
  *
@@ -86,13 +86,13 @@ const rightClickLabel = computed(() =>
 )
 const chatLabel = computed(() =>
   draft.value.chat
-    ? 'on — visitors can post messages'
-    : 'off — "Community Chat has been turned off"',
+    ? 'on — community chat button is visible in the navbar'
+    : 'off — community chat is hidden from the navbar',
 )
 const privateChatLabel = computed(() =>
   draft.value.privateChat
-    ? 'on � private chat button is visible in the navbar'
-    : 'off � private chat is hidden from the navbar',
+    ? 'on  -  private chat button is visible in the navbar'
+    : 'off  -  private chat is hidden from the navbar',
 )
 const backdropLabel = computed(() =>
   draft.value.backdrop
@@ -244,8 +244,8 @@ function cancelRestore(): void {
       <!-- ════════════════════════════════════════════════════════ -->
 
       <!-- ── Right-click protection ───────────────────────────── -->
-      <section class="rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <MousePointerClick
@@ -275,7 +275,7 @@ function cancelRestore(): void {
             :aria-label="
               draft.rightClick ? 'Disable right click' : 'Enable right click'
             "
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.rightClick
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -284,7 +284,7 @@ function cancelRestore(): void {
             @click="toggleRightClick"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="
                 draft.rightClick ? 'translate-x-[1.5rem]' : 'translate-x-0.5'
               "
@@ -301,8 +301,8 @@ function cancelRestore(): void {
       </section>
 
       <!-- ── Community chat ───────────────────────────────────── -->
-      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <MessageCircle
@@ -316,9 +316,9 @@ function cancelRestore(): void {
             <p
               class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500"
             >
-              When off, visitors can&rsquo;t send messages &mdash; the chat
-              shows &ldquo;Community Chat has been turned off&rdquo; instead.
-              Turn it on to let visitors post again.
+              When off, the community chat button is hidden from the navbar
+              &mdash; visitors can&rsquo;t open the chat (like private chat).
+              Turn it on to show community chat in the navbar.
             </p>
             <p class="mt-3 font-mono text-[11px] text-gray-400">
               // {{ chatLabel }}
@@ -333,7 +333,7 @@ function cancelRestore(): void {
                 ? 'Turn off community chat'
                 : 'Turn on community chat'
             "
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.chat
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -342,7 +342,7 @@ function cancelRestore(): void {
             @click="toggleChat"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="
                 draft.chat ? 'translate-x-[1.5rem]' : 'translate-x-0.5'
               "
@@ -360,15 +360,15 @@ function cancelRestore(): void {
 
       <!-- ── Animated backdrops ───────────────────────────────── -->
             <!-- -- Private chat -- -->
-      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <MessagesSquare class="h-4 w-4 shrink-0 text-gray-400" :stroke-width="1.7" />
               <h2 class="font-mono text-[13px] font-semibold text-ink">Private Chat</h2>
             </div>
             <p class="mt-2 max-w-md text-[13px] leading-relaxed text-gray-500">
-              When off, the private chat button is hidden from the navbar � visitors can''t open the 1-on-1 DM (like community chat). Turn it on to show private chat in the navbar.
+              When off, the private chat button is hidden from the navbar  -  visitors cannot open the 1-on-1 DM (like community chat). Turn it on to show private chat in the navbar.
             </p>
             <p class="mt-3 font-mono text-[11px] text-gray-400">// {{ privateChatLabel }}</p>
           </div>
@@ -377,7 +377,7 @@ function cancelRestore(): void {
             role="switch"
             :aria-checked="draft.privateChat"
             :aria-label="draft.privateChat ? 'Hide private chat from navbar' : 'Show private chat in navbar'"
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.privateChat
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -386,7 +386,7 @@ function cancelRestore(): void {
             @click="togglePrivateChat"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="draft.privateChat ? 'translate-x-[1.5rem]' : 'translate-x-0.5'"
             >
               <Check v-if="draft.privateChat" class="h-3 w-3 text-white" :stroke-width="3" aria-hidden="true" />
@@ -394,8 +394,8 @@ function cancelRestore(): void {
           </button>
         </div>
       </section>
-<section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+<section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <Sparkles
@@ -427,7 +427,7 @@ function cancelRestore(): void {
                 ? 'Turn off animated backdrops'
                 : 'Turn on animated backdrops'
             "
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.backdrop
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -436,7 +436,7 @@ function cancelRestore(): void {
             @click="toggleBackdrop"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="
                 draft.backdrop
                   ? 'translate-x-[1.5rem]'
@@ -455,8 +455,8 @@ function cancelRestore(): void {
       </section>
 
       <!-- ── Enable/Disable Triz.ai ──────────────────────────── -->
-      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <Sparkles
@@ -488,7 +488,7 @@ function cancelRestore(): void {
                 ? 'Disable Triz.ai chat'
                 : 'Enable Triz.ai chat'
             "
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.askTriz
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -497,7 +497,7 @@ function cancelRestore(): void {
             @click="toggleAskTriz"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="
                 draft.askTriz
                   ? 'translate-x-[1.5rem]'
@@ -516,8 +516,8 @@ function cancelRestore(): void {
       </section>
 
       <!-- ── Show "Click me..." ───────────────────────────────── -->
-      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <MousePointerClick
@@ -548,7 +548,7 @@ function cancelRestore(): void {
                 ? 'Hide click me button'
                 : 'Show click me button'
             "
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
             :class="[
               draft.clickMe
                 ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -557,7 +557,7 @@ function cancelRestore(): void {
             @click="toggleClickMe"
           >
             <span
-              class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+              class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
               :class="
                 draft.clickMe
                   ? 'translate-x-[1.5rem]'
@@ -578,8 +578,8 @@ function cancelRestore(): void {
       <!-- ════════════════════════════════════════════════════════ -->
       <!-- PET SECTION                                              -->
       <!-- ════════════════════════════════════════════════════════ -->
-      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
-        <div class="flex items-start justify-between gap-6">
+      <section class="mt-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div class="min-w-0">
             <div class="flex items-center gap-3">
               <PawPrint
@@ -632,7 +632,7 @@ function cancelRestore(): void {
                   ? 'Collapse pet configuration'
                   : 'Expand pet configuration'
               "
-              class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
+              class="rounded-md min-h-[44px] min-w-[44px] p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
               @click="togglePetExpanded"
             >
               <EyeOff
@@ -653,7 +653,7 @@ function cancelRestore(): void {
                   ? 'Hide salary cat from navbar'
                   : 'Show salary cat in navbar'
               "
-              class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200"
+              class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-md border transition-colors duration-200"
               :class="[
                 draft.petEnabled
                   ? 'border-gray-400 bg-transparent dark:border-gray-400 dark:bg-transparent'
@@ -662,7 +662,7 @@ function cancelRestore(): void {
               @click="togglePetEnabled"
             >
               <span
-                class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 shadow-sm transition-transform duration-200"
+                class="inline-flex h-4 w-4 items-center justify-center rounded-md bg-gray-900 shadow-sm transition-transform duration-200"
                 :class="
                   draft.petEnabled
                     ? 'translate-x-[1.5rem]'
@@ -761,7 +761,7 @@ function cancelRestore(): void {
       <div class="mt-8 flex flex-wrap items-center gap-4 border-t border-gray-200 pt-6">
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-md bg-ink px-5 py-2.5 font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-md bg-ink px-5 py-3 min-h-[44px] font-mono text-[13px] font-semibold text-bg transition-opacity hover:opacity-80 disabled:opacity-50"
           :disabled="saving || !hasChanges"
           @click="save"
         >
@@ -852,4 +852,5 @@ function cancelRestore(): void {
     />
   </AdminLayout>
 </template>
+
 

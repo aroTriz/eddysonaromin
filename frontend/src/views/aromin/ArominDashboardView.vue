@@ -291,6 +291,33 @@ function formatCount(n: number): string {
   if (n >= 100) return '100+'
   return String(n)
 }
+
+/** IPv6 /64 grouping — 2400:6a80:8314:460:xxxx:xxxx:xxxx:xxxx → 2400:6a80:8314:460.
+ *  IPv4 stays as-is. Prevents the same device (privacy IID) from filling the table
+ *  with 10 rows that are actually one network. */
+function normalizeIp(ip: string): string {
+  if (!ip) return ''
+  if (!ip.includes(':')) return ip
+  const parts = ip.split(':').filter(Boolean)
+  if (parts.length >= 4) return parts.slice(0, 4).join(':')
+  return ip
+}
+const groupedRecent = computed(() => {
+  const map = new Map<string, RecentVisit & { _fullIp: string; _displayIp: string }>()
+  for (const v of a.value.recent) {
+    const raw = (v.raw_ip || v.ip || '').trim()
+    if (!raw) continue
+    const key = normalizeIp(raw)
+    const existing = map.get(key)
+    if (!existing) {
+      map.set(key, { ...v, _fullIp: raw, _displayIp: key, visits: v.visits ?? 1 } as any)
+    } else {
+      existing.visits = (existing.visits ?? 0) + (v.visits ?? 1)
+      // keep most recent created_at (a.recent is already latest-first, so first wins)
+    }
+  }
+  return Array.from(map.values()).slice(0, 10)
+})
 </script>
 
 <template>
@@ -421,55 +448,58 @@ function formatCount(n: number): string {
             // recent visits <span class="text-gray-400">(latest 10 IPs)</span>
           </p>
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[560px] text-left font-mono text-[11.5px]">
+            <table class="w-full min-w-[560px] sm:min-w-[560px] text-left font-mono text-[10px] sm:text-[11.5px]">
               <thead>
-                <tr class="border-b border-gray-200 text-[10px] uppercase tracking-wide text-gray-400 dark:border-gray-300">
-                  <th class="px-6 py-2.5 font-normal">ip</th>
-                  <th class="px-3 py-2.5 font-normal">visits</th>
-                  <th class="px-3 py-2.5 font-normal">location</th>
-                  <th class="px-3 py-2.5 font-normal">device</th>
-                  <th class="px-3 py-2.5 font-normal">browser / os</th>
-                  <th class="px-3 py-2.5 font-normal">last seen</th>
-                  <th class="px-6 py-2.5 text-right font-normal">detail</th>
+                <tr class="border-b border-gray-200 text-[9px] sm:text-[10px] uppercase tracking-wide text-gray-400 dark:border-gray-300">
+                  <th class="px-3 sm:px-6 py-2.5 font-normal">ip</th>
+                  <th class="px-2 sm:px-3 py-2.5 font-normal">visits</th>
+                  <th class="px-2 sm:px-3 py-2.5 font-normal">location</th>
+                  <th class="hidden sm:table-cell px-3 py-2.5 font-normal">device</th>
+                  <th class="hidden sm:table-cell px-3 py-2.5 font-normal">browser / os</th>
+                  <th class="px-2 sm:px-3 py-2.5 font-normal">last seen</th>
+                  <th class="px-3 sm:px-6 py-2.5 text-right font-normal">detail</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(v, i) in a.recent"
-                  :key="i"
+                  v-for="(v, i) in groupedRecent"
+                  :key="v._displayIp + i"
                   class="border-b border-gray-100 last:border-0 dark:border-gray-200"
                 >
-                  <td class="max-w-[280px] break-all px-6 py-3 text-gray-500">{{ v.raw_ip || v.ip || '—' }}</td>
-                  <td class="whitespace-nowrap px-3 py-3 text-ink">{{ v.visits ?? 0 }}</td>
-                  <td class="whitespace-nowrap px-3 py-3 text-gray-600 dark:text-gray-400">
+                  <td class="max-w-[110px] sm:max-w-[280px] truncate px-3 sm:px-6 py-3 text-gray-500" :title="v._fullIp">{{ v._displayIp || '—' }}<span v-if="v._displayIp !== v._fullIp" class="text-gray-300"> *</span></td>
+                  <td class="whitespace-nowrap px-2 sm:px-3 py-3 text-ink">{{ v.visits ?? 0 }}</td>
+                  <td class="whitespace-nowrap px-2 sm:px-3 py-3 text-gray-600 dark:text-gray-400">
                     {{ flag(v.country) }}
                     <span v-if="v.country" class="text-gray-500">{{ v.country }}</span>
-                    <span v-if="v.city"> · {{ v.city }}</span>
+                    <span v-if="v.city" class="hidden sm:inline"> · {{ v.city }}</span>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ deviceLabel(v) }}</td>
-                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">
+                  <td class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-gray-500">{{ deviceLabel(v) }}</td>
+                  <td class="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-gray-500">
                     {{ [v.browser, v.os].filter(Boolean).join(' · ') || '—' }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
-                  <td class="whitespace-nowrap px-6 py-3 text-right">
+                  <td class="whitespace-nowrap px-2 sm:px-3 py-3 text-gray-500">{{ timeAgo(v.created_at) }}</td>
+                  <td class="whitespace-nowrap px-3 sm:px-6 py-3 text-right">
                     <button
                       type="button"
-                      class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink"
-                      :aria-label="`View visit history for ${v.raw_ip || v.ip}`"
-                      title="View visit history"
-                      @click="openVisitHistory(v)"
+                      class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-ink sm:min-h-[44px] sm:min-w-[44px]"
+                      :aria-label="`View visit history for ${v._fullIp}`"
+                      :title="`View history for ${v._fullIp}${v._displayIp !== v._fullIp ? ' (grouped /64)' : ''}`"
+                      @click="openVisitHistory({ ...v, raw_ip: v._fullIp } as any)"
                     >
                       <Eye class="h-3.5 w-3.5" :stroke-width="1.7" />
                     </button>
                   </td>
                 </tr>
-                <tr v-if="a.recent.length === 0">
+                <tr v-if="groupedRecent.length === 0">
                   <td colspan="7" class="px-6 py-8 text-center text-gray-400">
-                    // no visits recorded yet
+                    <span class="hidden sm:inline">// no visits recorded yet</span><span class="sm:hidden text-[11px]">no visits yet</span>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <p v-if="groupedRecent.length" class="px-3 sm:px-6 py-2 font-mono text-[9px] leading-relaxed text-gray-400 sm:text-[10px]">
+              <span class="hidden sm:inline">* grouped by /64 for IPv6 — same device with privacy IID is merged. Full IP on hover.</span><span class="sm:hidden">* IPv6 grouped by /64</span>
+            </p>
           </div>
         </div>
       </section>
@@ -519,12 +549,12 @@ function formatCount(n: number): string {
                     {{ historyTarget?.raw_ip || historyTarget?.ip || 'IP' }}
                   </p>
                   <span
-                    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-medium"
+                    class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[9px] font-medium"
                     :class="isVisitorActive
                       ? 'border border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
                       : 'border border-gray-200 bg-gray-100 text-gray-400'"
                   >
-                    <span class="h-1 w-1 rounded-full" :class="isVisitorActive ? 'bg-green-500' : 'bg-gray-300'" />
+                    <span class="h-1 w-1 rounded-md" :class="isVisitorActive ? 'bg-green-500' : 'bg-gray-300'" />
                     {{ isVisitorActive ? 'active now' : fullDateTime(historyTarget?.created_at ?? '') }}
                   </span>
                 </div>
@@ -642,9 +672,9 @@ function formatCount(n: number): string {
                         </span>
                         <span class="shrink-0 text-gray-400">{{ formatCount(row.count) }}</span>
                       </div>
-                      <div class="h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-300">
+                      <div class="h-1 w-full overflow-hidden rounded-md bg-gray-100 dark:bg-gray-300">
                         <div
-                          class="h-full rounded-full bg-ink transition-[width] duration-500 group-hover:opacity-60"
+                          class="h-full rounded-md bg-ink transition-[width] duration-500 group-hover:opacity-60"
                           :style="{ width: `${Math.round((row.count / Math.max(1, pageBreakdown[0]?.count ?? 1)) * 100)}%` }"
                         ></div>
                       </div>

@@ -244,10 +244,10 @@ onBeforeUnmount(() => {
       <span class="coffee-tail absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full" />
       <!-- Dust particles on dismiss -->
       <template v-if="bubbleDismissing">
-        <span class="coffee-dust-particle absolute left-[15%] top-[60%] h-1 w-1 rounded-full bg-amber-400/60" style="animation-delay:0.08s" />
-        <span class="coffee-dust-particle absolute left-[45%] top-[30%] h-0.5 w-0.5 rounded-full bg-amber-300/50" style="animation-delay:0.15s" />
-        <span class="coffee-dust-particle absolute right-[20%] top-[50%] h-1 w-1 rounded-full bg-amber-500/40" style="animation-delay:0.04s" />
-        <span class="coffee-dust-particle absolute left-[70%] top-[25%] h-0.5 w-0.5 rounded-full bg-orange-400/50" style="animation-delay:0.2s" />
+        <span class="coffee-dust-particle absolute left-[15%] top-[60%] h-1 w-1 rounded-md bg-amber-400/60" style="animation-delay:0.08s" />
+        <span class="coffee-dust-particle absolute left-[45%] top-[30%] h-0.5 w-0.5 rounded-md bg-amber-300/50" style="animation-delay:0.15s" />
+        <span class="coffee-dust-particle absolute right-[20%] top-[50%] h-1 w-1 rounded-md bg-amber-500/40" style="animation-delay:0.04s" />
+        <span class="coffee-dust-particle absolute left-[70%] top-[25%] h-0.5 w-0.5 rounded-md bg-orange-400/50" style="animation-delay:0.2s" />
       </template>
     </button>
 

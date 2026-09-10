@@ -29,7 +29,7 @@ defineProps<{
     :class="[
       'mx-auto select-none',
       equalHeight
-        ? 'flex h-full max-h-full w-auto max-w-full flex-col justify-center'
+        ? 'device-mockup-laptop flex h-full max-h-full w-auto max-w-full flex-col justify-center'
         : 'w-full max-w-3xl',
     ]"
   >
@@ -69,7 +69,7 @@ defineProps<{
           <video
             v-if="video"
             :src="src"
-            class="h-full w-full object-cover"
+            class="h-full w-full object-contain bg-white"
             muted
             loop
             playsinline
@@ -81,7 +81,7 @@ defineProps<{
             v-else
             :src="src"
             :alt="alt"
-            class="h-full w-full object-cover"
+            class="h-full w-full object-contain bg-white"
             loading="lazy"
           />
         </div>
@@ -109,3 +109,5 @@ defineProps<{
     {{ label }}
   </p>
 </template>
+
+

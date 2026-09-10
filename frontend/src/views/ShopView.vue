@@ -11,5 +11,6 @@ import UnderMaintenance from '@/components/ui/UnderMaintenance.vue'
   <UnderMaintenance
     page="shop"
     message="The shop is being restocked with fresh digital products — check back soon."
+    :showHome="false"
   />
 </template>

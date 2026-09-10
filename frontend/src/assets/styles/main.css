@@ -1,10 +1,10 @@
-/* ════════════════════════════════════════════════════════════════════
-   EDDYSON AROMIN — DESIGN SYSTEM
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   EDDYSON AROMIN â€” DESIGN SYSTEM
    Design tokens derived from the bryllim.com reference:
    Geist family, monochrome scale via RGB variables, halftone textures.
-   ════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Tailwind v4 ───────────────────────────────────────────────── */
+/* â”€â”€ Tailwind v4 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @import 'tailwindcss';
 
 /* NOTE: @ionic/vue/css/* are intentionally NOT imported anymore. The app no
@@ -17,7 +17,7 @@
    theme composable + pre-paint script), NOT by prefers-color-scheme. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Theme tokens ──────────────────────────────────────────────── */
+/* â”€â”€ Theme tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @theme {
   --font-sans:
     'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -27,7 +27,7 @@
     'Geist Pixel', 'Geist Mono', ui-monospace, monospace;
   --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
-  /* Monochrome palette — flipped by the `dark` class on <html> */
+  /* Monochrome palette â€” flipped by the `dark` class on <html> */
   --color-ink: rgb(var(--ink));
   --color-bg: rgb(var(--bg));
   /* Remap Tailwind's literal white/black to theme vars so `bg-white`
@@ -49,7 +49,7 @@
 
   --tracking-tightest: -0.045em;
 
-  /* Theme-aware surface & text aliases — flip with html.dark */
+  /* Theme-aware surface & text aliases â€” flip with html.dark */
   --color-surface: rgb(var(--bg));
   --color-card: rgb(var(--g50));
   --color-muted: rgb(var(--g500));
@@ -68,7 +68,7 @@
     to {
       opacity: 1;
       transform: none;
-      /* `none` (not blur(0)) — any non-none filter value keeps the element
+      /* `none` (not blur(0)) â€” any non-none filter value keeps the element
          in its own compositing layer after the entrance finishes. Releasing
          it lets the browser go back to cheap, layer-free painting. */
       filter: none;
@@ -88,16 +88,16 @@
       transform: translateX(0);
     }
     to {
-      /* Exact seam distance (one copy width) — set via JS on the strip as
+      /* Exact seam distance (one copy width) â€” set via JS on the strip as
          --marquee-distance; falls back to -50% before measurement. */
       transform: translateX(calc(var(--marquee-distance, 50%) * -1));
     }
   }
 }
 
-/* Reverse marquee keyframes — defined OUTSIDE @theme so Tailwind v4 doesn't
+/* Reverse marquee keyframes â€” defined OUTSIDE @theme so Tailwind v4 doesn't
    tree-shake them (they're referenced from scoped HomeView CSS, not from an
-   --animate-* theme variable). Second home strip scrolls right → left. */
+   --animate-* theme variable). Second home strip scrolls right â†’ left. */
 @keyframes marquee-reverse {
   from {
     transform: translateX(calc(var(--marquee-distance, 50%) * -1));
@@ -107,7 +107,7 @@
   }
 }
 
-/* ── Geist Pixel (Vercel, via jsDelivr) ────────────────────────── */
+/* â”€â”€ Geist Pixel (Vercel, via jsDelivr) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @font-face {
   font-family: 'Geist Pixel';
   src:
@@ -116,7 +116,7 @@
   font-display: swap;
 }
 
-/* ── Theme variables ───────────────────────────────────────────── */
+/* â”€â”€ Theme variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   --bg: 255 255 255;
   --ink: 10 10 10;
@@ -157,9 +157,9 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Themed base — no flash before utilities compile.
+/* Themed base â€” no flash before utilities compile.
    The View Transitions API handles the smooth theme cross-fade on the GPU
-   compositor. NO per-element transitions here — they fight the compositor
+   compositor. NO per-element transitions here â€” they fight the compositor
    and cause lag on every theme flip. */
 @layer base {
   html,
@@ -176,11 +176,11 @@ html.dark {
   color: var(--sel-fg);
 }
 
-/* ── Page switch — bryllim-style blur fade (keyed wrapper in App.vue) ──
+/* â”€â”€ Page switch â€” bryllim-style blur fade (keyed wrapper in App.vue) â”€â”€
    Every route change remounts the .page-enter wrapper, replaying this
    entrance: blurred + faded-up, sharpening in place. */
 
-/* Theme flip — exact bryllim.com technique (smooth reference).
+/* Theme flip â€” exact bryllim.com technique (smooth reference).
    Coordinated color crossfade (.theme-anim) is the fallback + base.
    View Transitions replace the default crossfade with a clean circular
    reveal (driven in useTheme.ts). */
@@ -216,7 +216,7 @@ html.theme-anim *::after {
 }
 
 /* Profile video is now part of the root snapshot (no separate view-transition-name),
-   so the circular reveal covers it smoothly like bryllim — no separate 0.3s fade
+   so the circular reveal covers it smoothly like bryllim â€” no separate 0.3s fade
    that desyncs at the tail. The frame ping-pong is driven by THEME_CHANGE_EVENT. */
 .page-enter {
   /* `backwards` (not `both`): after the entrance the element returns to its
@@ -246,7 +246,7 @@ html.theme-anim *::after {
   }
 }
 
-/* ── Loading skeletons — shimmer sweep over a soft pulse ───────── */
+/* â”€â”€ Loading skeletons â€” shimmer sweep over a soft pulse â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Every data view (web + admin) uses `.skeleton` on its loading blocks:
    the block keeps its own bg/border/rounded classes, this class adds the
    moving shimmer highlight + gentle pulse so loading is visibly animated. */
@@ -283,7 +283,7 @@ html.theme-anim *::after {
   }
 }
 
-/* ── Confirm dialog — blur fade (ConfirmModal.vue) ─────────────── */
+/* â”€â”€ Confirm dialog â€” blur fade (ConfirmModal.vue) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.25s ease;
@@ -293,7 +293,7 @@ html.theme-anim *::after {
   opacity: 0;
 }
 
-/* ── Halftone dot textures ─────────────────────────────────────── */
+/* â”€â”€ Halftone dot textures â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .halftone {
   background-image: radial-gradient(
     circle at center,
@@ -347,7 +347,7 @@ html.theme-anim *::after {
   mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
-/* ── Entrance reveal ───────────────────────────────────────────── */
+/* â”€â”€ Entrance reveal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .reveal {
   opacity: 0;
   animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -374,7 +374,7 @@ html.theme-anim *::after {
 
 a,
 button {
-  /* NO global transition — the View Transition API handles the theme
+  /* NO global transition â€” the View Transition API handles the theme
      cross-fade. Global transition-colors on 80+ elements causes lag. */
 }
 
@@ -385,12 +385,12 @@ button {
 /*
  * Element-level theme defaults live in `@layer base` (NOT unlayered).
  * Unlayered CSS beats Tailwind's layered utilities regardless of
- * specificity — if these sat outside the layer, `body a { color }`
+ * specificity â€” if these sat outside the layer, `body a { color }`
  * would override every `text-gray-*` / `text-bg` utility on links.
  */
 @layer base {
   /* Fonts + default link styling for the SPA root (previously scoped
-     under `ion-app` — the root div in App.vue inherits these). */
+     under `ion-app` â€” the root div in App.vue inherits these). */
   #app {
     font-family: var(--font-sans);
     color: rgb(var(--ink));
@@ -408,7 +408,7 @@ button {
 
 /*
  * Document scrolling lives on the <html> element (natural website
- * scrolling — no Ionic scroll containers anymore). Keep the html/body
+ * scrolling â€” no Ionic scroll containers anymore). Keep the html/body
  * overrides explicit so nothing re-introduces app-style fixed scrolling.
  */
 html {
@@ -430,7 +430,7 @@ body {
   transform: none;
 }
 
-/* ── Spotlight card deck (home showcase) ───────────────────────── */
+/* â”€â”€ Spotlight card deck (home showcase) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .deck {
   position: relative;
   height: 18rem;
@@ -527,7 +527,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Prose (blog post content) ─────────────────────────────────── */
+/* â”€â”€ Prose (blog post content) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .prose-local {
   line-height: 1.75;
 }
@@ -596,7 +596,7 @@ body {
   margin: 2rem 0;
 }
 
-/* ── Utility: text with mono metadata look (terminal vibe) ─────── */
+/* â”€â”€ Utility: text with mono metadata look (terminal vibe) â”€â”€â”€â”€â”€â”€â”€ */
 .terminal-comment {
   color: rgb(var(--g500));
   font-family: var(--font-mono);
@@ -607,3 +607,10 @@ body {
   color: rgb(var(--g500));
   font-family: var(--font-mono);
 }
+
+/* DeviceShowcase — lock desktop shape, shrink on mobile, not square */
+.device-mockup-laptop { height: 200px !important; width: auto !important; }
+.device-mockup-phone { height: 200px !important; width: auto !important; }
+@media (min-width: 640px) { .device-mockup-laptop, .device-mockup-phone { height: 360px !important; } }
+
+

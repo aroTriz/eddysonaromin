@@ -33,9 +33,9 @@ const rows = computed(() =>
           {{ percent ? `${row.pct}%` : row.count.toLocaleString() }}
         </span>
       </div>
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-300">
+      <div class="h-1.5 w-full overflow-hidden rounded-md bg-gray-100 dark:bg-gray-300">
         <div
-          class="h-full rounded-full bg-ink transition-[width] duration-500 group-hover:opacity-60"
+          class="h-full rounded-md bg-ink transition-[width] duration-500 group-hover:opacity-60"
           :style="{ width: `${row.pct}%` }"
         ></div>
       </div>

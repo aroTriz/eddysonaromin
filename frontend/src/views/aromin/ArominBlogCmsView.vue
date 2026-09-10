@@ -392,7 +392,7 @@ onMounted(load)
               <img :src="img" class="h-full w-full object-cover" :alt="`Post image ${i + 1}`" />
               <button
                 type="button"
-                class="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500"
+                class="absolute right-1 top-1 rounded-md bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500"
                 :aria-label="`Remove image ${i + 1}`"
                 @click="removeImage(i)"
               >
@@ -498,7 +498,7 @@ onMounted(load)
       <div class="ml-auto flex items-center gap-2">
         <button
           type="button"
-          class="rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+          class="rounded-md border border-gray-200 px-2.5 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
           @click="toggleArchived"
         >
           {{ showArchived ? 'Show active' : 'Show archived' }}
@@ -533,7 +533,7 @@ onMounted(load)
       <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
         @click="askDeleteSelected"
       >
         <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -591,7 +591,7 @@ onMounted(load)
           <button
             v-if="showArchived"
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
+            class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 min-h-[44px] py-2 font-mono text-[11px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
             :aria-label="`Restore ${post.title}`"
             @click="restoreItem(post)"
           >

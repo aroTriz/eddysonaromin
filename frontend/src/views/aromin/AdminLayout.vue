@@ -159,7 +159,7 @@ async function handleLogout(): Promise<void> {
               {{ link.label }}
               <span
                 v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
-                class="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
+                class="ml-1.5 h-2 w-2 shrink-0 rounded-md bg-red-500"
                 :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
                 aria-label="Unread private messages"
               />
@@ -202,15 +202,16 @@ async function handleLogout(): Promise<void> {
     </nav>
 
     <!-- ── Mobile top bar (below lg) ─────────────────────────── -->
+    <!-- balanced like AppShell: px-6 py-3, plain font-pixel 14px, -mr-1 p-1 button -->
     <header class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md lg:hidden">
-      <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-2.5">
-        <RouterLink to="/aromin/dashboard" class="-my-2 py-2 font-pixel text-[14px]">&lt; Aromin-Admin /&gt;</RouterLink>
+      <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
+        <RouterLink to="/aromin/dashboard" class="font-pixel text-[14px]">&lt; Aromin-Admin /&gt;</RouterLink>
         <div class="flex items-center gap-3">
           <ThemeSwitch />
           <button
             type="button"
             aria-label="Open admin menu"
-            class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
+            class="-mr-1 p-1 text-gray-700 hover:text-ink"
             @click="openMobileMenu"
           >
             <Menu class="h-5 w-5" />
@@ -232,7 +233,7 @@ async function handleLogout(): Promise<void> {
           <button
             type="button"
             aria-label="Close admin menu"
-            class="-mr-1.5 flex h-11 w-11 items-center justify-center text-gray-700 hover:text-ink"
+            class="-mr-1 p-1 text-gray-700 hover:text-ink"
             @click="closeMobileMenu"
           >
             <X class="h-5 w-5" />
@@ -246,7 +247,7 @@ async function handleLogout(): Promise<void> {
                 v-for="link in group.links"
                 :key="link.name"
                 :to="link.to"
-                class="relative inline-flex w-fit items-center gap-3 whitespace-nowrap py-2 text-gray-700 hover:text-ink"
+                class="relative inline-flex w-fit items-center gap-3 whitespace-nowrap text-gray-700 hover:text-ink"
                 :class="{ 'pl-6 text-ink': active === link.name }"
                 @click="closeMobileMenu"
               >
@@ -254,7 +255,7 @@ async function handleLogout(): Promise<void> {
               {{ link.label }}
               <span
                 v-if="link.name === 'aromin-private-chat' && unreadPrivate > 0"
-                class="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
+                class="ml-1.5 h-2 w-2 shrink-0 rounded-md bg-red-500"
                 :title="`${unreadPrivate} unread message${unreadPrivate > 1 ? 's' : ''}`"
                 aria-label="Unread private messages"
               />

@@ -587,7 +587,7 @@ onBeforeUnmount(() => {
               class="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left"
               @click="openThread(c)"
             >
-              <img class="h-9 w-9 shrink-0 rounded-full bg-gray-100" :src="avatarUrl(c.visitor.name)" :alt="`${c.visitor.name} avatar`" loading="lazy" />
+              <img class="h-9 w-9 shrink-0 rounded-md bg-gray-100" :src="avatarUrl(c.visitor.name)" :alt="`${c.visitor.name} avatar`" loading="lazy" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-baseline justify-between gap-2">
                   <p class="truncate font-mono text-[12px] text-ink" :class="c.unread > 0 ? 'font-bold' : 'font-semibold'">
@@ -610,7 +610,7 @@ onBeforeUnmount(() => {
                   </p>
                   <span
                     v-if="c.unread > 0"
-                    class="flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 font-mono text-[10px] font-bold leading-none text-white"
+                    class="flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-md bg-red-500 px-1.5 font-mono text-[10px] font-bold leading-none text-white"
                   >
                     {{ c.unread > 99 ? '99+' : c.unread }}
                   </span>
@@ -656,7 +656,7 @@ onBeforeUnmount(() => {
       <section :class="['min-w-0 flex-1 flex-col', mobileView === 'chat' ? 'flex' : 'hidden sm:flex']">
         <!-- empty state -->
         <div v-if="!active" class="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-          <div class="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 text-gray-300 dark:border-gray-300">
+          <div class="flex h-14 w-14 items-center justify-center rounded-md border border-gray-200 text-gray-300 dark:border-gray-300">
             <Send class="h-5 w-5" :stroke-width="1.5" />
           </div>
           <p class="font-pixel text-[15px] text-gray-400">Pick a conversation</p>
@@ -676,13 +676,13 @@ onBeforeUnmount(() => {
             >
               <ArrowLeft class="h-4.5 w-4.5" :stroke-width="1.7" />
             </button>
-            <img class="h-9 w-9 shrink-0 rounded-full bg-gray-100" :src="avatarUrl(active.visitor.name)" :alt="`${active.visitor.name} avatar`" loading="lazy" />
+            <img class="h-9 w-9 shrink-0 rounded-md bg-gray-100" :src="avatarUrl(active.visitor.name)" :alt="`${active.visitor.name} avatar`" loading="lazy" />
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <p class="truncate font-mono text-[13px] font-semibold text-ink">{{ active.visitor.name }}</p>
                 <span
                   v-if="active.archived_at"
-                  class="shrink-0 rounded-full border border-gray-300 px-1.5 py-0.5 font-mono text-[9px] text-gray-500 dark:border-gray-300"
+                  class="shrink-0 rounded-md border border-gray-300 px-1.5 py-0.5 font-mono text-[9px] text-gray-500 dark:border-gray-300"
                 >
                   archived
                 </span>
@@ -706,7 +706,7 @@ onBeforeUnmount(() => {
               <p class="font-mono text-[11.5px] leading-relaxed text-red-500">// {{ threadError }}</p>
               <button
                 type="button"
-                class="mt-2.5 rounded-md border border-gray-200 px-3.5 py-1.5 font-mono text-[11px] text-ink transition-colors hover:bg-gray-100 dark:border-gray-300 dark:hover:bg-gray-200"
+                class="mt-2.5 rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[11px] text-ink transition-colors hover:bg-gray-100 dark:border-gray-300 dark:hover:bg-gray-200"
                 @click="retryThread"
               >
                 try again
@@ -721,7 +721,7 @@ onBeforeUnmount(() => {
             <template v-for="(m, i) in messages" :key="m.id">
               <div
                 v-if="i === 0 || dayLabel(m.created_at) !== dayLabel(messages[i - 1].created_at)"
-                class="my-2 self-center rounded-full border border-gray-200 bg-white px-3 py-1 font-mono text-[9.5px] text-gray-400 dark:border-gray-300 dark:bg-gray-100"
+                class="my-2 self-center rounded-md border border-gray-200 bg-white px-3 py-1 font-mono text-[9.5px] text-gray-400 dark:border-gray-300 dark:bg-gray-100"
               >
                 {{ dayLabel(m.created_at) }}
               </div>
@@ -790,7 +790,7 @@ onBeforeUnmount(() => {
                 v-if="pendingFile.kind === 'image'"
                 :src="pendingFile.data"
                 :alt="pendingFile.name"
-                class="h-10 w-10 rounded object-cover"
+                class="h-11 w-11 rounded object-cover"
               />
               <FileImage v-else class="h-5 w-5 shrink-0 text-gray-400" :stroke-width="1.7" />
               <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-gray-600 dark:text-gray-400">
@@ -817,7 +817,7 @@ onBeforeUnmount(() => {
               />
               <button
                 type="button"
-                class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink dark:border-gray-300"
+                class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink dark:border-gray-300"
                 aria-label="Attach a file or image"
                 title="Attach a file or image (max 2.5MB)"
                 @click="fileInput?.click()"
@@ -830,14 +830,14 @@ onBeforeUnmount(() => {
                 maxlength="2000"
                 autocomplete="off"
                 placeholder="Reply as the admin…"
-                class="min-w-0 flex-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
+                class="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-4 py-2.5 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400 dark:border-gray-300"
                 @input="onReplyInput"
                 @blur="stopTyping"
               />
               <button
                 type="submit"
                 :disabled="(!reply.trim() && !pendingFile) || replyBusy"
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-ink text-bg transition-opacity hover:opacity-80 disabled:opacity-30"
                 aria-label="Send reply"
               >
                 <Send class="h-4 w-4" :stroke-width="1.8" />
