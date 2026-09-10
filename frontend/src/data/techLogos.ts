@@ -1,4 +1,4 @@
-import { markRaw, type Component } from 'vue'
+ï»¿import { markRaw, type Component } from 'vue'
 import {
   Bot,
   Brain,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-vue-next'
 
 /**
- * Tech logos — Simple Icons 24x24 SVG paths with brand colors, keyed by
+ * Tech logos â€” Simple Icons 24x24 SVG paths with brand colors, keyed by
  * the exact technology names used in the stack data. Non-branded entries
  * (SQL, Machine Learning, Data Analytics) resolve to lucide icons instead.
  */
@@ -27,7 +27,7 @@ export interface TechLogo {
   viewBox?: string
   /** Optional fill rule for cutout-style marks (defaults to "nonzero"). */
   fillRule?: 'nonzero' | 'evenodd'
-  /** Optional dark-mode variant path — used when the light path is a filled
+  /** Optional dark-mode variant path â€” used when the light path is a filled
    *  box with a cutout (e.g. Grok) that would look wrong flipped white. */
   pathDark?: string
 }
@@ -114,7 +114,7 @@ export const TECH_FALLBACK_ICON: Record<string, Component> = {
   'Cisco Packet Tracer': markRaw(Network),
   // Local web dev environments without a Simple Icons brand
   WAMP: markRaw(Server),
-  // New stacks — communication
+  // New stacks â€” communication
   Discord: markRaw(MessageCircle),
   Mattermost: markRaw(MessagesSquare),
   // Project management
