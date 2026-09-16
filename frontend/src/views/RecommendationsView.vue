@@ -4,7 +4,7 @@
  * mirroring bryllim.com/recommendations exactly. Content is served
  * from the /api/v1/recommendations endpoint (managed in /aromin admin).
  */
-import { ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft, Images, Phone, X } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
 import { recommendations as staticRecommendations } from '@/data/profile'
@@ -24,7 +24,9 @@ const fallbackItems: Recommendation[] = staticRecommendations.map((rec, i) => ({
   author: rec.author,
   role: rec.role,
   email: rec.email ?? null,
+  phone: null,
   photo_url: null,
+  letter_url: null,
   sort_order: i,
   archived_at: null,
   created_at: null,
@@ -32,6 +34,16 @@ const fallbackItems: Recommendation[] = staticRecommendations.map((rec, i) => ({
 }))
 
 const items = ref<Recommendation[]>(fallbackItems)
+const letterModal = ref<string | null>(null)
+
+function openLetter(url: string): void {
+  letterModal.value = url
+  document.documentElement.style.overflow = 'hidden'
+}
+function closeLetter(): void {
+  letterModal.value = null
+  document.documentElement.style.overflow = ''
+}
 
 onMounted(async () => {
   try {
@@ -80,8 +92,8 @@ onMounted(async () => {
         </blockquote>
 
         <figcaption class="mt-5 flex items-start gap-3 border-t border-gray-100 pt-4">
-          <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
-            <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
+          <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+            <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-cover" loading="lazy" />
           </div>
           <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
             {{ rec.initials }}
@@ -89,10 +101,33 @@ onMounted(async () => {
           <div class="min-w-0">
             <div class="truncate text-[13px] font-semibold leading-snug text-ink" :title="rec.author">{{ rec.author }}</div>
             <div class="mt-0.5 truncate text-[11px] leading-snug text-gray-500">{{ rec.role }}</div>
+            <a v-if="rec.phone" :href="`tel:${rec.phone}`" class="mt-1 inline-flex items-center gap-1 font-mono text-[11px] text-gray-500 hover:text-ink">
+              <Phone class="h-3 w-3" :stroke-width="1.6" />
+              {{ rec.phone }}
+            </a>
           </div>
+          <button v-if="rec.letter_url" type="button" class="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:text-ink" aria-label="View recommendation letter" @click="openLetter(rec.letter_url!)">
+            <Images class="h-3.5 w-3.5" :stroke-width="1.6" />
+          </button>
         </figcaption>
       </figure>
     </div>
+
+    <!-- Letter modal — like experience album modal -->
+    <Teleport to="body">
+      <div v-if="letterModal" class="fixed inset-0 z-[100] flex items-center justify-center p-5" role="dialog" aria-modal="true" aria-label="Recommendation letter" @click.self="closeLetter">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeLetter"></div>
+        <div class="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+          <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+            <p class="font-mono text-[12px] text-gray-500">// recommendation letter</p>
+            <button type="button" class="rounded p-1 text-gray-400 hover:text-ink" @click="closeLetter"><X class="h-4 w-4" :stroke-width="1.7" /></button>
+          </div>
+          <div class="flex-1 overflow-auto bg-gray-50 p-4 flex items-center justify-center">
+            <img :src="letterModal" alt="Recommendation letter" class="max-h-[70vh] w-auto max-w-full object-contain rounded-md border border-gray-200 bg-white" />
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

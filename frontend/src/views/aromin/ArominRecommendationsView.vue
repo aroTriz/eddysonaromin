@@ -4,10 +4,11 @@
  * archive & restore. Confirms destructive/save actions with a themed
  * blur modal (ConfirmModal). Bulk selection with select-all / delete-selected.
  */
-import { Archive, ArchiveRestore, FileText, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, FileText, Images, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import ImageCropModal from '@/components/ui/ImageCropModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
   archiveAdminRecommendation,
@@ -47,9 +48,15 @@ const showArchived = ref(false)
 // Editor state
 const editing = ref<Recommendation | null>(null)
 const editorOpen = ref(false)
-const form = ref<RecommendationInput & { photo_url: string | null }>({ quote: '', author: '', role: '', email: null, photo_url: null })
+const form = ref<RecommendationInput>({ quote: '', author: '', role: '', email: null, phone: null, photo_url: null, letter_url: null })
 const photoUploading = ref(false)
 const photoInputRef = ref<HTMLInputElement | null>(null)
+const cropSrc = ref('')
+const cropOpen = ref(false)
+const letterUploading = ref(false)
+const letterInputRef = ref<HTMLInputElement | null>(null)
+const letterCropSrc = ref('')
+const letterCropOpen = ref(false)
 const autoInitials = computed(() => generateInitials(form.value.author || ''))
 
 // Bulk selection state
@@ -102,7 +109,7 @@ function askConfirm(opts: {
 function startNew(): void {
   editing.value = null
   editorOpen.value = true
-  form.value = { quote: '', author: '', role: '', email: null, photo_url: null }
+  form.value = { quote: '', author: '', role: '', email: null, phone: null, photo_url: null, letter_url: null }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -114,7 +121,9 @@ function startEdit(rec: Recommendation): void {
     author: rec.author,
     role: rec.role,
     email: rec.email ?? null,
+    phone: rec.phone ?? null,
     photo_url: rec.photo_url ?? null,
+    letter_url: rec.letter_url ?? null,
   }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -122,13 +131,26 @@ function startEdit(rec: Recommendation): void {
 function cancelEdit(): void {
   editing.value = null
   editorOpen.value = false
-  form.value = { quote: '', author: '', role: '', email: null, photo_url: null }
+  form.value = { quote: '', author: '', role: '', email: null, phone: null, photo_url: null, letter_url: null }
 }
 
 async function onPhotoPicked(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
+  if (input) input.value = ''
   if (!file) return
+  // Open crop modal (square 1:1 for avatar — filled display)
+  const reader = new FileReader()
+  reader.onload = () => {
+    cropSrc.value = reader.result as string
+    cropOpen.value = true
+  }
+  reader.readAsDataURL(file)
+}
+
+async function onCroppedPhoto(blob: Blob): Promise<void> {
+  cropOpen.value = false
+  const file = new File([blob], 'avatar.png', { type: 'image/png' })
   photoUploading.value = true
   error.value = ''
   try {
@@ -138,8 +160,49 @@ async function onPhotoPicked(event: Event): Promise<void> {
     error.value = e instanceof Error ? e.message : 'Failed to upload photo'
   } finally {
     photoUploading.value = false
-    if (input) input.value = ''
   }
+}
+
+function cancelCrop(): void {
+  cropOpen.value = false
+  cropSrc.value = ''
+}
+
+async function onLetterPicked(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (input) input.value = ''
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    letterCropSrc.value = reader.result as string
+    letterCropOpen.value = true
+  }
+  reader.readAsDataURL(file)
+}
+
+async function onCroppedLetter(blob: Blob): Promise<void> {
+  letterCropOpen.value = false
+  const file = new File([blob], 'letter.png', { type: 'image/png' })
+  letterUploading.value = true
+  error.value = ''
+  try {
+    const { url } = await uploadRecommendationPhoto(file)
+    form.value.letter_url = url
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to upload letter'
+  } finally {
+    letterUploading.value = false
+  }
+}
+
+function cancelLetterCrop(): void {
+  letterCropOpen.value = false
+  letterCropSrc.value = ''
+}
+
+function removeLetter(): void {
+  form.value.letter_url = null
 }
 
 function removePhoto(): void {
@@ -173,7 +236,9 @@ async function save(): Promise<void> {
       author: form.value.author.trim(),
       role: form.value.role.trim(),
       email: form.value.email?.trim() ? form.value.email.trim() : null,
+      phone: form.value.phone?.trim() ? form.value.phone.trim() : null,
       photo_url: form.value.photo_url || null,
+      letter_url: form.value.letter_url || null,
     }
     if (editing.value) {
       await updateAdminRecommendation(editing.value.id, payload)
@@ -350,8 +415,8 @@ onMounted(load)
           <div class="flex flex-col gap-1.5">
             <label class="font-mono text-[11px] text-gray-500">photo</label>
             <div class="flex items-center gap-3">
-              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
-                <img :src="form.photo_url" alt="preview" class="h-full w-full object-contain" />
+              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+                <img :src="form.photo_url" alt="preview" class="h-full w-full object-cover" />
               </div>
               <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[13px] font-semibold text-gray-600">
                 {{ autoInitials }}
@@ -415,15 +480,58 @@ onMounted(load)
           ></textarea>
         </div>
 
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="rec-email">email (optional)</label>
+            <input
+              id="rec-email"
+              v-model="form.email"
+              type="email"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="contact@example.com"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="font-mono text-[11px] text-gray-500" for="rec-phone">phone (optional)</label>
+            <input
+              id="rec-phone"
+              v-model="form.phone"
+              type="tel"
+              class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
+              placeholder="+63 9XX XXX XXXX"
+            />
+          </div>
+        </div>
+
         <div class="flex flex-col gap-1.5">
-          <label class="font-mono text-[11px] text-gray-500" for="rec-email">email (optional)</label>
-          <input
-            id="rec-email"
-            v-model="form.email"
-            type="email"
-            class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-[16px] text-ink outline-none transition-colors focus:border-gray-400"
-            placeholder="contact@example.com"
-          />
+          <label class="font-mono text-[11px] text-gray-500">letter image (optional) — recommendation letter</label>
+          <div class="flex items-center gap-3">
+            <div class="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+              <img v-if="form.letter_url" :src="form.letter_url" alt="letter preview" class="h-full w-full object-cover" />
+              <Images v-else class="h-6 w-6 text-gray-300" :stroke-width="1.5" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <input ref="letterInputRef" type="file" accept="image/*" class="hidden" @change="onLetterPicked" />
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-600 transition-colors hover:border-gray-300 hover:text-ink disabled:opacity-50"
+                :disabled="letterUploading"
+                @click="letterInputRef?.click()"
+              >
+                <LoaderCircle v-if="letterUploading" class="h-3.5 w-3.5 animate-spin" :stroke-width="1.7" />
+                <span>{{ letterUploading ? 'Uploading...' : form.letter_url ? 'Change letter' : 'Add letter' }}</span>
+              </button>
+              <button
+                v-if="form.letter_url"
+                type="button"
+                class="inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-[11px] text-red-500 hover:text-red-600"
+                @click="removeLetter"
+              >
+                <Trash2 class="h-3 w-3" :stroke-width="1.7" /> Remove letter
+              </button>
+            </div>
+          </div>
+          <p class="font-mono text-[10.5px] text-gray-400">Image icon → letter image, like experience. Displayed as filled thumbnail on web.</p>
         </div>
 
         <div class="flex gap-2">
@@ -553,8 +661,8 @@ onMounted(load)
           :aria-label="`Select ${rec.author}'s recommendation`"
           @change="toggleSelect(rec.id)"
         />
-        <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
-          <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-contain" loading="lazy" />
+        <div v-if="rec.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+          <img :src="rec.photo_url" :alt="rec.author" class="h-full w-full object-cover" loading="lazy" />
         </div>
         <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
           {{ rec.initials }}
@@ -615,6 +723,9 @@ onMounted(load)
       edits appear instantly on /recommendations
     </div>
 
+    <ImageCropModal :open="cropOpen" :src="cropSrc" device="avatar" @confirm="onCroppedPhoto" @cancel="cancelCrop" />
+    <ImageCropModal :open="letterCropOpen" :src="letterCropSrc" device="avatar" @confirm="onCroppedLetter" @cancel="cancelLetterCrop" />
+
     <!-- -- Themed confirm dialog (delete / save) ----------------- -->
     <ConfirmModal
       :open="confirm !== null"
@@ -628,3 +739,4 @@ onMounted(load)
     />
   </AdminLayout>
 </template>
+

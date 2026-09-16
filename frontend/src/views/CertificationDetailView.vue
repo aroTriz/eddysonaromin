@@ -1,23 +1,50 @@
 <script setup lang="ts">
 /**
- * CertificationDetail — slug-driven credential page. Looks up the certification
- * from local profile data by slug; shows a not-found state for unknown slugs.
+ * CertificationDetail - slug-driven credential page. Fetches from the
+ * certifications CMS (/api/v1/certifications/:slug) with a static fallback.
  */
-import { ArrowLeft, Award, CalendarDays, GraduationCap } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { ArrowLeft, Award, CalendarDays, GraduationCap, LoaderCircle } from 'lucide-vue-next'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { certifications } from '@/data/profile'
+import { certifications as fallbackCerts } from '@/data/profile'
+import { fetchCertification } from '@/services/api'
+import type { Certification } from '@/types'
 
 const route = useRoute()
 
-const cert = computed(() =>
-  certifications.find((c) => c.slug === route.params.slug),
-)
+const cert = ref<Certification | null>(null)
+const loading = ref(true)
+const notFound = ref(false)
 
-const categoryLabel = computed(() =>
-  cert.value?.category === 'degree' ? 'degree' : 'certification',
-)
+const categoryLabel = ref('certification')
+
+async function load(): Promise<void> {
+  const slug = String(route.params.slug ?? '')
+  loading.value = true
+  notFound.value = false
+  try {
+    const data = await fetchCertification(slug)
+    cert.value = data
+    categoryLabel.value = data.category === 'degree' ? 'degree' : 'certification'
+    document.title = `${data.title} - Eddyson Aromin`
+  } catch {
+    const local = fallbackCerts.find((c) => c.slug === slug) as unknown as Certification | undefined
+    if (local) {
+      cert.value = local
+      categoryLabel.value = local.category === 'degree' ? 'degree' : 'certification'
+      document.title = `${local.title} - Eddyson Aromin`
+    } else {
+      notFound.value = true
+      document.title = 'Credential - Eddyson Aromin'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
+watch(() => route.params.slug, load)
 </script>
 
 <template>
@@ -30,7 +57,11 @@ const categoryLabel = computed(() =>
       back to certifications
     </RouterLink>
 
-    <template v-if="cert">
+    <div v-if="loading" class="mt-16 flex justify-center">
+      <LoaderCircle class="h-6 w-6 animate-spin text-gray-400" :stroke-width="1.7" />
+    </div>
+
+    <template v-else-if="cert">
       <header class="mt-6">
         <div class="flex flex-wrap items-center gap-2 font-mono text-[12.5px] text-gray-500">
           <span class="inline-flex items-center gap-1.5">
@@ -67,7 +98,7 @@ const categoryLabel = computed(() =>
       </section>
     </template>
 
-    <template v-else>
+    <template v-else-if="notFound">
       <div class="mt-16 text-center">
         <p class="font-mono text-[13px] text-gray-500">credential not found.</p>
         <RouterLink

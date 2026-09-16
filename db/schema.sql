@@ -1,7 +1,7 @@
--- ────────────────────────────────────────────────────────────────
--- Eddyson Aromin portfolio — Cloudflare D1 schema
+﻿-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Eddyson Aromin portfolio â€” Cloudflare D1 schema
 -- Mirrors the Laravel migrations (backend/database/migrations).
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS projects;
 CREATE TABLE projects (
@@ -55,10 +55,10 @@ CREATE TABLE contact_messages (
 );
 CREATE INDEX idx_contact_messages_email ON contact_messages(email);
 
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- Admin auth (/aromin area) + visitor tracking
 -- Mirrors the Laravel migration + the previous projects' Pages Functions.
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS admins;
 CREATE TABLE admins (
@@ -107,11 +107,11 @@ CREATE TABLE visitors (
 );
 CREATE UNIQUE INDEX idx_visitors_site ON visitors(site);
 
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- Visit analytics (one row per page view)
--- Unique visitors = COUNT(DISTINCT ip) over this table — never the
+-- Unique visitors = COUNT(DISTINCT ip) over this table â€” never the
 -- visitors.count above (which is a denormalized cache of that value).
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS visits;
 CREATE TABLE visits (
@@ -136,9 +136,9 @@ CREATE INDEX idx_visits_site_created ON visits(site, created_at);
 CREATE INDEX idx_visits_ip ON visits(ip);
 CREATE INDEX idx_visits_country ON visits(site, country);
 
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- Tech stack CMS (mirrors the Laravel stack_groups migration).
--- ────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS stack_groups;
 CREATE TABLE stack_groups (
@@ -149,9 +149,9 @@ CREATE TABLE stack_groups (
   created_at TEXT,
   updated_at TEXT
 );
--- ─────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- Community chat (mirrors the Laravel chat tables migration).
--- ─────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS chat_messages;
 CREATE TABLE chat_messages (
@@ -177,9 +177,9 @@ CREATE TABLE chat_identities (
   updated_at TEXT
 );
 
--- ─────────────────────────────────────────────────────────────────
--- Private chat (1-on-1 DMs) — mirrors the Laravel private chat migration.
--- ─────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Private chat (1-on-1 DMs) â€” mirrors the Laravel private chat migration.
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
@@ -243,12 +243,12 @@ CREATE TABLE private_chat_typing (
   UNIQUE (conversation_id, user_id)
 );
 
--- ─────────────────────────────────────────────────────────────────
--- Site settings (key-value) — mirrors the Laravel site_settings migration.
--- `community_chat_enabled` = '1' (default) | '0' — toggled from the
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Site settings (key-value) â€” mirrors the Laravel site_settings migration.
+-- `community_chat_enabled` = '1' (default) | '0' â€” toggled from the
 -- /aromin preferences page; the community chat rejects new messages
 -- and shows a "turned off" notice to visitors when '0'.
--- ─────────────────────────────────────────────────────────────────
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS site_settings;
 CREATE TABLE site_settings (
@@ -264,19 +264,19 @@ VALUES ('community_chat_enabled', '1', NULL, NULL);
 INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at)
 VALUES ('backdrop_enabled', '1', NULL, NULL);
 
--- ─────────────────────────────────────────────────────────────────
--- Experiences & Education CMS — replaces the static profile.ts data.
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Experiences & Education CMS â€” replaces the static profile.ts data.
 -- Both types share the same table; `type` = 'experience' | 'education'.
 -- Images (logo, albums, certificates) are uploaded as base64 data-URLs
--- and stored directly in JSON columns — no external file host needed.
--- ─────────────────────────────────────────────────────────────────
+-- and stored directly in JSON columns â€” no external file host needed.
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 DROP TABLE IF EXISTS experiences;
 CREATE TABLE experiences (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   type         TEXT    NOT NULL DEFAULT 'experience',  -- experience | education
-  period       TEXT    NOT NULL,                        -- e.g. "Nov 2025 — Jun 2026"
-  year         TEXT    NOT NULL,                        -- short year label e.g. "2025 — 2026"
+  period       TEXT    NOT NULL,                        -- e.g. "Nov 2025 â€” Jun 2026"
+  year         TEXT    NOT NULL,                        -- short year label e.g. "2025 â€” 2026"
   tag          TEXT    NOT NULL,                        -- Professional | Internship | Graduated
   title        TEXT    NOT NULL,                        -- job title or degree
   company      TEXT    NOT NULL,                        -- company or school name
@@ -294,3 +294,46 @@ CREATE TABLE experiences (
 );
 CREATE INDEX idx_experiences_type ON experiences(type, sort_order);
 CREATE INDEX idx_experiences_archived ON experiences(archived_at);
+
+DROP TABLE IF EXISTS certifications;
+CREATE TABLE certifications (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug       TEXT    NOT NULL UNIQUE,
+  title      TEXT    NOT NULL,
+  issuer     TEXT    NOT NULL,
+  year       TEXT    NOT NULL,
+  category   TEXT    NOT NULL DEFAULT 'certification',
+  summary    TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  archived_at TEXT,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE INDEX idx_certifications_category ON certifications(category, sort_order);
+CREATE INDEX idx_certifications_archived ON certifications(archived_at);
+
+-- Seed static certifications from profile.ts (now managed via CMS)
+INSERT OR IGNORE INTO certifications (id, slug, title, issuer, year, category, summary, sort_order, created_at, updated_at) VALUES
+  (1, 'bachelor-of-science-in-information-technology', 'Bachelor of Science in Information Technology', 'Saint Louis University (SAMCIS)', '2025', 'degree', 'Four-year undergraduate degree in Information Technology at Saint Louis University — covering software development, web technologies, databases, networking, and information systems, capped by a full-stack capstone project (ISakay).', 0, datetime('now'), datetime('now')),
+  (2, 'agile-fast-phased-development', 'Agile & Fast-Phased Development', 'PRAXXYS Solutions Inc.', '2026', 'certification', 'Company credential from PRAXXYS Solutions Inc. on agile methodology and fast-phased delivery — the working practices used on real client web and mobile work in an agile development team.', 1, datetime('now'), datetime('now')),
+  (3, 'quality-assurance-testing', 'Quality Assurance & Testing', 'NOAH Business Application', '2025', 'certification', 'QA credential from NOAH Business Application covering the full quality assurance discipline — test case authoring, bug and regression tracking, and documentation review for release readiness.', 2, datetime('now'), datetime('now'));
+
+
+DROP TABLE IF EXISTS recommendations;
+CREATE TABLE recommendations (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  initials   TEXT    NOT NULL,
+  quote      TEXT    NOT NULL,
+  author     TEXT    NOT NULL,
+  role       TEXT    NOT NULL,
+  email      TEXT,
+  phone      TEXT,
+  photo_url  TEXT,
+  letter_url TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  archived_at TEXT,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE INDEX idx_recommendations_sort ON recommendations(sort_order);
+

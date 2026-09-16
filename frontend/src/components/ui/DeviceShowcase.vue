@@ -115,7 +115,7 @@ function onTouchEnd(e: TouchEvent): void {
       <!-- device stage â€” fixed height so phone === laptop visually -->
       <div
         class="min-w-0 flex-1 flex items-center justify-center overflow-visible px-4 sm:px-0"
-        style="min-height: auto; height: auto;"
+        style="height: clamp(420px, 65vh, 520px);"
         @touchstart.passive="onTouchStart"
         @touchmove.passive="onTouchMove"
         @touchend.passive="onTouchEnd"
@@ -123,7 +123,7 @@ function onTouchEnd(e: TouchEvent): void {
         <Transition :name="direction === 1 ? 'swipe-next' : 'swipe-prev'" mode="out-in">
           <div
             :key="`${current?.device}-${index}`"
-            class="flex h-full w-full max-w-3xl items-center justify-center will-change-transform"
+            class="flex h-full w-full max-w-none items-center justify-center overflow-visible will-change-transform"
             :style="isDragging ? `transform: translateX(${dragOffset}px); transition: none;` : undefined"
           >
             <LaptopMockup
@@ -133,14 +133,14 @@ function onTouchEnd(e: TouchEvent): void {
               :alt="`${project.title} laptop view ${index + 1}`"
               :url="project.url"
               :equal-height="true"
-              class="device-mockup-laptop w-auto max-h-full"
+              class="device-mockup-laptop h-full w-auto max-w-none overflow-visible"
             />
             <PhoneMockup
               v-else-if="current?.device === 'phone'"
               :src="current.src"
               :video="current.media === 'video'"
               :alt="`${project.title} phone view ${index + 1}`"
-              class="device-mockup-phone w-full max-w-[240px] mx-auto"
+              class="device-mockup-phone h-full w-auto mx-auto overflow-visible"
             />
           </div>
         </Transition>
@@ -205,6 +205,8 @@ function onTouchEnd(e: TouchEvent): void {
   opacity: 0;
 }
 </style>
+
+
 
 
 

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,171 +7,177 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
-      meta: { title: 'Eddyson Aromin — IT Portfolio' },
+      meta: { title: 'Eddyson Aromin - IT Portfolio' },
     },
     {
       path: '/about',
       name: 'about',
       component: () => import('@/views/AboutView.vue'),
-      meta: { title: 'About — Eddyson Aromin' },
+      meta: { title: 'About - Eddyson Aromin' },
     },
     {
       path: '/projects',
       name: 'projects',
       component: () => import('@/views/ProjectsView.vue'),
-      meta: { title: 'Projects — Eddyson Aromin' },
+      meta: { title: 'Projects - Eddyson Aromin' },
     },
     {
       path: '/projects/:slug',
       name: 'project-detail',
       component: () => import('@/views/ProjectDetailView.vue'),
-      meta: { title: 'Project — Eddyson Aromin' },
+      meta: { title: 'Project - Eddyson Aromin' },
     },
     {
       path: '/experience',
       name: 'experience',
       component: () => import('@/views/ExperienceView.vue'),
-      meta: { title: 'Experience — Eddyson Aromin' },
+      meta: { title: 'Experience - Eddyson Aromin' },
     },
     {
       path: '/services',
       name: 'services',
       component: () => import('@/views/ServicesView.vue'),
-      meta: { title: 'Services — Eddyson Aromin' },
+      meta: { title: 'Services - Eddyson Aromin' },
     },
     {
       path: '/shop',
       name: 'shop',
       component: () => import('@/views/ShopView.vue'),
-      meta: { title: 'Shop — Eddyson Aromin' },
+      meta: { title: 'Shop - Eddyson Aromin' },
     },
     {
       path: '/stack',
       name: 'stack',
       component: () => import('@/views/StackView.vue'),
-      meta: { title: 'Stack — Eddyson Aromin' },
+      meta: { title: 'Stack - Eddyson Aromin' },
     },
     {
       path: '/certifications',
       name: 'certifications',
       component: () => import('@/views/CertificationsView.vue'),
-      meta: { title: 'Certifications — Eddyson Aromin' },
+      meta: { title: 'Certifications - Eddyson Aromin' },
     },
     {
       path: '/certifications/:slug',
       name: 'certification-detail',
       component: () => import('@/views/CertificationDetailView.vue'),
-      meta: { title: 'Credential — Eddyson Aromin' },
+      meta: { title: 'Credential - Eddyson Aromin' },
     },
     {
       path: '/references/:slug',
       name: 'reference-detail',
       component: () => import('@/views/ReferenceDetailView.vue'),
-      meta: { title: 'Reference — Eddyson Aromin' },
+      meta: { title: 'Reference - Eddyson Aromin' },
     },
     {
       path: '/recommendations',
       name: 'recommendations',
       component: () => import('@/views/RecommendationsView.vue'),
-      meta: { title: 'Recommendations — Eddyson Aromin' },
+      meta: { title: 'Recommendations - Eddyson Aromin' },
     },
     {
       path: '/blog',
       name: 'blog',
       component: () => import('@/views/BlogView.vue'),
-      meta: { title: 'Blog — Eddyson Aromin' },
+      meta: { title: 'Blog - Eddyson Aromin' },
     },
     {
       path: '/blog/:slug',
       name: 'blog-post',
       component: () => import('@/views/BlogPostView.vue'),
-      meta: { title: 'Blog — Eddyson Aromin' },
+      meta: { title: 'Blog - Eddyson Aromin' },
     },
     {
       path: '/contact',
       name: 'contact',
       component: () => import('@/views/ContactView.vue'),
-      meta: { title: 'Contact — Eddyson Aromin' },
+      meta: { title: 'Contact - Eddyson Aromin' },
     },
     {
       path: '/private-chat',
       name: 'private-chat',
       component: () => import('@/views/PrivateChatView.vue'),
-      meta: { title: 'Private Chat — Eddyson Aromin' },
+      meta: { title: 'Private Chat - Eddyson Aromin' },
     },
-    // ── Admin area (/aromin) ───────────────────────────────────
+    // â”€â”€ Admin area (/aromin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     {
       path: '/aromin',
       name: 'aromin-login',
       component: () => import('@/views/aromin/ArominLoginView.vue'),
-      meta: { title: 'Admin Login — Eddyson Aromin' },
+      meta: { title: 'Admin Login - Aromin Admin' },
     },
     {
       path: '/aromin/dashboard',
       name: 'aromin-dashboard',
       component: () => import('@/views/aromin/ArominDashboardView.vue'),
-      meta: { title: 'Dashboard — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Dashboard - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/blog',
       name: 'aromin-blog',
       component: () => import('@/views/aromin/ArominBlogCmsView.vue'),
-      meta: { title: 'Blog — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Blog - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/recommendations',
       name: 'aromin-recommendations',
       component: () => import('@/views/aromin/ArominRecommendationsView.vue'),
-      meta: { title: 'Recommendations — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Recommendations - Aromin Admin', requiresAuth: true },
+    },
+    {
+      path: '/aromin/certifications',
+      name: 'aromin-certifications',
+      component: () => import('@/views/aromin/ArominCertificationsView.vue'),
+      meta: { title: 'Certifications - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/references',
       name: 'aromin-references',
       component: () => import('@/views/aromin/ArominReferencesView.vue'),
-      meta: { title: 'References — Aromin Admin', requiresAuth: true },
+      meta: { title: 'References - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/projects',
       name: 'aromin-projects',
       component: () => import('@/views/aromin/ArominProjectsView.vue'),
-      meta: { title: 'Projects — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Projects - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/experience',
       name: 'aromin-experience',
       component: () => import('@/views/aromin/ArominExperienceCmsView.vue'),
-      meta: { title: 'Experience — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Experience - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/preferences',
       name: 'aromin-preferences',
       component: () => import('@/views/aromin/ArominPreferencesView.vue'),
-      meta: { title: 'Preferences — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Preferences - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/users',
       name: 'aromin-users',
       component: () => import('@/views/aromin/ArominUsersView.vue'),
-      meta: { title: 'Accounts — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Accounts - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/chat',
       name: 'aromin-chat',
       component: () => import('@/views/aromin/ArominChatView.vue'),
-      meta: { title: 'Chat — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Chat - Aromin Admin', requiresAuth: true },
     },
     {
       path: '/aromin/private-chat',
       name: 'aromin-private-chat',
       component: () => import('@/views/aromin/ArominPrivateChatView.vue'),
-      meta: { title: 'Private Chat — Aromin Admin', requiresAuth: true },
+      meta: { title: 'Private Chat - Aromin Admin', requiresAuth: true },
     },
-    // Legacy alias — the old site used /home for the landing page.
+    // Legacy alias - the old site used /home for the landing page.
     {
       path: '/home',
       redirect: '/',
     },
-    // Unknown routes — redirect straight to the homepage (no 404 page).
+    // Unknown routes - redirect straight to the homepage (no 404 page).
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',
@@ -189,10 +195,10 @@ const router = createRouter({
 
 router.afterEach((to) => {
   const title = typeof to.meta.title === 'string' ? to.meta.title : null
-  document.title = title ?? 'Eddyson Aromin — IT Portfolio'
+  document.title = title ?? 'Eddyson Aromin - IT Portfolio'
 })
 
-// Auth guard — protects the /aromin admin routes.
+// Auth guard - protects the /aromin admin routes.
 router.beforeEach(async (to) => {
   if (!to.meta.requiresAuth) return true
   const { checkSession } = await import('@/composables/useAuth')
@@ -202,3 +208,5 @@ router.beforeEach(async (to) => {
 })
 
 export default router
+
+

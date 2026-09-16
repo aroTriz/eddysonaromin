@@ -51,7 +51,9 @@ class AdminRecommendationController extends Controller
             'author' => ['required', 'string', 'max:255'],
             'role' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
             'photo_url' => ['nullable', 'string'],
+            'letter_url' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
@@ -66,7 +68,9 @@ class AdminRecommendationController extends Controller
             'author' => $validated['author'],
             'role' => $validated['role'],
             'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
             'photo_url' => $validated['photo_url'] ?? null,
+            'letter_url' => $validated['letter_url'] ?? null,
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
@@ -96,7 +100,9 @@ class AdminRecommendationController extends Controller
             'author' => ['sometimes', 'string', 'max:255'],
             'role' => ['sometimes', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
             'photo_url' => ['nullable', 'string'],
+            'letter_url' => ['nullable', 'string'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ]);
 

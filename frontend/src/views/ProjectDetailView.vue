@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ProjectDetail — slug-driven project page. Fetches by slug from the API,
+ * ProjectDetail - slug-driven project page. Fetches by slug from the API,
  * handles loading / error / not-found states.
  */
 import { ArrowLeft, CalendarDays, ExternalLink, Folder } from 'lucide-vue-next'
@@ -37,7 +37,7 @@ async function load(): Promise<void> {
 onMounted(async () => {
   await load()
   if (project.value) {
-    document.title = `${project.value.title} — Eddyson Aromin`
+    document.title = `${project.value.title} - Eddyson Aromin`
   }
 })
 </script>
@@ -71,9 +71,24 @@ onMounted(async () => {
             </template>
           </div>
 
-          <h1 class="mt-3 text-[2rem] font-semibold leading-tight tracking-tightest md:text-[2.8rem]">
-            {{ project.title }}
-          </h1>
+          <div class="mt-3 flex items-center gap-3.5 sm:gap-4">
+            <div
+              v-if="project.category === 'professional' || project.category === 'personal'"
+              class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm sm:h-12 sm:w-12"
+            >
+              <img
+                v-if="project.favicon_url"
+                :src="project.favicon_url"
+                :alt="`${project.title} logo`"
+                class="h-full w-full object-cover"
+                loading="eager"
+              />
+              <Folder v-else class="h-5 w-5 text-gray-400" :stroke-width="1.5" />
+            </div>
+            <h1 class="text-[2rem] font-semibold leading-tight tracking-tightest md:text-[2.8rem]">
+              {{ project.title }}
+            </h1>
+          </div>
 
           <div class="mt-4 flex flex-wrap items-center gap-3">
             <a
@@ -89,7 +104,7 @@ onMounted(async () => {
           </div>
         </header>
 
-        <!-- Project snapshot — greyfolio-style device switcher: a laptop
+        <!-- Project snapshot - greyfolio-style device switcher: a laptop
              (PC screen) interface and a phone interface, toggled with the
              arrows / swipe. Projects without a screenshot (e.g. ARventure)
              show a computer / smartphone icon inside the screen instead of a

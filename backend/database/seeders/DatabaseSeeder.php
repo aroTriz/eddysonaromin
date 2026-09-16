@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
             BlogPostSeeder::class,
             RecommendationSeeder::class,
             ReferenceSeeder::class,
+            CertificationSeeder::class,
             CensoredWordSeeder::class,
         ]);
     }
 }
+

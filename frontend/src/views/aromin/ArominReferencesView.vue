@@ -9,6 +9,7 @@ import { Archive, ArchiveRestore, FileText, LoaderCircle, Pencil, Plus, Save, Tr
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import ImageCropModal from '@/components/ui/ImageCropModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import {
   archiveAdminReference,
@@ -36,6 +37,8 @@ const editorOpen = ref(false)
 const form = ref<ReferenceInput & { slug: string; summary: string; photo_url: string | null }>({ slug: '', initials: '', name: '', title: '', email: null, photo_url: null, summary: '', sort_order: 0 })
 const photoUploading = ref(false)
 const photoInputRef = ref<HTMLInputElement | null>(null)
+const cropSrc = ref('')
+const cropOpen = ref(false)
 
 // Bulk selection state
 const selectionMode = ref(false)
@@ -120,7 +123,19 @@ function cancelEdit(): void {
 async function onPhotoPicked(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
+  if (input) input.value = ''
   if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    cropSrc.value = reader.result as string
+    cropOpen.value = true
+  }
+  reader.readAsDataURL(file)
+}
+
+async function onCroppedPhoto(blob: Blob): Promise<void> {
+  cropOpen.value = false
+  const file = new File([blob], 'avatar.png', { type: 'image/png' })
   photoUploading.value = true
   error.value = ''
   try {
@@ -130,8 +145,12 @@ async function onPhotoPicked(event: Event): Promise<void> {
     error.value = e instanceof Error ? e.message : 'Failed to upload photo'
   } finally {
     photoUploading.value = false
-    if (input) input.value = ''
   }
+}
+
+function cancelCrop(): void {
+  cropOpen.value = false
+  cropSrc.value = ''
 }
 
 function removePhoto(): void {
@@ -368,8 +387,8 @@ onMounted(load)
           <div class="flex flex-col gap-1.5">
             <label class="font-mono text-[11px] text-gray-500">photo</label>
             <div class="flex items-center gap-3">
-              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1.5">
-                <img :src="form.photo_url" alt="preview" class="h-full w-full object-contain" />
+              <div v-if="form.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+                <img :src="form.photo_url" alt="preview" class="h-full w-full object-cover" />
               </div>
               <div v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 font-mono text-[13px] font-semibold text-gray-400">
                 {{ form.initials || '?' }}
@@ -584,8 +603,8 @@ onMounted(load)
           :aria-label="`Select ${refItem.name}'s reference`"
           @change="toggleSelect(refItem.id)"
         />
-        <div v-if="refItem.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
-          <img :src="refItem.photo_url" :alt="refItem.name" class="h-full w-full object-contain" loading="lazy" />
+        <div v-if="refItem.photo_url" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+          <img :src="refItem.photo_url" :alt="refItem.name" class="h-full w-full object-cover" loading="lazy" />
         </div>
         <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
           {{ refItem.initials }}
@@ -645,6 +664,8 @@ onMounted(load)
       <FileText class="h-3.5 w-3.5" :stroke-width="1.7" />
       edits appear instantly on /certifications → references
     </div>
+
+    <ImageCropModal :open="cropOpen" :src="cropSrc" device="avatar" @confirm="onCroppedPhoto" @cancel="cancelCrop" />
 
     <!-- -- Themed confirm dialog (delete / save) ----------------- -->
     <ConfirmModal

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ReferenceDetail — slug-driven reference page. Fetches from the
+ * ReferenceDetail - slug-driven reference page. Fetches from the
  * references CMS (/api/v1/references/:slug) with a static fallback.
  */
 import { ArrowLeft, LoaderCircle, Mail, UserRound } from 'lucide-vue-next'
@@ -23,11 +23,17 @@ async function load(): Promise<void> {
   notFound.value = false
   try {
     reference.value = await fetchReference(slug)
+    if (reference.value) document.title = `${reference.value.name} - Eddyson Aromin`
   } catch {
     // Fallback to static data (keeps old slugs working offline)
     const local = fallbackReferences.find((r) => r.slug === slug) as unknown as Reference | undefined
-    if (local) reference.value = local
-    else notFound.value = true
+    if (local) {
+      reference.value = local
+      document.title = `${local.name} - Eddyson Aromin`
+    } else {
+      notFound.value = true
+      document.title = 'Reference - Eddyson Aromin'
+    }
   } finally {
     loading.value = false
   }
@@ -53,8 +59,8 @@ watch(() => route.params.slug, load)
     <template v-else-if="reference">
       <header class="mt-6">
         <div class="flex items-center gap-3">
-          <div v-if="reference.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-2">
-            <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" />
+          <div v-if="reference.photo_url" class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+            <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-cover" />
           </div>
           <div
             v-else

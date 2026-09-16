@@ -29,7 +29,7 @@ defineProps<{
     :class="[
       'mx-auto select-none',
       equalHeight
-        ? 'device-mockup-laptop flex h-full max-h-full w-auto max-w-full flex-col justify-center'
+        ? 'device-mockup-laptop flex h-full max-h-full w-auto max-w-none flex-col justify-center overflow-visible'
         : 'w-full max-w-3xl',
     ]"
   >
@@ -41,7 +41,7 @@ defineProps<{
       ]"
       :style="
         equalHeight
-          ? 'height:calc(100% - 14px); aspect-ratio:1.62; width:auto; max-width:100%; min-height:0; max-height:calc(100% - 14px)'
+          ? 'height:calc(100% - 14px); aspect-ratio:1.62; width:auto; max-width:none; min-height:0; max-height:calc(100% - 14px); overflow:visible'
           : undefined
       "
     >
@@ -109,5 +109,6 @@ defineProps<{
     {{ label }}
   </p>
 </template>
+
 
 

@@ -1,20 +1,53 @@
 <script setup lang="ts">
 /**
  * BlogSection — bryllim-style blog list on the home page
- * (01 — blog): divided rows of recent posts with date.
+ * (dynamic number — blog): divided rows of recent posts with date.
+ * Accepts optional `posts` prop so parent (HomeView) can control
+ * visibility + numbering and avoid duplicate fetches. Falls back to
+ * fetching when no prop is provided (standalone use).
  */
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 import { fetchBlogPosts } from '@/services/api'
 import type { BlogPost } from '@/types'
 
-const posts = ref<BlogPost[]>([])
+const props = defineProps<{ posts?: BlogPost[] }>()
+
+const internalPosts = ref<BlogPost[]>([])
 const loading = ref(true)
 
+// When parent passes posts, use them directly (reactive, no fetch).
+// Otherwise fetch internally for standalone usage.
+watch(
+  () => props.posts,
+  (val) => {
+    if (val !== undefined) {
+      internalPosts.value = val.slice(0, 3)
+      loading.value = false
+    }
+  },
+  { immediate: true },
+)
+
+const posts = ref<BlogPost[]>([])
+// posts is the rendered list — either from prop or internal fetch
+// We keep `posts` as the unified source for the template.
+watch(
+  [internalPosts, () => props.posts],
+  () => {
+    if (props.posts !== undefined) posts.value = props.posts.slice(0, 3)
+    else posts.value = internalPosts.value
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
+  if (props.posts !== undefined) return
   try {
-    posts.value = (await fetchBlogPosts()).slice(0, 3)
+    internalPosts.value = (await fetchBlogPosts()).slice(0, 3)
+    posts.value = internalPosts.value
   } catch {
+    internalPosts.value = []
     posts.value = []
   } finally {
     loading.value = false

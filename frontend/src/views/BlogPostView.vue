@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * BlogPost — slug-driven post page. Renders markdown-ish content from the
+ * BlogPost - slug-driven post page. Renders markdown-ish content from the
  * API into styled HTML with safe, simple formatting (no external deps).
  */
 import { ArrowLeft } from 'lucide-vue-next'
@@ -46,7 +46,7 @@ async function load(): Promise<void> {
 onMounted(async () => {
   await load()
   if (post.value) {
-    document.title = `${post.value.title} — Eddyson Aromin`
+    document.title = `${post.value.title} - Eddyson Aromin`
   }
 })
 
@@ -230,7 +230,7 @@ function formatDate(iso: string | null): string {
             >
               <img
                 :src="img"
-                :alt="`${post.title} — image ${i + 2}`"
+                :alt="`${post.title} - image ${i + 2}`"
                 loading="lazy"
                 class="aspect-[4/3] w-full object-cover transition-transform duration-500 hover:scale-105"
               />

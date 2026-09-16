@@ -112,9 +112,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, params, env }
   const now = new Date().toISOString()
   const result = await env.blog_db
     .prepare(
-      'INSERT INTO recommendations (initials, quote, author, role, email, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO recommendations (initials, quote, author, role, email, phone, photo_url, letter_url, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-    .bind(initials, quote, author, role, strOrNull(body.email), num(body.sort_order), now, now)
+    .bind(initials, quote, author, role, strOrNull(body.email), strOrNull(body.phone), strOrNull(body.photo_url), strOrNull(body.letter_url), num(body.sort_order), now, now)
     .run()
 
   const row = await env.blog_db
@@ -145,7 +145,7 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, params, env })
   const now = new Date().toISOString()
   await env.blog_db
     .prepare(
-      'UPDATE recommendations SET initials = ?, quote = ?, author = ?, role = ?, email = ?, sort_order = ?, updated_at = ? WHERE id = ?',
+      'UPDATE recommendations SET initials = ?, quote = ?, author = ?, role = ?, email = ?, phone = ?, photo_url = ?, letter_url = ?, sort_order = ?, updated_at = ? WHERE id = ?',
     )
     .bind(
       str(body.initials, String(existing.initials)),
@@ -153,6 +153,9 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, params, env })
       str(body.author, String(existing.author)),
       str(body.role, String(existing.role)),
       strOrNull(body.email) ?? (existing.email as string | null),
+      strOrNull(body.phone) ?? (existing.phone as string | null),
+      strOrNull(body.photo_url) ?? (existing.photo_url as string | null),
+      strOrNull(body.letter_url) ?? (existing.letter_url as string | null),
       num(body.sort_order, existing.sort_order as number),
       now,
       id,
@@ -194,3 +197,5 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, params, env
   await env.blog_db.prepare('DELETE FROM recommendations WHERE id = ?').bind(id).run()
   return json({ success: true })
 }
+
+

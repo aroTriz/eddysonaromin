@@ -1,9 +1,10 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Api\AdminBlogPostController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminExperienceController;
 use App\Http\Controllers\Api\AdminRecommendationController;
+use App\Http\Controllers\Api\AdminCertificationController;
 use App\Http\Controllers\Api\AdminReferenceController;
 use App\Http\Controllers\Api\AdminStackGroupController;
 use App\Http\Controllers\Api\AdminUserController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\GithubController;
 use App\Http\Controllers\Api\PrivateChatController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\CertificationController;
 use App\Http\Controllers\Api\ReferenceController;
 use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\StackController;
@@ -48,14 +50,14 @@ Route::prefix('v1')->group(function (): void {
 
     Route::post('/contact', [ContactController::class, 'store']);
 
-    // ── Community chat ─────────────────────────────────────────
+    // â”€â”€ Community chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/chat', [ChatController::class, 'index']);
     Route::get('/chat/stream', [ChatController::class, 'stream']);
     Route::post('/chat', [ChatController::class, 'store']);
     Route::get('/chat/identity', [ChatController::class, 'identityGet']);
     Route::post('/chat/identity', [ChatController::class, 'identityPost']);
 
-    // ── Site settings (community chat on/off, backdrops, pet config) ──
+    // â”€â”€ Site settings (community chat on/off, backdrops, pet config) â”€â”€
     Route::get('/settings', [SiteSettingsController::class, 'show']);
     Route::get('/settings/pet', [SiteSettingsController::class, 'pet']);
     Route::post('/admin/settings/community-chat', [SiteSettingsController::class, 'updateCommunityChat']);
@@ -65,7 +67,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/settings/private-chat', [SiteSettingsController::class, 'updatePrivateChat']);
     Route::post('/admin/settings/pet', [SiteSettingsController::class, 'updatePet']);
 
-    // ── Private chat (visitor ↔ admin DMs) ─────────────────────
+    // â”€â”€ Private chat (visitor â†” admin DMs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::post('/private/auth/register', [PrivateChatController::class, 'register']);
     Route::post('/private/auth/login', [PrivateChatController::class, 'login']);
     Route::post('/private/auth/logout', [PrivateChatController::class, 'logout']);
@@ -84,17 +86,21 @@ Route::prefix('v1')->group(function (): void {
 
     Route::post('/ask', [AskController::class, 'answer']);
 
-    // ── Public tech stack ─────────────────────────────────────
+    // â”€â”€ Public tech stack â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/stack', [StackController::class, 'index']);
 
-    // ── Public recommendations ────────────────────────────────
+    // â”€â”€ Public recommendations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/recommendations', [RecommendationController::class, 'index']);
 
-    // ── Public references (separate CMS) ──────────────────────────
+    // â”€â”€ Public references (separate CMS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/references', [ReferenceController::class, 'index']);
     Route::get('/references/{slug}', [ReferenceController::class, 'show']);
 
-    // ── Admin auth (/aromin area) ──────────────────────────────
+    // ── Public certifications (CMS — transferred from static profile.ts) ──
+    Route::get('/certifications', [CertificationController::class, 'index']);
+    Route::get('/certifications/{slug}', [CertificationController::class, 'show']);
+
+    // â”€â”€ Admin auth (/aromin area) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/verify', [AuthController::class, 'verify']);
     Route::get('/auth/session', [AuthController::class, 'session']);
@@ -153,7 +159,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/recommendations/{id}/restore', [AdminRecommendationController::class, 'restore']);
     Route::delete('/admin/recommendations/{id}', [AdminRecommendationController::class, 'destroy']);
 
-    // ── Admin references (separate CMS) ─────────────────────────────
+    // â”€â”€ Admin references (separate CMS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/admin/references', [AdminReferenceController::class, 'index']);
     Route::post('/admin/references', [AdminReferenceController::class, 'store']);
     Route::post('/admin/references/upload', [AdminReferenceController::class, 'upload']);
@@ -164,7 +170,17 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/references/{id}/restore', [AdminReferenceController::class, 'restore']);
     Route::delete('/admin/references/{id}', [AdminReferenceController::class, 'destroy']);
 
-    // ── Admin experiences ──────────────────────────────────────────
+    // ── Admin certifications (CMS — transferred from static profile.ts) ──
+    Route::get('/admin/certifications', [AdminCertificationController::class, 'index']);
+    Route::post('/admin/certifications', [AdminCertificationController::class, 'store']);
+    Route::delete('/admin/certifications/bulk', [AdminCertificationController::class, 'bulkDestroy']);
+    Route::get('/admin/certifications/{id}', [AdminCertificationController::class, 'show']);
+    Route::put('/admin/certifications/{id}', [AdminCertificationController::class, 'update']);
+    Route::post('/admin/certifications/{id}/archive', [AdminCertificationController::class, 'archive']);
+    Route::post('/admin/certifications/{id}/restore', [AdminCertificationController::class, 'restore']);
+    Route::delete('/admin/certifications/{id}', [AdminCertificationController::class, 'destroy']);
+
+    // â”€â”€ Admin experiences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/admin/experiences', [AdminExperienceController::class, 'index']);
     Route::post('/admin/experiences', [AdminExperienceController::class, 'store']);
     Route::delete('/admin/experiences/bulk', [AdminExperienceController::class, 'bulkDestroy']);
@@ -186,7 +202,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/projects/{id}/restore', [AdminProjectController::class, 'restore']);
     Route::delete('/admin/projects/{id}', [AdminProjectController::class, 'destroy']);
 
-    // ── Account management (registered site accounts) ─────────
+    // â”€â”€ Account management (registered site accounts) â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::post('/admin/users', [AdminUserController::class, 'store']);
     Route::delete('/admin/users/bulk', [AdminUserController::class, 'bulkDestroy']);
@@ -195,8 +211,10 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/admin/users/{id}/ban', [AdminUserController::class, 'ban']);
     Route::post('/admin/users/{id}/unban', [AdminUserController::class, 'unban']);
 
-    // ── Visitor counter ────────────────────────────────────────
+    // â”€â”€ Visitor counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     Route::get('/visitors', [VisitorController::class, 'index']);
     Route::get('/visitors/active', [VisitorController::class, 'active']);
     Route::post('/visitors', [VisitorController::class, 'increment']);
 });
+
+

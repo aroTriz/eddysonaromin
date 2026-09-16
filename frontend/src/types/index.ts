@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared TypeScript types for the Eddyson Aromin portfolio.
  * Mirrors the Laravel API contract (backend/routes/api.php + models).
  */
@@ -35,7 +35,7 @@ export interface Project {
   updated_at: string | null
 }
 
-/** DeviceShowcase config — which laptop / phone media a project renders. */
+/** DeviceShowcase config â€” which laptop / phone media a project renders. */
 export interface ProjectShowcase {
   laptops: ShowcaseMedia[]
   phones: ShowcaseMedia[]
@@ -93,14 +93,31 @@ export interface Recommendation {
   author: string
   role: string
   email: string | null
+  phone: string | null
   photo_url: string | null
+  letter_url: string | null
   sort_order: number
   archived_at: string | null
   created_at: string | null
   updated_at: string | null
 }
 
-/** Reference / referrer entry — separate CMS from recommendations & certifications. */
+/** Certification / credential entry — CMS transferred from static profile.ts */
+export interface Certification {
+  id: number
+  slug: string
+  title: string
+  issuer: string
+  year: string
+  category: 'degree' | 'certification'
+  summary: string | null
+  sort_order: number
+  archived_at: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Reference / referrer entry â€” separate CMS from recommendations & certifications. */
 export interface Reference {
   id: number
   slug: string
@@ -116,7 +133,7 @@ export interface Reference {
   updated_at: string | null
 }
 
-/** Experience / Education entry — stored in D1, managed via /aromin/experience. */
+/** Experience / Education entry â€” stored in D1, managed via /aromin/experience. */
 export interface ExperienceEntry {
   id: number
   type: 'experience' | 'education'
@@ -138,7 +155,7 @@ export interface ExperienceEntry {
   updated_at: string | null
 }
 
-/** Profile — personal details shown across the site (static by design). */
+/** Profile â€” personal details shown across the site (static by design). */
 export interface Profile {
   name: string
   fullName: string
@@ -146,7 +163,7 @@ export interface Profile {
   role: string
   degree: string
   university: string
-  /** Year professional work began — drives the "Years of Experience" stat. */
+  /** Year professional work began â€” drives the "Years of Experience" stat. */
   graduationYear: number
   location: string
   hometown: string
@@ -160,3 +177,4 @@ export interface Profile {
   bio: string[]
   available: string
 }
+

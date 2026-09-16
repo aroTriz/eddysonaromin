@@ -1,9 +1,9 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
- * ImageCropModal — crop an uploaded image before adding it to the device
+ * ImageCropModal â€” crop an uploaded image before adding it to the device
  * showcase. Uses Cropper.js v1 with the device-appropriate aspect ratio:
- *  - phone  → 9:16 (portrait)
- *  - laptop → 16:9 (landscape)
+ *  - phone  â†’ 9:16 (portrait)
+ *  - laptop â†’ 16:9 (landscape)
  *
  * Emits the cropped Blob on confirm, null on cancel.
  */
@@ -17,7 +17,7 @@ const props = defineProps<{
   /** Source image URL (blob: or data: URL from FileReader). */
   src: string
   /** Device type drives the crop aspect ratio. */
-  device: 'laptop' | 'phone'
+  device: 'laptop' | 'phone' | 'avatar' | 'square'
 }>()
 
 const emit = defineEmits<{
@@ -28,8 +28,12 @@ const emit = defineEmits<{
 const imgRef = ref<HTMLImageElement | null>(null)
 let cropper: Cropper | null = null
 
-/** Reactive — phone 9:16 portrait, laptop 16:9 landscape; sakto sa web crop */
-const aspectRatio = computed(() => (props.device === 'phone' ? 9 / 19.5 : 16 / 9))
+/** Reactive â€” phone 9:16 portrait, laptop 16:9 landscape; sakto sa web crop */
+const aspectRatio = computed(() => {
+  if (props.device === 'phone') return 9 / 19.5
+  if (props.device === 'avatar' || props.device === 'square') return 1
+  return 16 / 9
+})
 
 function initCropper(): void {
   if (!imgRef.value) return
@@ -65,12 +69,14 @@ watch(
   },
 )
 
-// Kapag nag-switch ng device (phone ↔ laptop) habang bukas yung modal,
+// Kapag nag-switch ng device (phone â†” laptop) habang bukas yung modal,
 // palitan agad yung aspect nang hindi na need i-reopen
 watch(
   () => props.device,
   (newDevice) => {
-    const newRatio = newDevice === 'phone' ? 9 / 19.5 : 16 / 9
+    let newRatio = 16 / 9
+    if (newDevice === 'phone') newRatio = 9 / 19.5
+    else if (newDevice === 'avatar' || newDevice === 'square') newRatio = 1
     if (cropper) {
       cropper.setAspectRatio(newRatio)
     }
@@ -113,7 +119,7 @@ function cancel(): void {
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3">
           <p class="font-mono text-[12px] text-gray-500">
-            // crop — {{ device === 'phone' ? 'portrait (9:16)' : 'landscape (16:9)' }}
+            // crop â€” {{ device === 'phone' ? 'portrait (9:16)' : device === 'avatar' || device === 'square' ? 'square (1:1)' : 'landscape (16:9)' }}
           </p>
           <button
             type="button"
@@ -155,3 +161,5 @@ function cancel(): void {
     </div>
   </Teleport>
 </template>
+
+

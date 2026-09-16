@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { FolderKanban, Briefcase, Contact, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { Award, FolderKanban, Briefcase, Contact, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -93,6 +93,7 @@ const navGroups = [
       { label: 'Experience', to: '/aromin/experience', name: 'aromin-experience', icon: Briefcase },
       { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
       { label: 'References', to: '/aromin/references', name: 'aromin-references', icon: Contact },
+      { label: 'Certifications', to: '/aromin/certifications', name: 'aromin-certifications', icon: Award },
     ],
   },
   {
@@ -308,3 +309,4 @@ async function handleLogout(): Promise<void> {
     </div>
   </div>
 </template>
+

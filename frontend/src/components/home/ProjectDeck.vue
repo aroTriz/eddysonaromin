@@ -5,30 +5,56 @@
  * swaps it to the center with a smooth spring transition.
  */
 import { ArrowUpRight, Folder } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { fetchProjects } from '@/services/api'
 import type { Project } from '@/types'
 import { projectTypeLabel } from '@/utils/format'
 
+const props = defineProps<{ projects?: Project[] }>()
+
 const router = useRouter()
 
+const internalProjects = ref<Project[]>([])
 const projects = ref<Project[]>([])
 const order = ref<number[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+function syncProjects(list: Project[]): void {
+  projects.value = list
+  order.value = list.map((_, i) => i)
+}
+
+watch(
+  () => props.projects,
+  (val) => {
+    if (val !== undefined) {
+      syncProjects(val)
+      loading.value = false
+      error.value = null
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
+  if (props.projects !== undefined) return
   try {
     const all = await fetchProjects({ category: 'personal' })
-    projects.value = all
-    order.value = all.map((_, i) => i)
+    internalProjects.value = all
+    syncProjects(all)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load projects.'
   } finally {
     loading.value = false
   }
+})
+
+// Keep projects in sync when internal fetch resolves (fallback mode)
+watch(internalProjects, (val) => {
+  if (props.projects === undefined) syncProjects(val)
 })
 
 /** Center card is always order[1] (middle of the 3 visible). */

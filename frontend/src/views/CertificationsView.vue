@@ -1,20 +1,22 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
- * Certifications — credentials + references with All/Certifications/References
+ * Certifications â€” credentials + references with All/Certifications/References
  * filters, grouped by category when "All" is active, and URL-driven pagination
- * (8 per category per page) — mirroring the projects page pattern.
+ * (8 per category per page) â€” mirroring the projects page pattern.
  * Cards link to slug-based detail pages (/certifications/:slug, /references/:slug).
  */
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ArrowUpRight, Award, UserRound } from 'lucide-vue-next'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import Reveal from '@/components/ui/Reveal.vue'
-import { certifications, references } from '@/data/profile'
+import { certifications as staticCerts, references as staticReferences } from '@/data/profile'
+import { fetchCertifications, fetchReferences } from '@/services/api'
+import type { Certification, Reference } from '@/types'
 
-/** Items per category per page — 4 before pagination. */
+/** Items per category per page â€” 4 before pagination. */
 const ITEMS_PER_PAGE = 4
 
 const filters = [
@@ -34,10 +36,20 @@ const page = computed(() => {
 })
 
 /** All certifications (unpaginated). */
-const certAll = computed(() => certifications)
+const certAll = ref<Certification[]>(staticCerts as unknown as Certification[])
 
 /** All references (unpaginated). */
-const refAll = computed(() => references)
+const refAll = ref<Reference[]>(staticReferences as unknown as Reference[]);
+onMounted(async () => {
+  try {
+    const [certData, refData] = await Promise.all([fetchCertifications().catch(() => [] as Certification[]), fetchReferences().catch(() => [] as Reference[])])
+    if (certData && certData.length > 0) certAll.value = certData
+    if (refData && refData.length > 0) refAll.value = refData
+  } catch {
+    // keep fallbacks
+  }
+})
+
 
 /** Certifications on the current page (8 per page). */
 const certPage = computed(() => {
@@ -83,7 +95,7 @@ const paginationTotal = computed(() => {
       description="Credentials, affiliations & references."
     />
 
-    <!-- ── Filters (rounded-md pill chips) ────────────────── -->
+    <!-- â”€â”€ Filters (rounded-md pill chips) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <Reveal :delay="1" class="mt-8 flex flex-wrap gap-2">
       <button
         v-for="filter in filters"
@@ -101,7 +113,7 @@ const paginationTotal = computed(() => {
       </button>
     </Reveal>
 
-    <!-- ── All → grouped with separator ─────────────────────── -->
+    <!-- â”€â”€ All â†’ grouped with separator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <template v-if="activeFilter === ''">
       <div v-if="certPage.length" class="mt-10">
         <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
@@ -160,9 +172,9 @@ const paginationTotal = computed(() => {
             <div class="flex items-start gap-3">
               <div
                 v-if="reference.photo_url"
-                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
               >
-                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" loading="lazy" />
+                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div
                 v-else
@@ -190,7 +202,7 @@ const paginationTotal = computed(() => {
       </div>
     </template>
 
-    <!-- ── Specific filter → flat grid ──────────────────────── -->
+    <!-- â”€â”€ Specific filter â†’ flat grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div v-if="activeFilter === 'certifications' && certListed.length" class="mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <RouterLink
         v-for="cert in certListed"
@@ -227,9 +239,9 @@ const paginationTotal = computed(() => {
         <div class="flex items-start gap-3">
           <div
                 v-if="reference.photo_url"
-                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
               >
-                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-contain" loading="lazy" />
+                <img :src="reference.photo_url" :alt="reference.name" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div
                 v-else
@@ -252,7 +264,12 @@ const paginationTotal = computed(() => {
       </RouterLink>
     </div>
 
-    <!-- Pagination (bryllim-exact: ← prev · N / M · next →) -->
+    <!-- Pagination (bryllim-exact: â† prev Â· N / M Â· next â†’) -->
     <Pagination :total="paginationTotal" :page-size="ITEMS_PER_PAGE" />
   </div>
 </template>
+
+
+
+
+

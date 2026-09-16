@@ -1,6 +1,6 @@
 ﻿import { getToken } from '@/composables/useAuth'
 import { invalidatePublic } from '@/services/api'
-import type { BlogPost, ExperienceEntry, Project, ProjectShowcase, Recommendation, Reference } from '@/types'
+import type { BlogPost, Certification, ExperienceEntry, Project, ProjectShowcase, Recommendation, Reference } from '@/types'
 /**
  * Authenticated API client for the /aromin admin area.
  * Every call attaches the admin Bearer token.
@@ -544,7 +544,9 @@ export interface RecommendationInput {
   author: string
   role: string
   email?: string | null
+  phone?: string | null
   photo_url?: string | null
+  letter_url?: string | null
   sort_order?: number
 }
 
@@ -1184,4 +1186,91 @@ export async function uploadReferencePhoto(file: File): Promise<{ url: string }>
     body: JSON.stringify({ image: dataUrl }),
   })
   return handle<{ url: string }>(res)
+}
+
+// ── Certifications CMS (transferred from static profile.ts) ──
+
+/** Fields the admin can edit on a certification (mirrors backend rules). */
+export interface CertificationInput {
+  slug?: string
+  title: string
+  issuer: string
+  year: string
+  category: 'degree' | 'certification'
+  summary?: string | null
+  sort_order?: number
+}
+
+/** All certifications (active by default). Pass archived=true for archived ones. */
+export function fetchAdminCertifications(archived = false): Promise<Certification[]> {
+  const key = `admin:certs:${archived ? 'archived' : 'active'}`
+  return cachedAdmin(key, async () => {
+    const res = await fetch(`${API_BASE}/admin/certifications${archived ? '?archived=1' : ''}`, {
+      headers: authHeaders(),
+    })
+    return handle<Certification[]>(res)
+  })
+}
+
+/** Create a certification. */
+export async function createAdminCertification(input: CertificationInput): Promise<Certification> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Certification>(res)
+}
+
+/** Update a certification by id. */
+export async function updateAdminCertification(id: number, input: Partial<CertificationInput>): Promise<Certification> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  })
+  return handle<Certification>(res)
+}
+
+/** Delete a certification permanently. */
+export async function deleteAdminCertification(id: number): Promise<void> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  await handle<void>(res)
+}
+
+/** Bulk delete certifications by ids. */
+export async function deleteAdminCertifications(ids: number[]): Promise<{ deleted: number }> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids }),
+  })
+  return handle<{ deleted: number }>(res)
+}
+
+/** Archive a certification (hides from site; restorable). */
+export async function archiveAdminCertification(id: number): Promise<Certification> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications/${id}/archive`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Certification>(res)
+}
+
+/** Restore an archived certification. */
+export async function restoreAdminCertification(id: number): Promise<Certification> {
+  invalidatePublic('certifications'); invalidateAdmin('admin:certs:active', 'admin:certs:archived', 'admin:stats')
+  const res = await fetch(`${API_BASE}/admin/certifications/${id}/restore`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  return handle<Certification>(res)
 }

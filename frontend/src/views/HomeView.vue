@@ -4,7 +4,7 @@
  * name + intro paragraphs + social links right; stats grid, tech
  * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, GraduationCap } from 'lucide-vue-next'
+import { ArrowUpRight, GraduationCap, Images, Phone, X } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BlogSection from '@/components/home/BlogSection.vue'
@@ -15,8 +15,8 @@ import ProjectDeck from '@/components/home/ProjectDeck.vue'
 import InfiniteSwiper from '@/components/ui/InfiniteSwiper.vue'
 import TechLogo from '@/components/ui/TechLogo.vue'
 import { useTypewriter } from '@/composables/useTypewriter'
-import { fetchProjects, fetchRecommendations, fetchStackGroups } from '@/services/api'
-import type { Recommendation } from '@/types'
+import { fetchBlogPosts, fetchCertifications, fetchExperiences, fetchProjects, fetchRecommendations, fetchStackGroups } from '@/services/api'
+import type { BlogPost, Certification, ExperienceEntry, Project, Recommendation } from '@/types'
 import {
   allTechnologies,
   certifications,
@@ -41,7 +41,9 @@ const fallbackRecs: Recommendation[] = staticRecommendations.map((rec, i) => ({
   author: rec.author,
   role: rec.role,
   email: rec.email ?? null,
+  phone: null,
   photo_url: null,
+  letter_url: null,
   sort_order: i,
   archived_at: null,
   created_at: null,
@@ -49,6 +51,15 @@ const fallbackRecs: Recommendation[] = staticRecommendations.map((rec, i) => ({
 }))
 
 const recs = ref<Recommendation[]>(fallbackRecs)
+const letterModal = ref<string | null>(null)
+function openLetter(url: string): void {
+  letterModal.value = url
+  document.documentElement.style.overflow = 'hidden'
+}
+function closeLetter(): void {
+  letterModal.value = null
+  document.documentElement.style.overflow = ''
+}
 
 /**
  * Tech marquee — driven by the CMS stack groups (/aromin admin).
@@ -112,6 +123,54 @@ const displayStats = computed(() =>
   }),
 )
 
+/**
+ * Home sections — dynamic hide + auto-renumber (hehe gets mo).
+ * If a section has no laman (empty), it hides and the next one moves up
+ * to become 01, 02, ... . When laman returns (e.g. blog gets posts again),
+ * blog becomes 01 again. Applied to all home sections.
+ *
+ * Order is fixed; visibility decides numbering.
+ */
+type SectionKey = 'blog' | 'projects' | 'experience' | 'certifications' | 'recommendations' | 'github'
+const SECTION_ORDER: SectionKey[] = ['blog', 'projects', 'experience', 'certifications', 'recommendations', 'github']
+
+// CMS-driven lists that gate visibility. Loading = true so sections show
+// their skeleton during fetch; only after fetch do we hide if truly empty.
+const homeBlogPosts = ref<BlogPost[]>([])
+const homePersonalProjects = ref<Project[]>([])
+const homeBlogLoaded = ref(false)
+const homeProjectsLoaded = ref(false)
+// Experience / certifications are CMS-driven too — seeded with static so
+// home renders instantly, then silently overridden by the API. If the CMS
+// returns 0 rows, the section hides ("walang laman hide").
+const homeExperiences = ref<(ExperienceEntry | typeof experiences[number])[]>([...experiences] as unknown as ExperienceEntry[])
+const homeCertifications = ref<(Certification | typeof certifications[number])[]>([...certifications] as unknown as Certification[])
+const homeExpLoaded = ref(false)
+const homeCertsLoaded = ref(false)
+
+const sectionVisibility = computed<Record<SectionKey, boolean>>(() => ({
+  blog: !homeBlogLoaded.value ? true : homeBlogPosts.value.length > 0,
+  projects: !homeProjectsLoaded.value ? true : homePersonalProjects.value.length > 0,
+  experience: !homeExpLoaded.value ? true : homeExperiences.value.length > 0,
+  certifications: !homeCertsLoaded.value ? true : homeCertifications.value.length > 0,
+  recommendations: recs.value.length > 0,
+  github: !!profile.github,
+}))
+
+const sectionNumbers = computed<Record<SectionKey, string>>(() => {
+  const map = {} as Record<SectionKey, string>
+  let n = 0
+  for (const key of SECTION_ORDER) {
+    if (sectionVisibility.value[key]) {
+      n += 1
+      map[key] = String(n).padStart(2, '0')
+    } else {
+      map[key] = ''
+    }
+  }
+  return map
+})
+
 onMounted(async () => {
   try {
     const [projectList, groups] = await Promise.all([
@@ -131,14 +190,89 @@ onMounted(async () => {
     // Keep the static fallbacks when the API is unavailable.
   }
 
+  // Home section visibility: fetch blog + personal projects + experience + certs.
+  // These drive whether the section hides and how numbering shifts.
+  try {
+    const [blogData, personal, expData, certData] = await Promise.all([
+      fetchBlogPosts().catch(() => [] as BlogPost[]),
+      fetchProjects({ category: 'personal' }).catch(() => [] as Project[]),
+      fetchExperiences().catch(() => null as unknown as ExperienceEntry[]),
+      fetchCertifications().catch(() => null as unknown as Certification[]),
+    ])
+    homeBlogPosts.value = (blogData ?? []).slice(0, 3)
+    homePersonalProjects.value = personal ?? []
+    if (expData !== null) {
+      homeExperiences.value = expData as unknown as typeof homeExperiences.value
+    }
+    if (certData !== null) {
+      homeCertifications.value = certData as unknown as typeof homeCertifications.value
+    }
+  } catch {
+    // keep seeded fallbacks for exp/certs, but blog/projects go empty -> hide
+    homeBlogPosts.value = []
+    homePersonalProjects.value = []
+  } finally {
+    homeBlogLoaded.value = true
+    homeProjectsLoaded.value = true
+    homeExpLoaded.value = true
+    homeCertsLoaded.value = true
+  }
+
+  // Recommendations — API is source of truth for hide/show.
+  // If CMS returns [] (archived all), hide the section; only on fetch
+  // failure do we keep the static seed so the site never blanks by accident.
   try {
     const data = await fetchRecommendations()
-    if (data && data.length > 0) {
-      recs.value = data
-    }
+    recs.value = data ?? []
   } catch {
     // Keep the static seed — a failed fetch must never blank the section.
   }
+})
+
+/** Live refresh for hide/show — when CMS edits happen in /aromin (same tab
+ * via focus/visibility or other tab via storage), re-fetch all gated lists
+ * so sections hide/show and renumber without a hard refresh. */
+async function refreshHomeSections(): Promise<void> {
+  try {
+    const [blogData, personal, expData, certData, recData] = await Promise.all([
+      fetchBlogPosts().catch(() => [] as BlogPost[]),
+      fetchProjects({ category: 'personal' }).catch(() => [] as Project[]),
+      fetchExperiences().catch(() => null as unknown as ExperienceEntry[]),
+      fetchCertifications().catch(() => null as unknown as Certification[]),
+      fetchRecommendations().catch(() => null as unknown as Recommendation[]),
+    ])
+    homeBlogPosts.value = (blogData ?? []).slice(0, 3)
+    homePersonalProjects.value = personal ?? []
+    if (expData !== null) homeExperiences.value = expData as unknown as typeof homeExperiences.value
+    if (certData !== null) homeCertifications.value = certData as unknown as typeof homeCertifications.value
+    if (recData !== null) recs.value = recData as Recommendation[]
+  } catch {
+    // ignore — keep current visibility
+  } finally {
+    homeBlogLoaded.value = true
+    homeProjectsLoaded.value = true
+    homeExpLoaded.value = true
+    homeCertsLoaded.value = true
+  }
+}
+
+onMounted(() => {
+  const onStorage = (e: StorageEvent): void => {
+    if (!e.key) return
+    if (e.key === '__api_cache_bust' || e.key.startsWith('__api_cache_bust:')) void refreshHomeSections()
+  }
+  const onFocus = (): void => void refreshHomeSections()
+  const onVis = (): void => {
+    if (!document.hidden) void refreshHomeSections()
+  }
+  window.addEventListener('storage', onStorage)
+  window.addEventListener('focus', onFocus)
+  document.addEventListener('visibilitychange', onVis)
+  onBeforeUnmount(() => {
+    window.removeEventListener('storage', onStorage)
+    window.removeEventListener('focus', onFocus)
+    document.removeEventListener('visibilitychange', onVis)
+  })
 })
 
 /** Typewriter roles shown under the profile video. */
@@ -298,10 +432,10 @@ const socials = [
       </div>
     </section>
 
-    <!-- -- Blog (bryllim-style list) --------------------------- -->
-    <section id="blog" aria-label="Blog" class="relative py-14">
+    <!-- -- Blog (bryllim-style list) — auto-hides when empty, auto-renumbers -- -->
+    <section v-if="sectionVisibility.blog" id="blog" aria-label="Blog" class="relative py-14">
       <div class="mb-8 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">01 — blog</h2>
+        <h2 class="font-pixel text-sm text-gray-400">{{ sectionNumbers.blog }} — blog</h2>
         <RouterLink
           to="/blog"
           class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
@@ -310,13 +444,13 @@ const socials = [
         </RouterLink>
       </div>
 
-      <BlogSection />
+      <BlogSection :posts="homeBlogPosts" />
     </section>
 
-    <!-- -- Projects spotlight deck (bryllim-style, personal only) -- -->
-    <section id="projects" aria-label="Projects" class="py-8 sm:py-14">
+    <!-- -- Projects spotlight deck (bryllim-style, personal only) — auto-hides when empty -- -->
+    <section v-if="sectionVisibility.projects" id="projects" aria-label="Projects" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">02 — projects</h2>
+        <h2 class="font-pixel text-sm text-gray-400">{{ sectionNumbers.projects }} — projects</h2>
         <RouterLink
           to="/projects"
           class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
@@ -325,13 +459,13 @@ const socials = [
         </RouterLink>
       </div>
 
-      <ProjectDeck />
+      <ProjectDeck :projects="homePersonalProjects" />
     </section>
 
-    <!-- -- Experience (bryllim-style rows) --------------------- -->
-    <section id="experience" aria-label="Experience" class="py-8 sm:py-14">
+    <!-- -- Experience (bryllim-style rows) — auto-hides when empty -- -->
+    <section v-if="sectionVisibility.experience" id="experience" aria-label="Experience" class="py-8 sm:py-14">
       <div class="mb-6 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">03 — experience</h2>
+        <h2 class="font-pixel text-sm text-gray-400">{{ sectionNumbers.experience }} — experience</h2>
         <RouterLink
           to="/experience"
           class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
@@ -342,7 +476,7 @@ const socials = [
 
       <div class="divide-y divide-gray-200 border-y border-gray-200">
         <div
-          v-for="job in experiences"
+          v-for="job in homeExperiences"
           :key="job.title"
           class="group grid grid-cols-12 items-baseline gap-2 sm:gap-3 py-2.5 hover:bg-gray-50/80"
         >
@@ -355,10 +489,10 @@ const socials = [
       </div>
     </section>
 
-    <!-- -- Certifications — infinite swiper (single line, never wraps) - -->
-    <section id="certifications" aria-label="Certifications" class="py-8 sm:py-14">
+    <!-- -- Certifications — infinite swiper (single line, never wraps) — auto-hides when empty -- -->
+    <section v-if="sectionVisibility.certifications" id="certifications" aria-label="Certifications" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">04 — certifications</h2>
+        <h2 class="font-pixel text-sm text-gray-400">{{ sectionNumbers.certifications }} — certifications</h2>
         <RouterLink
           to="/certifications"
           class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
@@ -367,7 +501,7 @@ const socials = [
         </RouterLink>
       </div>
 
-      <InfiniteSwiper :items="(certifications as unknown[])" :gap="16">
+      <InfiniteSwiper :items="(homeCertifications as unknown[])" :gap="16">
         <template #default="{ item }">
           <RouterLink
             :to="`/certifications/${(item as typeof certifications[number]).slug}`"
@@ -389,10 +523,10 @@ const socials = [
       </InfiniteSwiper>
     </section>
 
-    <!-- -- Recommendations — infinite swiper (single line, never wraps) -->
-    <section id="recommendations" aria-label="Recommendations" class="py-8 sm:py-14">
+    <!-- -- Recommendations — infinite swiper (single line, never wraps) — auto-hides when empty -- -->
+    <section v-if="sectionVisibility.recommendations" id="recommendations" aria-label="Recommendations" class="py-8 sm:py-14">
       <div class="mb-8 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-400">05 — recommendations</h2>
+        <h2 class="font-pixel text-sm text-gray-400">{{ sectionNumbers.recommendations }} — recommendations</h2>
         <RouterLink
           to="/recommendations"
           class="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 font-mono text-[11px] uppercase tracking-wider text-gray-500 hover:text-ink"
@@ -416,28 +550,35 @@ const socials = [
             </p>
 
             <div class="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3">
-              <div v-if="(item as Recommendation).photo_url" class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white p-1">
-                <img :src="(item as Recommendation).photo_url!" :alt="(item as Recommendation).author" class="h-full w-full object-contain" loading="lazy" />
+              <div v-if="(item as Recommendation).photo_url" class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+                <img :src="(item as Recommendation).photo_url!" :alt="(item as Recommendation).author" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[10px] font-medium text-gray-600">
                 {{ (item as Recommendation).initials }}
               </div>
-              <div class="min-w-0">
+              <div class="min-w-0 flex-1">
                 <div class="truncate text-[12px] font-semibold text-ink">{{ (item as Recommendation).author }}</div>
                 <div class="truncate font-mono text-[9px] uppercase tracking-wider text-gray-400">
                   {{ (item as Recommendation).role }}
                 </div>
+                <a v-if="(item as Recommendation).phone" :href="`tel:${(item as Recommendation).phone}`" class="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-gray-500 hover:text-ink">
+                  <Phone class="h-3 w-3" :stroke-width="1.6" />
+                  {{ (item as Recommendation).phone }}
+                </a>
               </div>
+              <button v-if="(item as Recommendation).letter_url" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:text-ink" aria-label="View recommendation letter" @click.stop.prevent="openLetter((item as Recommendation).letter_url!)">
+                <Images class="h-3.5 w-3.5" :stroke-width="1.6" />
+              </button>
             </div>
           </RouterLink>
         </template>
       </InfiniteSwiper>
     </section>
 
-    <!-- -- GitHub (bryllim-style halftone graph) ---------------- -->
-    <section id="github" aria-label="GitHub" class="py-8 sm:py-14">
+    <!-- -- GitHub (bryllim-style halftone graph) — auto-renumbers when sections above hide -- -->
+    <section v-if="sectionVisibility.github" id="github" aria-label="GitHub" class="py-8 sm:py-14">
       <div class="mb-6 flex items-baseline justify-between">
-        <h2 class="font-pixel text-sm text-gray-500 dark:text-gray-400">06 — github</h2>
+        <h2 class="font-pixel text-sm text-gray-500 dark:text-gray-400">{{ sectionNumbers.github }} — github</h2>
         <a
           :href="profile.github"
           target="_blank"
@@ -460,6 +601,22 @@ const socials = [
       </p>
     </footer>
   </div>
+
+  <!-- Letter modal -->
+  <Teleport to="body">
+    <div v-if="letterModal" class="fixed inset-0 z-[100] flex items-center justify-center p-5" role="dialog" aria-modal="true" aria-label="Recommendation letter" @click.self="closeLetter">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeLetter"></div>
+      <div class="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+          <p class="font-mono text-[12px] text-gray-500">// recommendation letter</p>
+          <button type="button" class="rounded p-1 text-gray-400 hover:text-ink" @click="closeLetter"><X class="h-4 w-4" :stroke-width="1.7" /></button>
+        </div>
+        <div class="flex-1 overflow-auto bg-gray-50 p-4 flex items-center justify-center">
+          <img :src="letterModal" alt="Recommendation letter" class="max-h-[70vh] w-auto max-w-full object-contain rounded-md border border-gray-200 bg-white" />
+        </div>
+      </div>
+    </div>
+  </Teleport>
 
   <!-- Email "say hello" modal (bryllim-style) -->
   <EmailModal ref="emailModalRef" />
@@ -501,3 +658,4 @@ const socials = [
   );
 }
 </style>
+

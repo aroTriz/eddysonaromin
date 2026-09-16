@@ -197,12 +197,12 @@ const fieldClass =
 
         <div class="mt-6 border-t border-gray-100 pt-5">
           <p class="terminal-comment mb-3 text-[12px]">// find_me_on</p>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <a
               :href="profile.github"
               target="_blank"
               rel="noopener noreferrer"
-              class="rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              class="inline-flex items-center justify-center text-center rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2.5 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
             >
               GitHub
             </a>
@@ -210,7 +210,7 @@ const fieldClass =
               :href="profile.linkedin"
               target="_blank"
               rel="noopener noreferrer"
-              class="rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
+              class="inline-flex items-center justify-center text-center rounded-md border border-gray-200 px-3.5 min-h-[44px] py-2.5 font-mono text-[12.5px] text-gray-600 hover:border-gray-300 hover:text-ink"
             >
               LinkedIn
             </a>
@@ -248,3 +248,4 @@ html.dark .map-theme iframe {
   filter: invert(92%) hue-rotate(180deg);
 }
 </style>
+

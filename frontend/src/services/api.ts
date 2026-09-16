@@ -1,7 +1,10 @@
+﻿// LOCALHOST ONLY -- vibe code must use relative /api/v1 via Vite proxy to 127.0.0.1:8000
+// Never hardcode a Cloudflare/production URL here. See /LOCALHOST_ONLY.md
 import type {
   ApiError,
   BlogPost,
   ContactPayload,
+  Certification,
   ExperienceEntry,
   Project,
   Recommendation,
@@ -171,6 +174,20 @@ export async function fetchReference(slug: string): Promise<Reference> {
   return parse<Reference>(response)
 }
 
+/** Fetch certifications (public, non-archived). */
+export function fetchCertifications(): Promise<Certification[]> {
+  return cached('certifications:', async () => {
+    const response = await fetch(`${API_BASE}/certifications`)
+    return parse<Certification[]>(response)
+  })
+}
+
+/** Fetch a single certification by slug. */
+export async function fetchCertification(slug: string): Promise<Certification> {
+  const response = await fetch(`${API_BASE}/certifications/${encodeURIComponent(slug)}`)
+  return parse<Certification>(response)
+}
+
 /** Submit a contact message. Returns the created message id. */
 export async function submitContact(payload: ContactPayload): Promise<void> {
   const response = await fetch(`${API_BASE}/contact`, {
@@ -227,3 +244,8 @@ export function prefetchHomeData(): Promise<PromiseSettledResult<unknown>[]> {
     fetchGitHubContributions(username),
   ])
 }
+
+
+
+
+

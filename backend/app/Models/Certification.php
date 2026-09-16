@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Recommendation extends Model
+class Certification extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -12,14 +12,12 @@ class Recommendation extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'initials',
-        'quote',
-        'author',
-        'role',
-        'email',
-        'phone',
-        'photo_url',
-        'letter_url',
+        'slug',
+        'title',
+        'issuer',
+        'year',
+        'category',
+        'summary',
         'sort_order',
         'archived_at',
     ];
@@ -31,5 +29,6 @@ class Recommendation extends Model
      */
     protected $casts = [
         'archived_at' => 'datetime',
+        'sort_order' => 'integer',
     ];
 }
