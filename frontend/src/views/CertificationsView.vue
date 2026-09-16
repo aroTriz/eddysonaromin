@@ -137,11 +137,11 @@ const paginationTotal = computed(() => {
               />
             </div>
 
-            <div>
-              <h3 class="text-[15px] font-semibold leading-snug tracking-tight text-ink">
+            <div class="min-w-0">
+              <h3 class="truncate text-[15px] font-semibold leading-snug tracking-tight text-ink" :title="cert.title">
                 {{ cert.title }}
               </h3>
-              <p class="mt-1 font-mono text-[12.5px] text-gray-500">{{ cert.issuer }}</p>
+              <p class="mt-1 truncate font-mono text-[12.5px] text-gray-500" :title="cert.issuer">{{ cert.issuer }}</p>
               <p class="mt-0.5 font-mono text-[12px] text-gray-500">{{ cert.year }}</p>
             </div>
 
@@ -169,7 +169,7 @@ const paginationTotal = computed(() => {
             :to="`/references/${reference.slug}`"
             class="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300"
           >
-            <div class="flex items-start gap-3">
+            <div class="flex items-start gap-3 min-w-0">
               <div
                 v-if="reference.photo_url"
                 class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
@@ -182,12 +182,12 @@ const paginationTotal = computed(() => {
               >
                 {{ reference.initials }}
               </div>
-              <div class="min-w-0">
-                <h3 class="flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
-                  <UserRound class="h-3.5 w-3.5 text-gray-500" :stroke-width="1.6" />
-                  {{ reference.name }}
+              <div class="min-w-0 flex-1">
+                <h3 class="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
+                  <UserRound class="h-3.5 w-3.5 shrink-0 text-gray-500" :stroke-width="1.6" />
+                  <span class="truncate" :title="reference.name">{{ reference.name }}</span>
                 </h3>
-                <p class="mt-0.5 text-[12.5px] leading-snug text-gray-500">{{ reference.title }}</p>
+                <p class="mt-0.5 truncate text-[12.5px] leading-snug text-gray-500" :title="reference.title">{{ reference.title }}</p>
               </div>
             </div>
 
@@ -217,9 +217,9 @@ const paginationTotal = computed(() => {
           </div>
           <ArrowUpRight class="h-4 w-4 text-gray-500 transition-colors group-hover:text-ink" :stroke-width="1.6" />
         </div>
-        <div>
-          <h3 class="text-[15px] font-semibold leading-snug tracking-tight text-ink">{{ cert.title }}</h3>
-          <p class="mt-1 font-mono text-[12.5px] text-gray-500">{{ cert.issuer }}</p>
+        <div class="min-w-0">
+          <h3 class="truncate text-[15px] font-semibold leading-snug tracking-tight text-ink" :title="cert.title">{{ cert.title }}</h3>
+          <p class="mt-1 truncate font-mono text-[12.5px] text-gray-500" :title="cert.issuer">{{ cert.issuer }}</p>
           <p class="mt-0.5 font-mono text-[12px] text-gray-500">{{ cert.year }}</p>
         </div>
         <span class="mt-auto inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink">
@@ -236,7 +236,7 @@ const paginationTotal = computed(() => {
         :to="`/references/${reference.slug}`"
         class="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300"
       >
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3 min-w-0">
           <div
                 v-if="reference.photo_url"
                 class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white"
@@ -249,12 +249,12 @@ const paginationTotal = computed(() => {
               >
                 {{ reference.initials }}
               </div>
-          <div class="min-w-0">
-            <h3 class="flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
-              <UserRound class="h-3.5 w-3.5 text-gray-500" :stroke-width="1.6" />
-              {{ reference.name }}
+          <div class="min-w-0 flex-1">
+            <h3 class="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight text-ink">
+              <UserRound class="h-3.5 w-3.5 shrink-0 text-gray-500" :stroke-width="1.6" />
+              <span class="truncate" :title="reference.name">{{ reference.name }}</span>
             </h3>
-            <p class="mt-0.5 text-[12.5px] leading-snug text-gray-500">{{ reference.title }}</p>
+            <p class="mt-0.5 truncate text-[12.5px] leading-snug text-gray-500" :title="reference.title">{{ reference.title }}</p>
           </div>
         </div>
         <span class="mt-auto inline-flex items-center gap-1 font-mono text-[12px] text-gray-500 transition-colors group-hover:text-ink">

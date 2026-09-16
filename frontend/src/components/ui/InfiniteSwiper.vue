@@ -27,7 +27,7 @@ const props = withDefaults(
 )
 
 const N = computed(() => props.items.length)
-const needsLoop = computed(() => N.value > 3)
+const needsLoop = computed(() => N.value > 2)
 
 /** 3 copies for seamless loop, 1 copy when no loop needed */
 const deck = computed(() => (needsLoop.value ? [...props.items, ...props.items, ...props.items] : props.items))

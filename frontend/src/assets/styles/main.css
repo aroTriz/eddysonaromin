@@ -435,10 +435,18 @@ body {
   position: relative;
   height: 18rem;
   width: 100%;
-  max-width: 22rem;
+  max-width: min(22rem, calc(100vw - 2rem));
   margin-inline: auto;
   overflow: visible;
   padding-inline: 0;
+}
+
+/* Mobile-only: prevent horizontal swipe drift without touching desktop layout */
+@media (max-width: 767px) {
+  html, body, #app, main, .page-enter {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
 }
 @media (min-width: 640px) {
   .deck {

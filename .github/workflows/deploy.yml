@@ -84,6 +84,13 @@ jobs:
           command: d1 execute blog-db --remote --file=db/migration-recommendations-phone-letter-2026-09-05.sql
         continue-on-error: true
 
+      - name: Sync localhost snapshot to D1 (exact mirror including current data)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute blog-db --remote --file=db/sync-localhost-2026-09-16.sql
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

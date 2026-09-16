@@ -330,23 +330,23 @@ const socials = [
         </div>
 
         <!-- Text column (right) — centered content -->
-        <div class="flex flex-col items-center text-center">
-          <h1 class="reveal d2 font-pixel text-[1.5rem] leading-none sm:text-[2.4rem]">
+        <div class="flex min-w-0 w-full max-w-full flex-col items-center overflow-hidden text-center">
+          <h1 class="reveal d2 w-full max-w-full break-words font-pixel text-[1.5rem] leading-none sm:text-[2.4rem]">
             {{ profile.name }}
           </h1>
 
           <p
             v-for="(paragraph, i) in intro"
             :key="i"
-            class="reveal d3 mt-6 text-[15px] leading-relaxed text-gray-600"
+            class="reveal d3 mt-6 w-full max-w-full break-words text-[15px] leading-relaxed text-gray-600"
             :class="{ 'mt-5': i > 0 }"
           >
             {{ paragraph }}
           </p>
 
-          <!-- links below the intro — keep in one line at 320 (tight gap, no wrap) -->
+          <!-- links below the intro — one line at 320, no wrap -->
           <div
-            class="reveal d4 mt-6 flex flex-nowrap items-center justify-center gap-x-2 font-mono text-[12px] text-gray-500 overflow-hidden"
+            class="reveal d4 mt-6 flex flex-nowrap items-center justify-center gap-x-1 overflow-hidden font-mono text-[11px] text-gray-500 sm:gap-x-2 sm:text-[12px]"
           >
             <a
               v-for="social in socials"
@@ -354,13 +354,13 @@ const socials = [
               :href="social.href"
               target="_blank"
               rel="noopener noreferrer"
-              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1.5 py-1.5 hover:text-ink"
+              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1 py-1.5 hover:text-ink sm:px-1.5"
             >
               {{ social.label }}<ArrowUpRight class="inline h-3 w-3 shrink-0" :stroke-width="2" />
             </a>
             <button
               type="button"
-              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1.5 py-1.5 hover:text-ink"
+              class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1 py-1.5 hover:text-ink sm:px-1.5"
               aria-haspopup="dialog"
               @click="emailModalRef?.openModal()"
             >
@@ -511,8 +511,8 @@ const socials = [
             <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
               <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
             </div>
-            <h3 class="relative mt-3 min-h-[2.6rem] text-[13px] font-semibold leading-snug text-ink break-words text-center">{{ (item as typeof certifications[number]).title }}</h3>
-            <p class="relative mt-1 font-mono text-[9.5px] uppercase tracking-wider text-gray-400 break-words text-center">{{ (item as typeof certifications[number]).issuer }}</p>
+            <h3 class="relative mt-3 w-full truncate text-[13px] font-semibold leading-snug text-ink text-center" :title="(item as typeof certifications[number]).title">{{ (item as typeof certifications[number]).title }}</h3>
+            <p class="relative mt-1 w-full truncate font-mono text-[9.5px] uppercase tracking-wider text-gray-400 text-center" :title="(item as typeof certifications[number]).issuer">{{ (item as typeof certifications[number]).issuer }}</p>
             <div class="relative mt-3 flex items-center gap-1.5 text-gray-300 group-hover:text-ink">
               <span class="font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 group-hover:text-ink">
                 {{ (item as typeof certifications[number]).year }}
