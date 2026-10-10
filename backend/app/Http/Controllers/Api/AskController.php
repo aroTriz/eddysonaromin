@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Api;
 
@@ -11,7 +11,7 @@ class AskController extends Controller
 {
     /**
      * Answer a question by proxying through the EddGPT chat API
-     * (https://edd-gpt.pages.dev/api/chat) — the same free OpenAI-backed
+     * (https://edd-gpt.pages.dev/api/chat) â€” the same free OpenAI-backed
      * endpoint the EddGPT chat uses. The API key lives server-side on
      * Cloudflare, so no key is needed here.
      *
@@ -28,7 +28,7 @@ class AskController extends Controller
 
         $question = $validated['question'];
 
-        // Use opencode CLI to get AI answers via muse spark 1.2 contributor
+        // Use opencode CLI to get AI answers via Muse Spark 1.3 Contributor
         // opencode run uses its own agent, so we prefix the question directly
         $fullPrompt = "Answer this question directly in 1-3 sentences: {$question}";
         $escapedPrompt = escapeshellarg($fullPrompt);
@@ -44,7 +44,7 @@ class AskController extends Controller
                 $raw = trim(implode("\n", $output));
                 // Strip ANSI escape codes and terminal formatting
                 $answer = preg_replace('/\x1b\[[0-9;]*[a-zA-Z]/', '', $raw);
-                $answer = preg_replace('/^\s*>\s*build\s*·\s*muse-spark-1\.2-contributor\s*/m', '', $answer);
+                $answer = preg_replace('/^\s*>\s*build\s*Â·\s*muse-spark-1.3-contributor\s*/m', '', $answer);
                 $answer = trim($answer);
 
                 if ($exitCode === 0 && $answer !== '') {
@@ -65,13 +65,15 @@ class AskController extends Controller
     }
 
     /**
-     * System prompt — gives the assistant Eddyson's profile and instructs
+     * System prompt â€” gives the assistant Eddyson's profile and instructs
      * concise, direct answers (no follow-up questions).
      */
     private function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are Triz.ai, a helpful AI assistant on Eddyson Tristan Aromin's portfolio website. You answer any question the visitor asks — general knowledge, tech, life, anything. Be friendly, concise, and helpful. Never mention that you are a coding tool or CLI. Just answer the question like a normal AI chat assistant. Keep answers under 3 sentences unless more detail is needed.
+You are Triz.ai, a helpful AI assistant on Eddyson Tristan Aromin's portfolio website. You answer any question the visitor asks â€” general knowledge, tech, life, anything. Be friendly, concise, and helpful. Never mention that you are a coding tool or CLI. Just answer the question like a normal AI chat assistant. Keep answers under 3 sentences unless more detail is needed.
 PROMPT;
     }
 }
+
+

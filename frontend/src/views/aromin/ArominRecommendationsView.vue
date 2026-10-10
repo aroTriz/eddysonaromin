@@ -4,12 +4,17 @@
  * archive & restore. Confirms destructive/save actions with a themed
  * blur modal (ConfirmModal). Bulk selection with select-all / delete-selected.
  */
-import { Archive, ArchiveRestore, FileText, Images, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, FileText, Images, LoaderCircle, Pencil, Save, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import AdminListState from '@/components/admin/AdminListState.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminSelectionBar from '@/components/admin/AdminSelectionBar.vue'
+import AdminToolbar from '@/components/admin/AdminToolbar.vue'
 import ImageCropModal from '@/components/ui/ImageCropModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { useConfirm, useSelection } from '@/composables/useAdminList'
 import {
   archiveAdminRecommendation,
   createAdminRecommendation,
@@ -59,29 +64,22 @@ const letterCropSrc = ref('')
 const letterCropOpen = ref(false)
 const autoInitials = computed(() => generateInitials(form.value.author || ''))
 
-// Bulk selection state
-const selectionMode = ref(false)
-const selected = ref<Set<number>>(new Set())
-
-// Confirm dialog state
-const confirm = ref<{
-  title: string
-  message: string
-  confirmLabel: string
-  danger: boolean
-  action: () => void | Promise<void>
-} | null>(null)
-
 const sorted = computed(() =>
   [...items.value].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id),
 )
 
-const allSelected = computed(
-  () => sorted.value.length > 0 && sorted.value.every((r) => selected.value.has(r.id)),
-)
-const someSelected = computed(
-  () => sorted.value.some((r) => selected.value.has(r.id)) && !allSelected.value,
-)
+const { confirm, askConfirm, closeConfirm } = useConfirm()
+const {
+  selectionMode,
+  selected,
+  allSelected,
+  someSelected,
+  enterSelection,
+  exitSelection,
+  toggleSelect,
+  toggleSelectAll,
+  dropFromSelection,
+} = useSelection(() => sorted.value)
 
 async function load(): Promise<void> {
   loading.value = true
@@ -93,16 +91,6 @@ async function load(): Promise<void> {
   } finally {
     loading.value = false
   }
-}
-
-function askConfirm(opts: {
-  title: string
-  message: string
-  confirmLabel: string
-  danger: boolean
-  action: () => void | Promise<void>
-}): void {
-  confirm.value = opts
 }
 
 // -- Editor -------------------------------------------------------
@@ -245,7 +233,7 @@ async function save(): Promise<void> {
     } else {
       await createAdminRecommendation(payload)
     }
-    confirm.value = null
+    closeConfirm()
     await load()
     cancelEdit()
   } catch (e) {
@@ -277,8 +265,7 @@ async function restoreItem(rec: Recommendation): Promise<void> {
 
 function toggleArchived(): void {
   showArchived.value = !showArchived.value
-  selectionMode.value = false
-  selected.value = new Set()
+  exitSelection()
   void load()
 }
 
@@ -297,14 +284,12 @@ async function remove(rec: Recommendation): Promise<void> {
   deleting.value = true
   try {
     await deleteAdminRecommendation(rec.id)
-    const next = new Set(selected.value)
-    next.delete(rec.id)
-    selected.value = next
-    confirm.value = null
+    dropFromSelection(rec.id)
+    closeConfirm()
     await load()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to delete recommendation'
-    confirm.value = null
+    closeConfirm()
   } finally {
     deleting.value = false
   }
@@ -325,43 +310,14 @@ async function removeSelected(): Promise<void> {
   deleting.value = true
   try {
     await deleteAdminRecommendations([...selected.value])
-    confirm.value = null
+    closeConfirm()
     exitSelection()
     await load()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to delete recommendations'
-    confirm.value = null
+    closeConfirm()
   } finally {
     deleting.value = false
-  }
-}
-
-// -- Selection helpers --------------------------------------------
-function enterSelection(): void {
-  selectionMode.value = true
-}
-
-function exitSelection(): void {
-  selectionMode.value = false
-  selected.value = new Set()
-}
-
-function toggleSelect(id: number): void {
-  const next = new Set(selected.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selected.value = next
-}
-
-function toggleSelectAll(): void {
-  if (allSelected.value) {
-    const next = new Set(selected.value)
-    sorted.value.forEach((r) => next.delete(r.id))
-    selected.value = next
-  } else {
-    const next = new Set(selected.value)
-    sorted.value.forEach((r) => next.add(r.id))
-    selected.value = next
   }
 }
 
@@ -370,24 +326,7 @@ onMounted(load)
 
 <template>
   <AdminLayout active="aromin-recommendations">
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <h1 class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink">
-          recommendations<span class="text-gray-400">.</span>
-        </h1>
-        <p class="mt-1.5 font-mono text-[12px] text-gray-500">
-          // manage testimonials from your network
-        </p>
-      </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-md bg-ink px-3.5 py-2 font-mono text-[12px] font-semibold text-bg transition-opacity hover:opacity-80"
-        @click="startNew"
-      >
-        <Plus class="h-3.5 w-3.5" :stroke-width="2" />
-        New recommendation
-      </button>
-    </div>
+    <AdminPageHeader title="recommendations" comment="manage testimonials from your network" new-label="New recommendation" @new="startNew" />
 
     <p v-if="error" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-mono text-[12px] text-red-600">
       // {{ error }}
@@ -561,92 +500,12 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- -- List header: select-all + count + archive toggle ------ -->
-    <div class="mb-4 flex flex-wrap items-center gap-3">
-      <template v-if="selectionMode">
-        <label
-          class="flex cursor-pointer select-none items-center gap-2"
-          :title="allSelected ? 'Deselect all' : 'Select all recommendations'"
-        >
-          <input
-            type="checkbox"
-            class="h-4 w-4 cursor-pointer accent-ink"
-            :checked="allSelected"
-            :indeterminate.prop="someSelected"
-            @change="toggleSelectAll"
-          />
-          <span class="font-mono text-[11px] text-gray-500">Select all</span>
-        </label>
-      </template>
-      <p class="font-mono text-[11px] text-gray-500">
-        // {{ showArchived ? 'archived' : 'recommendations' }} ({{ items.length }})
-      </p>
-      <div class="ml-auto flex items-center gap-2">
-        <button
-          type="button"
-          class="rounded-md border border-gray-200 px-2.5 min-h-[44px] py-2 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
-          @click="toggleArchived"
-        >
-          {{ showArchived ? 'Show active' : 'Show archived' }}
-        </button>
-        <button
-          v-if="!selectionMode"
-          type="button"
-          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          aria-label="Select recommendations to delete"
-          title="Delete recommendations"
-          @click="enterSelection"
-        >
-          <Trash2 class="h-4 w-4" :stroke-width="1.7" />
-        </button>
-        <button
-          v-else
-          type="button"
-          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          aria-label="Cancel selection"
-          @click="exitSelection"
-        >
-          <X class="h-4 w-4" :stroke-width="1.7" />
-        </button>
-      </div>
-    </div>
+    <AdminToolbar noun="recommendations" :count="items.length" :show-archived="showArchived" :selection-mode="selectionMode" :all-selected="allSelected" :some-selected="someSelected" @toggle-archived="toggleArchived" @enter-selection="enterSelection" @exit-selection="exitSelection" @toggle-select-all="toggleSelectAll" />
 
-    <!-- -- Bulk action bar (visible while items are selected) -- -->
-    <div
-      v-if="selectionMode && selected.size > 0"
-      class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5"
-    >
-      <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 min-h-[44px] py-2 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
-        @click="askDeleteSelected"
-      >
-        <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
-        Delete selected
-      </button>
-      <button
-        type="button"
-        class="ml-auto rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-        aria-label="Cancel selection"
-        @click="exitSelection"
-      >
-        <X class="h-4 w-4" :stroke-width="1.7" />
-      </button>
-    </div>
+    <AdminSelectionBar v-if="selectionMode && selected.size > 0" :count="selected.size" @delete-selected="askDeleteSelected" @close="exitSelection" />
 
-    <!-- -- List ------------------------------------------------- -->
-    <div v-if="loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="h-20 skeleton rounded-lg border border-gray-200 bg-gray-50"></div>
-    </div>
-
-    <div v-else-if="sorted.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
-      <p class="font-mono text-[12px] text-gray-500">
-        {{ showArchived ? 'Nothing archived yet.' : 'No recommendations yet. Add your first one above!' }}
-      </p>
-    </div>
-
-    <div v-else class="space-y-2">
+    <AdminListState :loading="loading" :empty="sorted.length === 0" empty-message="No recommendations yet. Add your first one above!" :show-archived="showArchived">
+      <div class="space-y-2">
       <div
         v-for="rec in sorted"
         :key="rec.id"
@@ -716,7 +575,8 @@ onMounted(load)
           </template>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminListState>
 
     <div class="mt-8 flex items-center gap-2 font-mono text-[10.5px] text-gray-400">
       <FileText class="h-3.5 w-3.5" :stroke-width="1.7" />
@@ -735,7 +595,7 @@ onMounted(load)
       :danger="confirm?.danger ?? false"
       :busy="saving || deleting"
       @confirm="confirm?.action()"
-      @cancel="confirm = null"
+      @cancel="closeConfirm"
     />
   </AdminLayout>
 </template>

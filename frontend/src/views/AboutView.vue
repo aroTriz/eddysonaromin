@@ -5,6 +5,7 @@
 import { Download, Eye } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import HalftoneDivider from '@/components/ui/HalftoneDivider.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Reveal from '@/components/ui/Reveal.vue'
 import SectionHeading from '@/components/ui/SectionHeading.vue'
@@ -153,6 +154,9 @@ const info = [
         </span>
       </Reveal>
     </section>
+
+    <!-- -- Halftone divider (bryllim rhythm: between content blocks) -- -->
+    <HalftoneDivider />
 
     <!-- ── Interests ────────────────────────────────────────── -->
     <section aria-label="Interests" class="mt-16">

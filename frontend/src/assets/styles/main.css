@@ -352,6 +352,17 @@ html.theme-anim *::after {
   opacity: 0;
   animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+/* Reduced motion: entrances off AND content visible (the base rule sets
+   opacity 0, so disabling the animation alone would hide everything). */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .deck-card {
+    transition: none !important;
+  }
+}
 .d1 {
   animation-delay: 0.05s;
 }

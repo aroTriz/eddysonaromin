@@ -3,7 +3,7 @@
  * Fixed left sidebar (lg+) — mirrors the bryllim.com shell:
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
-import { Award, Bot, Briefcase, Command, FolderKanban, Layers, Mail, Menu, MessageCircle, MessagesSquare, PawPrint, Quote, Rss, ShoppingBag, User, Wrench, X } from 'lucide-vue-next'
+import { BadgeCheck, Bot, BriefcaseBusiness, CircleUserRound, Command, Component, FolderGit2, Mail, Menu, MessageCircle, MessagesSquare, MessageSquareQuote, Newspaper, PawPrint, Send, Sparkles, Store, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import EmailModal from '@/components/home/EmailModal.vue'
@@ -152,26 +152,26 @@ const navGroups = [
   {
     label: 'g1',
     links: [
-      { label: 'Shop', to: '/shop', name: 'shop', icon: ShoppingBag },
-      { label: 'Services', to: '/services', name: 'services', icon: Wrench },
-      { label: 'Blog', to: '/blog', name: 'blog', icon: Rss },
+      { label: 'Shop', to: '/shop', name: 'shop', icon: Store, guide: 'nav-shop' },
+      { label: 'Services', to: '/services', name: 'services', icon: Sparkles, guide: 'nav-services' },
+      { label: 'Blog', to: '/blog', name: 'blog', icon: Newspaper, guide: 'nav-blog' },
     ],
   },
   {
     label: 'g2',
     links: [
-      { label: 'Projects', to: '/projects', name: 'projects', icon: FolderKanban },
-      { label: 'Experience', to: '/experience', name: 'experience', icon: Briefcase },
-      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: Layers },
-      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: Award },
-      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: Quote },
+      { label: 'Projects', to: '/projects', name: 'projects', icon: FolderGit2, guide: 'nav-projects' },
+      { label: 'Experience', to: '/experience', name: 'experience', icon: BriefcaseBusiness, guide: 'nav-story' },
+      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: Component, guide: 'nav-story' },
+      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: BadgeCheck, guide: 'nav-story' },
+      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: MessageSquareQuote, guide: 'nav-story' },
     ],
   },
   {
     label: 'g3',
     links: [
-      { label: 'About', to: '/about', name: 'about', icon: User },
-      { label: 'Contact', to: '/contact', name: 'contact', icon: Mail },
+      { label: 'About', to: '/about', name: 'about', icon: CircleUserRound, guide: 'nav-story' },
+      { label: 'Contact', to: '/contact', name: 'contact', icon: Send, guide: 'nav-contact' },
     ],
   },
 ]
@@ -184,6 +184,7 @@ const navGroups = [
        No self color-transition either: the View Transition snapshot handles
        the flip, keeping the sidebar perfectly in sync with the background. -->
   <nav
+    data-guide="sidebar"
     class="fixed inset-y-0 left-0 z-50 hidden w-56 flex-col border-r border-gray-200 bg-white px-7 py-8 lg:flex"
     aria-label="Primary"
   >
@@ -195,10 +196,11 @@ const navGroups = [
       <template v-for="(group, gi) in navGroups" :key="group.label">
         <div class="flex flex-col gap-2.5">
           <RouterLink
-            v-for="link in group.links"
-            :key="link.name"
-            :to="link.to"
-            class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
+          v-for="link in group.links"
+          :key="link.name"
+          :to="link.to"
+          :data-guide="link.guide"
+          class="relative inline-flex w-fit items-center gap-2.5 text-gray-500 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
             :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
           >
             <component
@@ -294,19 +296,21 @@ const navGroups = [
       <button
         v-if="communityChatEnabled"
         type="button"
+        data-guide="chat"
         class="mt-3 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         @click="chatRef?.openChat()"
       >
-        <MessageCircle class="h-4 w-4" :stroke-width="1.6" />
+        <MessagesSquare class="h-4 w-4" :stroke-width="1.6" />
         community chat
       </button>
       <button
         v-if="privateChatEnabled"
         type="button"
+        data-guide="private-chat"
         class="mt-2 inline-flex w-fit items-center gap-2 font-mono text-[12px] text-gray-500 transition-colors hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
         @click="privateChatRef?.openChat()"
       >
-        <MessagesSquare class="h-4 w-4" :stroke-width="1.6" />
+        <MessageCircle class="h-4 w-4" :stroke-width="1.6" />
         private chat
       </button>
     </div>
@@ -322,6 +326,7 @@ const navGroups = [
         type="button"
         class="mt-1.5 inline-flex w-fit max-w-full items-center gap-1.5 font-mono text-[10.5px] text-ink hover:text-gray-500 dark:text-gray-950 dark:hover:text-gray-400"
         aria-haspopup="dialog"
+        data-guide="email"
         @click="emailRef?.openModal()"
       >
         <Mail class="h-[1.05em] w-[1.05em] shrink-0" />
@@ -379,6 +384,7 @@ const navGroups = [
               v-for="link in group.links"
               :key="link.name"
               :to="link.to"
+              :data-guide="link.guide"
               class="relative inline-flex w-fit items-center gap-3 text-gray-700 hover:text-ink dark:text-gray-400 dark:hover:text-gray-950"
               :class="{ 'pl-5 text-ink dark:text-gray-950': active === link.name }"
               @click="closeMobileMenu"
@@ -448,7 +454,7 @@ const navGroups = [
               class="inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); chatRef?.openChat()"
             >
-              <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               community chat
             </button>
             <button
@@ -457,7 +463,7 @@ const navGroups = [
               class="mb-3 inline-flex w-fit items-center gap-2 text-[14px] text-gray-600 hover:text-ink"
               @click="closeMobileMenu(); privateChatRef?.openChat()"
             >
-              <MessagesSquare class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
+              <MessageCircle class="h-[1.15em] w-[1.15em]" :stroke-width="1.6" />
               private chat
             </button>
             <button

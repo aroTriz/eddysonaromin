@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher. Desktop ≥lg; on mobile a
  * sticky top bar with a full-screen menu (mirrors AppShell.vue).
  */
-import { Award, FolderKanban, Briefcase, Contact, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare, Quote, Rss, Settings2, Users, X } from 'lucide-vue-next'
+import { BadgeCheck, BookUser, BriefcaseBusiness, FolderGit2, Gauge, LogOut, Menu, MessageCircle, MessagesSquare, MessageSquareQuote, Newspaper, SlidersHorizontal, UsersRound, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -82,32 +82,32 @@ const navGroups = [
   {
     label: 'g1',
     links: [
-      { label: 'Dashboard', to: '/aromin/dashboard', name: 'aromin-dashboard', icon: LayoutDashboard },
+      { label: 'Dashboard', to: '/aromin/dashboard', name: 'aromin-dashboard', icon: Gauge },
     ],
   },
   {
     label: 'g2',
     links: [
-      { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Rss },
-      { label: 'Projects', to: '/aromin/projects', name: 'aromin-projects', icon: FolderKanban },
-      { label: 'Experience', to: '/aromin/experience', name: 'aromin-experience', icon: Briefcase },
-      { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: Quote },
-      { label: 'References', to: '/aromin/references', name: 'aromin-references', icon: Contact },
-      { label: 'Certifications', to: '/aromin/certifications', name: 'aromin-certifications', icon: Award },
+      { label: 'Blog', to: '/aromin/blog', name: 'aromin-blog', icon: Newspaper },
+      { label: 'Projects', to: '/aromin/projects', name: 'aromin-projects', icon: FolderGit2 },
+      { label: 'Experience', to: '/aromin/experience', name: 'aromin-experience', icon: BriefcaseBusiness },
+      { label: 'Recommendations', to: '/aromin/recommendations', name: 'aromin-recommendations', icon: MessageSquareQuote },
+      { label: 'References', to: '/aromin/references', name: 'aromin-references', icon: BookUser },
+      { label: 'Certifications', to: '/aromin/certifications', name: 'aromin-certifications', icon: BadgeCheck },
     ],
   },
   {
     label: 'g3',
     links: [
-      { label: 'Community Chat', to: '/aromin/chat', name: 'aromin-chat', icon: MessageCircle },
-      { label: 'Private Chat', to: '/aromin/private-chat', name: 'aromin-private-chat', icon: MessagesSquare },
+      { label: 'Community Chat', to: '/aromin/chat', name: 'aromin-chat', icon: MessagesSquare },
+      { label: 'Private Chat', to: '/aromin/private-chat', name: 'aromin-private-chat', icon: MessageCircle },
     ],
   },
   {
     label: 'g4',
     links: [
-      { label: 'Users', to: '/aromin/users', name: 'aromin-users', icon: Users },
-      { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: Settings2 },
+      { label: 'Users', to: '/aromin/users', name: 'aromin-users', icon: UsersRound },
+      { label: 'Preferences', to: '/aromin/preferences', name: 'aromin-preferences', icon: SlidersHorizontal },
     ],
   },
 ]

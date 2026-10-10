@@ -16,12 +16,54 @@ const TYPE_LABELS: Record<Project['type'], string> = {
 
 /** Normalize a project type slug into its display label. */
 export function projectTypeLabel(type: Project['type']): string {
-  return TYPE_LABELS[type] ?? type.replace('-', ' ')
+  return TYPE_LABELS[type] ?? kebabToTitleCase(type)
 }
 
-/** Normalize a category slug ("personal" -> "Personal"). */
+// ── Case rules ───────────────────────────────────────────────────
+// Single source of truth for display casing. Slugs (`ai-tools`,
+// `blog_post`) become `Ai Tools`-style titles; plain words are
+// capitalized. Always use these instead of ad-hoc replace/capitalize.
+
+/** Uppercase the first letter, leave the rest untouched. */
 export function capitalize(value: string): string {
+  if (!value) return value
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+/** `ai-tools` → `Ai Tools`. Handles `-`, `_` and extra whitespace. */
+export function kebabToTitleCase(value: string): string {
+  return value
+    .split(/[-_\s]+/g)
+    .filter(Boolean)
+    .map((word) => capitalize(word.toLowerCase()))
+    .join(' ')
+}
+
+/** Any-case input → `Title Case With Spaces`. */
+export function toTitleCase(value: string): string {
+  return kebabToTitleCase(value.trim())
+}
+
+/** `My Title!` → `my-title` (max 60 chars). Shared by every CMS editor. */
+export function slugify(input: string, maxLength = 60): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, maxLength)
+}
+
+/** Short admin date: `Jan 5, 2026`. Returns `—` when empty. */
+export function formatShortDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 // ── Blog reading time & relative timestamps ──────────────────────
