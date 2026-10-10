@@ -10,6 +10,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import BlogSection from '@/components/home/BlogSection.vue'
 import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
+import HalftoneDivider from '@/components/ui/HalftoneDivider.vue'
 import ProfileVideo from '@/components/home/ProfileVideo.vue'
 import ProjectDeck from '@/components/home/ProjectDeck.vue'
 import InfiniteSwiper from '@/components/ui/InfiniteSwiper.vue'
@@ -331,7 +332,7 @@ const socials = [
 
         <!-- Text column (right) — centered content -->
         <div class="flex min-w-0 w-full max-w-full flex-col items-center overflow-hidden text-center">
-          <h1 class="reveal d2 w-full max-w-full break-words font-pixel text-[1.5rem] leading-none sm:text-[2.4rem]">
+          <h1 data-guide="name" class="reveal d2 w-full max-w-full break-words font-pixel text-[1.5rem] leading-none sm:text-[2.4rem]">
             {{ profile.name }}
           </h1>
 
@@ -346,6 +347,7 @@ const socials = [
 
           <!-- links below the intro — one line at 320, no wrap -->
           <div
+            data-guide="socials"
             class="reveal d4 mt-6 flex flex-nowrap items-center justify-center gap-x-1 overflow-hidden font-mono text-[11px] text-gray-500 sm:gap-x-2 sm:text-[12px]"
           >
             <a
@@ -378,6 +380,7 @@ const socials = [
          shrunk to fit 320px without wrapping to 2 rows — exactly as requested.
          Desktop structure/position untouched (sm: keeps original). -->
     <section
+      data-guide="stats"
       aria-label="Highlights"
       class="grid grid-cols-5 divide-x divide-gray-200 border-t border-gray-200"
     >
@@ -394,6 +397,9 @@ const socials = [
         </div>
       </div>
     </section>
+
+    <!-- -- Halftone divider (bryllim rhythm: stats → divider) -- -->
+    <HalftoneDivider />
 
     <!-- -- Tech marquee --------------------------------------- -->
     <section aria-label="Tech stack" class="mt-16">
@@ -593,6 +599,9 @@ const socials = [
         <GitHubContributions />
       </a>
     </section>
+
+    <!-- -- Bottom halftone fade (bryllim rhythm: content → fade → footer) -- -->
+    <HalftoneDivider tall />
 
     <!-- -- Footer --------------------------------------------- -->
     <footer class="mt-16 border-t border-gray-200 py-8">

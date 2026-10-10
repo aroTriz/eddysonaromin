@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 /**
- * /aromin/projects â€” projects CMS. List, create, edit, delete, archive &
+ * /aromin/projects — projects CMS. List, create, edit, delete, archive &
  * restore projects. The list has a category filter (all/personal/academic)
  * and a sort/arrangement column. The device-showcase editor uploads images
  * and videos (NOT URLs) via a "+ add" button that asks PC or Mobile, then
@@ -19,7 +19,6 @@ import {
   Laptop,
   LoaderCircle,
   Pencil,
-  Plus,
   RefreshCw,
   Save,
   Smartphone,
@@ -30,8 +29,13 @@ import {
 import { computed, onMounted, ref } from 'vue'
 
 import AdminLayout from './AdminLayout.vue'
+import AdminListState from '@/components/admin/AdminListState.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminSelectionBar from '@/components/admin/AdminSelectionBar.vue'
+import AdminToolbar from '@/components/admin/AdminToolbar.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ImageCropModal from '@/components/ui/ImageCropModal.vue'
+import { useConfirm, useSelection } from '@/composables/useAdminList'
 import {
   archiveAdminProject,
   createAdminProject,
@@ -125,25 +129,18 @@ const form = ref<ProjectInput>({
 })
 const techInput = ref('')
 
-// Bulk selection state
-const selectionMode = ref(false)
-const selected = ref<Set<number>>(new Set())
-
-// Confirm dialog state
-const confirm = ref<{
-  title: string
-  message: string
-  confirmLabel: string
-  danger: boolean
-  action: () => void | Promise<void>
-} | null>(null)
-
-const allSelected = computed(
-  () => items.value.length > 0 && items.value.every((p) => selected.value.has(p.id)),
-)
-const someSelected = computed(
-  () => items.value.some((p) => selected.value.has(p.id)) && !allSelected.value,
-)
+const { confirm, askConfirm, closeConfirm } = useConfirm()
+const {
+  selectionMode,
+  selected,
+  allSelected,
+  someSelected,
+  enterSelection,
+  exitSelection,
+  toggleSelect,
+  toggleSelectAll,
+  dropFromSelection,
+} = useSelection(() => items.value)
 
 async function load(): Promise<void> {
   loading.value = true
@@ -155,16 +152,6 @@ async function load(): Promise<void> {
   } finally {
     loading.value = false
   }
-}
-
-function askConfirm(opts: {
-  title: string
-  message: string
-  confirmLabel: string
-  danger: boolean
-  action: () => void | Promise<void>
-}): void {
-  confirm.value = opts
 }
 
 // -- Editor -------------------------------------------------------
@@ -488,13 +475,13 @@ async function save(): Promise<void> {
     } else {
       await createAdminProject(payload)
     }
-    confirm.value = null
+    closeConfirm()
     await load()
     // Stay in editor after update so admin can continue editing - dont exit to list (fix per user request)
     if (!editing.value) cancelEdit()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to save project'
-    confirm.value = null
+    closeConfirm()
   } finally {
     saving.value = false
   }
@@ -521,8 +508,7 @@ async function restoreItem(project: Project): Promise<void> {
 
 function toggleArchived(): void {
   showArchived.value = !showArchived.value
-  selectionMode.value = false
-  selected.value = new Set()
+  exitSelection()
   void load()
 }
 
@@ -541,14 +527,12 @@ async function remove(project: Project): Promise<void> {
   deleting.value = true
   try {
     await deleteAdminProject(project.id)
-    const next = new Set(selected.value)
-    next.delete(project.id)
-    selected.value = next
-    confirm.value = null
+    dropFromSelection(project.id)
+    closeConfirm()
     await load()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to delete project'
-    confirm.value = null
+    closeConfirm()
   } finally {
     deleting.value = false
   }
@@ -569,43 +553,14 @@ async function removeSelected(): Promise<void> {
   deleting.value = true
   try {
     await deleteAdminProjects([...selected.value])
-    confirm.value = null
+    closeConfirm()
     exitSelection()
     await load()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to delete projects'
-    confirm.value = null
+    closeConfirm()
   } finally {
     deleting.value = false
-  }
-}
-
-// -- Selection helpers --------------------------------------------
-function enterSelection(): void {
-  selectionMode.value = true
-}
-
-function exitSelection(): void {
-  selectionMode.value = false
-  selected.value = new Set()
-}
-
-function toggleSelect(id: number): void {
-  const next = new Set(selected.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selected.value = next
-}
-
-function toggleSelectAll(): void {
-  if (allSelected.value) {
-    const next = new Set(selected.value)
-    items.value.forEach((p) => next.delete(p.id))
-    selected.value = next
-  } else {
-    const next = new Set(selected.value)
-    items.value.forEach((p) => next.add(p.id))
-    selected.value = next
   }
 }
 
@@ -614,24 +569,7 @@ onMounted(load)
 
 <template>
   <AdminLayout active="aromin-projects" wide>
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <h1 class="font-pixel text-[clamp(1.6rem,4.5vw,2.2rem)] leading-tight text-ink">
-          projects<span class="text-gray-400">.</span>
-        </h1>
-        <p class="mt-1.5 font-mono text-[12px] text-gray-500">
-          // create, edit &amp; delete projects Â· configure laptop/phone showcase
-        </p>
-      </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-md bg-ink px-3.5 py-2 font-mono text-[12px] font-semibold text-bg transition-opacity hover:opacity-80"
-        @click="startNew"
-      >
-        <Plus class="h-3.5 w-3.5" :stroke-width="2" />
-        New project
-      </button>
-    </div>
+    <AdminPageHeader title="projects" comment="create, edit &amp; delete projects · configure laptop/phone showcase" new-label="New project" @new="startNew" />
 
     <p v-if="error" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-mono text-[12px] text-red-600">
       // {{ error }}
@@ -641,7 +579,7 @@ onMounted(load)
     <div v-if="editorOpen" class="mb-8 rounded-xl border border-gray-200 bg-white p-6">
       <div class="mb-5 flex items-center justify-between">
         <p class="font-mono text-[11px] text-gray-500">
-          // {{ editing ? `edit_project â€” #${editing.id}` : 'new_project' }}
+          // {{ editing ? `edit_project — #${editing.id}` : 'new_project' }}
         </p>
         <button
           type="button"
@@ -1068,29 +1006,8 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- -- Project list ----------------------------------------- -->
-    <div class="mb-4 flex flex-wrap items-center gap-3">
-      <template v-if="selectionMode">
-        <label
-          class="flex cursor-pointer select-none items-center gap-2"
-          :title="allSelected ? 'Deselect all' : 'Select all projects'"
-        >
-          <input
-            type="checkbox"
-            class="h-4 w-4 cursor-pointer accent-ink"
-            :checked="allSelected"
-            :indeterminate.prop="someSelected"
-            @change="toggleSelectAll"
-          />
-          <span class="font-mono text-[11px] text-gray-500">Select all</span>
-        </label>
-      </template>
-      <p class="font-mono text-[11px] text-gray-500">
-        // {{ showArchived ? 'archived' : 'projects' }} ({{ filteredItems.length }})
-      </p>
-
-      <!-- Filter + arrangement column -->
-      <div class="ml-auto flex flex-wrap items-center gap-2">
+    <AdminToolbar noun="projects" :count="filteredItems.length" :show-archived="showArchived" :selection-mode="selectionMode" :all-selected="allSelected" :some-selected="someSelected" @toggle-archived="toggleArchived" @enter-selection="enterSelection" @exit-selection="exitSelection" @toggle-select-all="toggleSelectAll">
+      <template #actions>
         <!-- Category filter -->
         <div
           class="flex overflow-hidden rounded-md border border-gray-200"
@@ -1124,84 +1041,26 @@ onMounted(load)
         <button
           type="button"
           class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          :aria-label="sortDir === 'asc' ? 'Sorted ascending â€” click for descending' : 'Sorted descending â€” click for ascending'"
+          :aria-label="sortDir === 'asc' ? 'Sorted ascending — click for descending' : 'Sorted descending — click for ascending'"
           :title="sortDir === 'asc' ? 'ascending' : 'descending'"
           @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
         >
           <ArrowUp v-if="sortDir === 'asc'" class="h-4 w-4" :stroke-width="1.7" />
           <ArrowDown v-else class="h-4 w-4" :stroke-width="1.7" />
         </button>
+      </template>
+    </AdminToolbar>
 
-        <button
-          type="button"
-          class="rounded-md border border-gray-200 px-2.5 py-1.5 font-mono text-[11.5px] text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
-          @click="toggleArchived"
+    <AdminSelectionBar v-if="selectionMode && selected.size > 0" :count="selected.size" @delete-selected="askDeleteSelected" @close="exitSelection" />
+
+    <AdminListState :loading="loading" :empty="items.length === 0" empty-message="No projects yet. Create your first one above!" :show-archived="showArchived" skeleton-height="h-14">
+      <div class="space-y-2">
+        <p
+          v-if="filteredItems.length === 0"
+          class="rounded-xl border border-dashed border-gray-200 p-8 text-center font-mono text-[12px] text-gray-500"
         >
-          {{ showArchived ? 'Show active' : 'Show archived' }}
-        </button>
-        <button
-          v-if="!selectionMode"
-          type="button"
-          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          aria-label="Select projects to delete"
-          title="Delete projects"
-          @click="enterSelection"
-        >
-          <Trash2 class="h-4 w-4" :stroke-width="1.7" />
-        </button>
-        <button
-          v-else
-          type="button"
-          class="rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-          aria-label="Cancel selection"
-          @click="exitSelection"
-        >
-          <X class="h-4 w-4" :stroke-width="1.7" />
-        </button>
-      </div>
-    </div>
-
-    <!-- -- Bulk action bar (visible while items are selected) -- -->
-    <div
-      v-if="selectionMode && selected.size > 0"
-      class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5"
-    >
-      <p class="font-mono text-[12px] font-semibold text-gray-600">{{ selected.size }} selected</p>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 font-mono text-[11.5px] font-semibold text-gray-500 transition-colors hover:border-gray-300 hover:text-ink"
-        @click="askDeleteSelected"
-      >
-        <Trash2 class="h-3.5 w-3.5" :stroke-width="1.7" />
-        Delete selected
-      </button>
-      <button
-        type="button"
-        class="ml-auto rounded-md border border-gray-200 p-1.5 text-gray-400 transition-colors hover:border-gray-300 hover:text-ink"
-        aria-label="Cancel selection"
-        @click="exitSelection"
-      >
-        <X class="h-4 w-4" :stroke-width="1.7" />
-      </button>
-    </div>
-
-    <div v-if="loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="h-14 skeleton rounded-lg border border-gray-200 bg-gray-50"></div>
-    </div>
-
-    <div v-else-if="items.length === 0" class="rounded-xl border border-dashed border-gray-200 p-10 text-center">
-      <p class="font-mono text-[12px] text-gray-500">
-        {{ showArchived ? 'Nothing archived yet.' : 'No projects yet. Create your first one above!' }}
-      </p>
-    </div>
-
-    <div v-else class="space-y-2">
-      <p
-        v-if="filteredItems.length === 0"
-        class="rounded-xl border border-dashed border-gray-200 p-8 text-center font-mono text-[12px] text-gray-500"
-      >
-        // no projects match this filter â€” try another category or sort
-      </p>
+          // no projects match this filter — try another category or sort
+        </p>
       <div
         v-for="project in filteredItems"
         :key="project.id"
@@ -1233,9 +1092,9 @@ onMounted(load)
             </span>
           </p>
           <p class="mt-0.5 truncate font-mono text-[11px] text-gray-400">
-            {{ project.category }} Â· {{ project.year || 'â€”' }} Â· {{ project.slug }}
+            {{ project.category }} · {{ project.year || '—' }} · {{ project.slug }}
             <template v-if="project.showcase?.laptops.length || project.showcase?.phones.length">
-              Â· {{ project.showcase.laptops.length }} lap / {{ project.showcase.phones.length }} phone
+              · {{ project.showcase.laptops.length }} lap / {{ project.showcase.phones.length }} phone
             </template>
           </p>
         </div>
@@ -1279,11 +1138,12 @@ onMounted(load)
           </template>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminListState>
 
     <div class="mt-8 flex items-center gap-2 font-mono text-[10.5px] text-gray-400">
       <FolderKanban class="h-3.5 w-3.5" :stroke-width="1.7" />
-      edits appear instantly on /projects â€” archived projects are hidden from the site but can be restored here
+      edits appear instantly on /projects — archived projects are hidden from the site but can be restored here
     </div>
 
     
@@ -1390,7 +1250,7 @@ onMounted(load)
       :danger="confirm?.danger ?? false"
       :busy="saving || deleting"
       @confirm="confirm?.action()"
-      @cancel="confirm = null"
+      @cancel="closeConfirm"
     />
   </AdminLayout>
 </template>

@@ -14,6 +14,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AppShell from '@/components/layout/AppShell.vue'
 import ClickRipple from '@/components/ui/ClickRipple.vue'
+import GuideCursor from '@/components/tour/GuideCursor.vue'
 import SalaryCat from '@/components/ui/SalaryCat.vue'
 import SiteBackdrop from '@/components/layout/SiteBackdrop.vue'
 import { useSiteBehavior } from '@/composables/useSiteBehavior'
@@ -107,6 +108,9 @@ onMounted(async () => {
     </template>
     <template v-else>
       <AppShell :active="activeRoute" />
+
+      <!-- Guided tour arrow (bryllim-style) — public side only, desktop only -->
+      <GuideCursor />
 
       <!-- SalaryCat desktop pet — always mounted, visibility toggled via CSS -->
       <SalaryCat />

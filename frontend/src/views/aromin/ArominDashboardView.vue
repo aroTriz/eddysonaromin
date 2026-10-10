@@ -26,6 +26,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AreaChart from '@/components/analytics/AreaChart.vue'
 import BarList from '@/components/analytics/BarList.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import HalftoneDivider from '@/components/ui/HalftoneDivider.vue'
 import HourStrip from '@/components/analytics/HourStrip.vue'
 import SearchableSelect from '@/components/ui/SearchableSelect.vue'
 import WorldHeatMap from '@/components/analytics/WorldHeatMap.vue'
@@ -394,6 +395,9 @@ const groupedRecent = computed(() => {
           * unique visitors are counted by IP — refreshing / reopening from the same device counts once · data kept for the last 12 months
         </p>
       </section>
+
+      <!-- -- Halftone divider (bryllim rhythm: metrics → divider → trends) -- -->
+      <HalftoneDivider />
 
       <!-- ── Trend + hourly ───────────────────────────────── -->
       <section class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Trends">
