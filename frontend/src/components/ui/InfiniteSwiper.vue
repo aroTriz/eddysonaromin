@@ -71,10 +71,11 @@ const offset = computed(() => {
 })
 
 // initialise to middle copy
+// initialise to middle copy so the first step works in both directions
 watch(
   N,
   async (n) => {
-    if (n > 3) {
+    if (n > 2) {
       current.value = n
     } else {
       current.value = 0

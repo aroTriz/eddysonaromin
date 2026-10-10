@@ -4,10 +4,11 @@
  * name + intro paragraphs + social links right; stats grid, tech
  * marquee, and serif recommendation card below.
  */
-import { ArrowUpRight, GraduationCap, Images, Phone, X } from 'lucide-vue-next'
+import { ArrowUpRight, Images, Phone, X } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BlogSection from '@/components/home/BlogSection.vue'
+import CertificationDeck from '@/components/home/CertificationDeck.vue'
 import EmailModal from '@/components/home/EmailModal.vue'
 import GitHubContributions from '@/components/home/GitHubContributions.vue'
 import HalftoneDivider from '@/components/ui/HalftoneDivider.vue'
@@ -229,6 +230,11 @@ onMounted(async () => {
     // Keep the static seed — a failed fetch must never blank the section.
   }
 })
+
+/** Certifications shaped for the ring deck (slug/title/issuer/year only). */
+const certificationDeckItems = computed(() =>
+  homeCertifications.value.map((c) => ({ slug: c.slug, title: c.title, issuer: c.issuer, year: c.year })),
+)
 
 /** Live refresh for hide/show — when CMS edits happen in /aromin (same tab
  * via focus/visibility or other tab via storage), re-fetch all gated lists
@@ -507,26 +513,7 @@ const socials = [
         </RouterLink>
       </div>
 
-      <InfiniteSwiper :items="(homeCertifications as unknown[])" :gap="16">
-        <template #default="{ item }">
-          <RouterLink
-            :to="`/certifications/${(item as typeof certifications[number]).slug}`"
-            class="group relative flex h-full min-h-[156px] w-full flex-col items-center rounded-md bg-gradient-to-b from-gray-50 to-white px-4 py-5 text-center shadow-[0_8px_22px_-14px_rgba(10,10,10,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgba(10,10,10,0.4)]"
-          >
-            <span aria-hidden="true" class="pointer-events-none absolute inset-[5px] rounded-md border border-gray-200/70"></span>
-            <div class="relative flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white">
-              <GraduationCap class="h-5 w-5 text-gray-500" :stroke-width="1.6" />
-            </div>
-            <h3 class="relative mt-3 w-full truncate text-[13px] font-semibold leading-snug text-ink text-center" :title="(item as typeof certifications[number]).title">{{ (item as typeof certifications[number]).title }}</h3>
-            <p class="relative mt-1 w-full truncate font-mono text-[9.5px] uppercase tracking-wider text-gray-400 text-center" :title="(item as typeof certifications[number]).issuer">{{ (item as typeof certifications[number]).issuer }}</p>
-            <div class="relative mt-3 flex items-center gap-1.5 text-gray-300 group-hover:text-ink">
-              <span class="font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 group-hover:text-ink">
-                {{ (item as typeof certifications[number]).year }}
-              </span>
-            </div>
-          </RouterLink>
-        </template>
-      </InfiniteSwiper>
+      <CertificationDeck :items="certificationDeckItems" />
     </section>
 
     <!-- -- Recommendations — infinite swiper (single line, never wraps) — auto-hides when empty -- -->

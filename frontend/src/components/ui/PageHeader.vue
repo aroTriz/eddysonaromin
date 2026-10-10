@@ -4,7 +4,8 @@
  * terminal comment + font-pixel lowercase title + Geist description.
  */
 defineProps<{
-  comment: string
+  /** Mono comment above the title — omit to hide the line entirely. */
+  comment?: string
   title: string
   description: string
 }>()
@@ -12,7 +13,7 @@ defineProps<{
 
 <template>
   <header class="mb-12">
-    <p class="terminal-comment mb-3 text-[13px]">{{ comment }}</p>
+    <p v-if="comment" class="terminal-comment mb-3 text-[13px]">{{ comment }}</p>
     <h1 class="font-pixel text-2xl leading-none">{{ title }}</h1>
   </header>
 

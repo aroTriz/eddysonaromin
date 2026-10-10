@@ -85,6 +85,9 @@ const highlightInput = ref('')
 const uploadingLogo = ref(false)
 const uploadingAlbum = ref(false)
 const uploadingCert = ref(false)
+/** Per-batch progress suffix, e.g. " 2/5" — empty for single files. */
+const albumProgress = ref('')
+const certProgress = ref('')
 const logoInput = ref<HTMLInputElement | null>(null)
 const albumInput = ref<HTMLInputElement | null>(null)
 const certInput = ref<HTMLInputElement | null>(null)
@@ -146,41 +149,49 @@ async function onLogoFileChange(e: Event): Promise<void> {
   }
 }
 
-/** Upload album (gallery) image — appends to albums array. */
+/** Upload album (gallery) images — pick many files at once, appended in order. */
 async function onAlbumFileChange(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
+  const files = Array.from(input.files ?? [])
   input.value = ''
-  if (!file) return
+  if (files.length === 0) return
   uploadingAlbum.value = true
   error.value = ''
   try {
-    const { url } = await uploadExperienceImage(file)
-    if (!form.value.albums) form.value.albums = []
-    form.value.albums.push(url)
+    for (const [i, file] of files.entries()) {
+      albumProgress.value = files.length > 1 ? ` ${i + 1}/${files.length}` : ''
+      const { url } = await uploadExperienceImage(file)
+      if (!form.value.albums) form.value.albums = []
+      form.value.albums.push(url)
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Album upload failed'
   } finally {
     uploadingAlbum.value = false
+    albumProgress.value = ''
   }
 }
 
-/** Upload certificate image — appends to certificates array. */
+/** Upload certificate images — pick many files at once, appended in order. */
 async function onCertFileChange(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
+  const files = Array.from(input.files ?? [])
   input.value = ''
-  if (!file) return
+  if (files.length === 0) return
   uploadingCert.value = true
   error.value = ''
   try {
-    const { url } = await uploadExperienceImage(file)
-    if (!form.value.certificates) form.value.certificates = []
-    form.value.certificates.push(url)
+    for (const [i, file] of files.entries()) {
+      certProgress.value = files.length > 1 ? ` ${i + 1}/${files.length}` : ''
+      const { url } = await uploadExperienceImage(file)
+      if (!form.value.certificates) form.value.certificates = []
+      form.value.certificates.push(url)
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Certificate upload failed'
   } finally {
     uploadingCert.value = false
+    certProgress.value = ''
   }
 }
 
@@ -631,7 +642,7 @@ onMounted(load)
             >
               <LoaderCircle v-if="uploadingAlbum" class="h-3.5 w-3.5 animate-spin" :stroke-width="1.7" />
               <Plus v-else class="h-3.5 w-3.5" :stroke-width="1.7" />
-              {{ uploadingAlbum ? 'Uploading...' : 'Add photo' }}
+              {{ uploadingAlbum ? 'Uploading' + albumProgress + '...' : 'Add photo' }}
             </button>
           </p>
           <div v-if="form.albums?.length" class="flex flex-wrap gap-2">
@@ -655,7 +666,7 @@ onMounted(load)
             </div>
           </div>
           <p v-else class="font-mono text-[10px] text-gray-400">No photos yet — click "Add photo" to upload</p>
-          <input ref="albumInput" type="file" accept="image/*" class="hidden" @change="onAlbumFileChange" />
+          <input ref="albumInput" type="file" accept="image/*" multiple class="hidden" @change="onAlbumFileChange" />
         </div>
 
         <!-- ── Certificates images — multiple upload ──────── -->
@@ -674,7 +685,7 @@ onMounted(load)
             >
               <LoaderCircle v-if="uploadingCert" class="h-3.5 w-3.5 animate-spin" :stroke-width="1.7" />
               <Plus v-else class="h-3.5 w-3.5" :stroke-width="1.7" />
-              {{ uploadingCert ? 'Uploading...' : 'Add certificate' }}
+              {{ uploadingCert ? 'Uploading' + certProgress + '...' : 'Add certificate' }}
             </button>
           </p>
           <div v-if="form.certificates?.length" class="flex flex-wrap gap-2">
@@ -698,7 +709,7 @@ onMounted(load)
             </div>
           </div>
           <p v-else class="font-mono text-[10px] text-gray-400">No certificates yet — click "Add certificate" to upload</p>
-          <input ref="certInput" type="file" accept="image/*" class="hidden" @change="onCertFileChange" />
+          <input ref="certInput" type="file" accept="image/*" multiple class="hidden" @change="onCertFileChange" />
         </div>
 
         <!-- Save / Cancel -->

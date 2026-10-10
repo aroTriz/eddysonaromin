@@ -2,6 +2,7 @@
 /**
  * AskTrizOverlay — same design as Command (AskAnything overlay) but
  * answers questions using the AI API instead of revealing browser info.
+ * Text Q&A only.
  *
  * Flow:
  *  1. Type a question, press Enter.
@@ -24,6 +25,8 @@ const titleText = ref('Ask me anything')
 const isShimmer = ref(false)
 const bubbleOn = ref(false)
 const bubbleText = ref('')
+/** Shown after the answer lands — the overlay only closes on click. */
+const showCloseHint = ref(false)
 
 const titleEl = ref<HTMLElement | null>(null)
 const textInput = ref<HTMLInputElement | null>(null)
@@ -54,9 +57,9 @@ async function submit(): Promise<void> {
   fieldVisible.value = false
 
   await setTitle('thinking...', true)
-  await sleep(1900)
+  await sleep(600)
   await setTitle('analyzing...', true)
-  await sleep(1500)
+  await sleep(600)
 
   // Call the AI endpoint
   let answer = ''
@@ -66,7 +69,7 @@ async function submit(): Promise<void> {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ question: query }),
     })
-    const data = await res.json() as { answer?: string; error?: string }
+    const data = (await res.json()) as { answer?: string; error?: string }
     answer = data.answer ?? data.error ?? 'Sorry, no response.'
   } catch {
     answer = "Sorry, I'm having trouble reaching the AI right now."
@@ -82,11 +85,11 @@ async function submit(): Promise<void> {
 
   for (const line of lines) {
     await setTitle(line)
-    await sleep(2500)
+    await sleep(1200)
   }
 
-  await sleep(1000)
-  close()
+  // Stay open until the visitor clicks the screen (no auto-exit).
+  showCloseHint.value = true
 }
 
 function openAsk(): void {
@@ -98,6 +101,7 @@ function openAsk(): void {
   bubbleOn.value = false
   bubbleText.value = ''
   isShimmer.value = false
+  showCloseHint.value = false
 
   if (!props.enabled) {
     titleText.value = 'Currently Disabled by Eddyson'
@@ -180,6 +184,9 @@ defineExpose({ openAsk })
         >
           {{ titleText }}
         </h2>
+
+        <!-- stays until the screen is clicked -->
+        <p v-show="showCloseHint" class="font-mono text-[11px] text-gray-400">// click anywhere to close</p>
 
         <!-- typing field — hidden after submit -->
         <div

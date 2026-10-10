@@ -157,6 +157,12 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Dark dithered/halftone PNG textures -> invert to light so they show on
+   dark surfaces (bryllim 1:1). */
+html.dark .dither-corner {
+  filter: invert(1);
+}
+
 /* Themed base â€” no flash before utilities compile.
    The View Transitions API handles the smooth theme cross-fade on the GPU
    compositor. NO per-element transitions here â€” they fight the compositor

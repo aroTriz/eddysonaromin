@@ -178,6 +178,29 @@ function mediaSrc(item: ShowcaseMedia): string {
   return typeof item === 'string' ? item : item.src
 }
 
+/**
+ * Row thumbnail — mirrors the public site: first phone screenshot, then
+ * laptop, then card image / favicon. Skips videos (no <img> preview).
+ * Applies to every project (inJoy, Triz AI, ISakay, …).
+ */
+function firstImageSrc(list: ShowcaseMedia[] | undefined): string | null {
+  if (!list) return null
+  for (const item of list) {
+    if (typeof item !== 'string' && item.kind === 'video') continue
+    const src = mediaSrc(item)
+    if (src) return src
+  }
+  return null
+}
+
+function projectThumb(project: Project): string | null {
+  return (
+    firstImageSrc(project.showcase?.phones) ??
+    firstImageSrc(project.showcase?.laptops) ??
+    project.image_url ??
+    project.favicon_url
+  )
+}
 
 /** Flat list of showcase entries for the editor grid (laptops first). */
 const showcaseItems = computed(() => {
@@ -1078,6 +1101,12 @@ onMounted(load)
           :aria-label="`Select ${project.title}`"
           @change="toggleSelect(project.id)"
         />
+        <div v-if="projectThumb(project)" class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white">
+          <img :src="projectThumb(project)!" :alt="project.title" class="h-full w-full object-cover" loading="lazy" />
+        </div>
+        <div v-else class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 font-mono text-[11px] font-medium text-gray-600">
+          {{ (project.title.charAt(0) || '?').toUpperCase() }}
+        </div>
         <div class="min-w-0 flex-1">
           <p class="flex items-center gap-2 truncate font-mono text-[13px] font-semibold text-ink">
             <Star

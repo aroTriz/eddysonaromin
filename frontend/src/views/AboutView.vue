@@ -57,7 +57,6 @@ const info = [
 <template>
   <div class="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <PageHeader
-      comment="$ cd ./about"
       title="about"
       description="Get to know the developer behind the code."
     />

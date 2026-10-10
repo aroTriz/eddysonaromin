@@ -86,7 +86,6 @@ function onKeydown(e: KeyboardEvent): void {
   <div class="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
     <!-- header -->
     <header class="mb-12">
-      <p class="terminal-comment mb-3 text-[13px]">$ cat ./resume.md</p>
       <h1 class="font-pixel text-2xl leading-none">experience</h1>
     </header>
 

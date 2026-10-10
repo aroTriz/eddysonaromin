@@ -224,11 +224,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-14 lg:py-20">
-    <!-- header -->
-    <header class="mb-12">
-      <p class="terminal-comment mb-3 text-[13px]">$ ls ./services/</p>
+    <!-- header (bryllim consulting rhythm) -->
+    <header class="mb-10">
       <h1 class="font-pixel text-2xl leading-none">services</h1>
-      <p class="mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
+      <p class="mt-5 max-w-xl text-[15px] leading-relaxed text-gray-600">
         What I can build for you — from full websites to polished interfaces, clean APIs,
         and quality-assured delivery. Here's how we can work together.
       </p>
@@ -259,7 +258,7 @@ onBeforeUnmount(() => {
         <div
           v-for="(service, i) in deck"
           :key="`${service.title}-${i}`"
-          class="group relative flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-6 text-left transition-all duration-500"
+          class="group relative flex shrink-0 cursor-pointer flex-col overflow-hidden border border-gray-200 bg-white p-6 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_16px_44px_-20px_rgba(0,0,0,0.28)]"
           :class="distance(i) === 0
             ? 'z-10 opacity-100 blur-0'
             : 'opacity-50 blur-[3px]'"
@@ -271,25 +270,26 @@ onBeforeUnmount(() => {
           @keydown.enter.prevent="openService(at(i))"
         >
           <!-- dithered corner accent (top-right) -->
-          <div
+          <img
+            src="/images/dither-corner.png"
+            alt=""
             aria-hidden="true"
-            class="pointer-events-none absolute right-0 top-0 h-24 w-24 select-none opacity-[0.18] transition-opacity duration-300 group-hover:opacity-30"
-            style="background-image: radial-gradient(rgb(10 10 10 / 0.8) 1px, transparent 1px); background-size: 8px 8px;"
-          ></div>
+            class="dither-corner pointer-events-none absolute right-0 top-0 h-24 w-24 select-none opacity-[0.18] transition-opacity duration-300 group-hover:opacity-30"
+          />
 
           <!-- icon as lower-right background decoration -->
           <div
             aria-hidden="true"
             class="pointer-events-none absolute -bottom-5 -right-4 h-28 w-28 text-gray-100 transition-all duration-300 group-hover:-rotate-6 group-hover:text-gray-200"
           >
-            <component :is="at(i).icon" class="h-full w-full" :stroke-width="1.2" />
+            <component :is="at(i).icon" class="h-full w-full" :stroke-width="1.5" />
           </div>
 
           <div class="relative z-10 flex h-full flex-col">
             <div class="flex items-start justify-between gap-3">
-              <h2 class="text-[16px] font-semibold tracking-tight text-ink">{{ at(i).title }}</h2>
+              <h2 class="text-[16px] font-semibold tracking-tight">{{ at(i).title }}</h2>
               <span
-                class="shrink-0 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-[11px] text-ink"
+                class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-[11px] text-gray-400"
               >
                 {{ at(i).price }}
               </span>

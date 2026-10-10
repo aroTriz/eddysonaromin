@@ -123,7 +123,6 @@ const listedProjects = computed(() => {
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-12 md:py-16">
     <Reveal>
-      <p class="terminal-comment text-[13px]">$ ls ./projects/</p>
       <h1 class="mt-3 font-pixel text-2xl leading-none">projects</h1>
       <p class="mt-12 max-w-xl text-[15px] leading-relaxed text-gray-600">
         Professional, personal, and academic projects I've designed and built — spanning web apps,
@@ -160,7 +159,7 @@ const listedProjects = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             professional projects
           </p>
-          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div :key="'pro-' + pageProfessional" class="page-enter mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in professionalProjects" :key="project.slug" :project="project" />
           </div>
           <Pagination :total="professionalAll.length" :page-size="PROJECTS_PER_PAGE" param="page_professional" />
@@ -172,7 +171,7 @@ const listedProjects = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             personal projects
           </p>
-          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div :key="'per-' + pagePersonal" class="page-enter mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in personalProjects" :key="project.slug" :project="project" />
           </div>
           <Pagination :total="personalAll.length" :page-size="PROJECTS_PER_PAGE" param="page_personal" />
@@ -184,7 +183,7 @@ const listedProjects = computed(() => {
           <p class="font-mono text-[11px] uppercase tracking-wider text-gray-400">
             academic projects
           </p>
-          <div class="mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div :key="'acad-' + pageAcademic" class="page-enter mt-4 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <ProjectCard v-for="project in academicProjects" :key="project.slug" :project="project" />
           </div>
           <Pagination :total="academicAll.length" :page-size="PROJECTS_PER_PAGE" param="page_academic" />
@@ -192,7 +191,7 @@ const listedProjects = computed(() => {
       </template>
 
       <template v-else>
-        <div class="mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div :key="'all-' + page" class="page-enter mt-8 grid gap-4 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <ProjectCard v-for="project in listedProjects" :key="project.slug" :project="project" />
         </div>
         <Pagination :total="projects.length" :page-size="PROJECTS_PER_PAGE" />

@@ -47,7 +47,7 @@ defineProps<{
             v-else
             :src="src"
             :alt="alt"
-            class="h-full w-full object-contain object-top bg-white"
+            class="h-full w-full bg-white object-cover"
             loading="lazy"
           />
         </div>
