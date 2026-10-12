@@ -317,7 +317,7 @@ const socials = [
           </div>
 
           <!-- typewriter role line below the video -->
-          <div class="mt-4 flex items-center justify-center font-mono text-[12px] text-gray-500">
+          <div data-guide="role" class="mt-4 flex items-center justify-center font-mono text-[12px] text-gray-500">
             <span class="whitespace-nowrap"
               >const role = '{{ displayedRole }}<span
                 class="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-[2px] bg-gray-500"
@@ -360,6 +360,7 @@ const socials = [
               v-for="social in socials"
               :key="social.label"
               :href="social.href"
+              :data-guide="`social-${social.label}`"
               target="_blank"
               rel="noopener noreferrer"
               class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1 py-1.5 hover:text-ink sm:px-1.5"
@@ -368,6 +369,7 @@ const socials = [
             </a>
             <button
               type="button"
+              data-guide="social-email"
               class="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap px-1 py-1.5 hover:text-ink sm:px-1.5"
               aria-haspopup="dialog"
               @click="emailModalRef?.openModal()"
@@ -408,7 +410,7 @@ const socials = [
     <HalftoneDivider />
 
     <!-- -- Tech marquee --------------------------------------- -->
-    <section aria-label="Tech stack" class="mt-16">
+    <section data-guide="tech" aria-label="Tech stack" class="mt-16">
       <div class="mb-4 flex items-baseline justify-between">
         <p class="terminal-comment text-[13px]">// tech stack</p>
         <RouterLink

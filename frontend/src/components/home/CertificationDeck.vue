@@ -24,8 +24,13 @@ const GAP = 20
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
 
 const N = computed(() => props.items.length)
-/** 3 copies of the deck so the ring never shows a gap. */
-const deck = computed(() => [...props.items, ...props.items, ...props.items])
+/**
+ * 5 copies so the window can never reach past either edge: with only
+ * 3 copies, rapid clicks slipped past the outer copy before the snap
+ * fired and flashed empty space (the "not infinite" gap).
+ */
+const COPIES = 5
+const deck = computed(() => Array.from({ length: COPIES }, () => props.items).flat())
 
 /** Slot (index into `deck`) of the centered card. Starts on the middle copy. */
 const current = ref(0)
@@ -36,7 +41,7 @@ const track = ref<HTMLElement | null>(null)
 watch(
   N,
   (n) => {
-    current.value = n
+    current.value = 2 * n
   },
   { immediate: true },
 )
@@ -80,7 +85,8 @@ function doSnap(): void {
   if (!snapPending || N.value === 0) return
   snapPending = false
   animating.value = false
-  current.value += current.value >= 2 * N.value ? -N.value : N.value
+  // Fold back into the middle copy (identical pixels, any distance).
+  current.value = ((current.value % N.value) + N.value) % N.value + 2 * N.value
   // Force a reflow so the transform applies without any transition, then
   // re-enable the transition on the next painted frame.
   if (track.value) void track.value.offsetWidth
@@ -102,9 +108,9 @@ function scheduleSnap(): void {
 function slide(dir: 1 | -1): void {
   if (N.value === 0) return
   current.value += dir
-  // Crossed into the 3rd (or 1st) copy → wait for the slide's transitionend,
-  // then shift back one ring. The ring rotates 1,2,3,1,2,3… with no jump.
-  if (current.value >= 2 * N.value || current.value < N.value) {
+  // Left the middle copy → wait for the slide's transitionend,
+  // then fold back. The ring rotates forever with no jump.
+  if (N.value > 0 && (current.value < 2 * N.value || current.value >= 3 * N.value)) {
     scheduleSnap()
   }
 }
@@ -112,7 +118,7 @@ function slide(dir: 1 | -1): void {
 /** Snap only once the slide's transform transition actually completed. */
 function onTrackTransitionEnd(e: TransitionEvent): void {
   if (e.propertyName !== 'transform') return
-  if (current.value >= 2 * N.value || current.value < N.value) {
+  if (current.value < 2 * N.value || current.value >= 3 * N.value) {
     scheduleSnap()
     // Defer the actual shift to the next frame so the transition end state
     // is fully committed before we strip the transition class.
@@ -126,11 +132,11 @@ function onResize(): void {
   windowWidth.value = window.innerWidth
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(() => {
-    // Snap back into the middle copy without animating (position is identical
+    // Fold back into the middle copy without animating (position is identical
     // modulo one full ring, so it's invisible).
-    if (N.value > 0 && (current.value >= 2 * N.value || current.value < N.value)) {
+    if (N.value > 0 && (current.value < 2 * N.value || current.value >= 3 * N.value)) {
       animating.value = false
-      current.value += current.value >= 2 * N.value ? -N.value : N.value
+      current.value = ((current.value % N.value) + N.value) % N.value + 2 * N.value
       requestAnimationFrame(() => {
         animating.value = true
       })

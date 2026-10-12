@@ -122,26 +122,40 @@ export function useGuideTour(refs: GuideTourRefs): {
 
   const hooks = (key: string): Element[] =>
     Array.from(document.querySelectorAll(`[data-guide="${key}"]`))
-  const within = (key: string, selector: string): Element[] =>
-    hooks(key).flatMap((el) => Array.from(el.querySelectorAll(selector)))
   const clamp = (v: number, min: number, max: number): number =>
     Math.min(Math.max(v, min), max)
   const rand = (min: number, max: number): number => min + Math.random() * (max - min)
 
   // The tour, in order. Steps whose targets are off screen are skipped;
   // `free` ones fall back to open space.
+  // Order: hero (name → role → links, each with its own line) → stats →
+  // navbar top-to-bottom (shop → contact) → helpers (ask-triz, chats,
+  // theme) → sign-off. Socials are NOT lumped: instagram = social life,
+  // linkedin = professional network, github = code home, email = direct line.
   const steps: TourStep[] = [
-    { els: () => hooks('name'), at: 'above', free: true, text: "Hi! I'm Eddyson, welcome to my website! :)" },
-    { els: () => within('socials', 'a'), at: 'below', text: 'Here are my social links.' },
-    { els: () => hooks('stats'), at: 'below', text: 'My journey in numbers — projects, tech, and experience.' },
-    { els: () => hooks('nav-blog'), text: 'I write about dev and engineering here.' },
-    { els: () => hooks('nav-projects'), text: "Things I've built — apps, games, and AI tools." },
-    { els: () => hooks('nav-shop'), text: 'Digital goodies up for grabs.' },
-    { els: () => hooks('nav-services'), text: 'Need something built? Start here.' },
-    { els: () => hooks('nav-story'), text: 'And the full story: experience, stack, and more.' },
+    { els: () => hooks('name'), at: 'above', free: true, text: "Hi! I'm Eddyson — welcome to my site! Let me show you around. :)" },
+    { els: () => hooks('role'), at: 'below', text: 'That line types out my roles — frontend, full-stack, AI, QA.' },
+    { els: () => hooks('social-github'), at: 'below', text: 'GitHub — my code home. Every repo and project source lives here.' },
+    { els: () => hooks('social-linkedin'), at: 'below', text: 'LinkedIn — my professional network. Career updates and work history here.' },
+    { els: () => hooks('social-instagram'), at: 'below', text: 'Instagram — my social side. Life outside code, behind the scenes.' },
+    { els: () => hooks('social-email'), at: 'below', text: 'Email — my direct line. For work and collabs, this reaches me fastest.' },
+    { els: () => hooks('stats'), at: 'below', text: 'My journey in numbers — graduation, projects, tech, and experience.' },
+    { els: () => hooks('tech'), at: 'below', text: "Every tool I use, scrolling by — hit 'all stack' for the full list." },
+    { els: () => hooks('nav-shop'), text: 'Shop — digital goodies up for grabs. First on the menu!' },
+    { els: () => hooks('nav-services'), text: 'Services — need something built? This is where you start.' },
+    { els: () => hooks('nav-blog'), text: 'Blog — I write about dev, engineering, and things I learn.' },
+    { els: () => hooks('nav-projects'), text: "Projects — things I've built: apps, games, and AI tools." },
+    { els: () => hooks('nav-experience'), text: "Experience — where I've worked and what I shipped there." },
+    { els: () => hooks('nav-stack'), text: 'Tech Stack — the full toolbox, grouped by what each tool does.' },
+    { els: () => hooks('nav-certs'), text: 'Certifications — the degrees and credentials behind it all.' },
+    { els: () => hooks('nav-recs'), text: "Recommendations — kind words from people I've worked with." },
+    { els: () => hooks('nav-about'), text: 'About — the full story: bio, education, and beyond-the-code stuff.' },
+    { els: () => hooks('nav-contact'), text: 'Contact — the form that lands straight in my inbox.' },
+    { els: () => hooks('ask-triz'), text: 'Ask Triz.ai — my AI assistant. Ask it anything about me or my work!' },
     { els: () => hooks('chat'), text: 'Say hi in the community chat. Other visitors hang out here!' },
-    { els: () => hooks('private-chat'), text: 'Or send me a private message here.' },
-    { els: () => hooks('email'), text: "Here's my email." },
+    { els: () => hooks('private-chat'), text: 'Or send me a private 1-on-1 message here.' },
+    { els: () => hooks('theme'), text: 'Light, dark, or system — pick how the site looks. Dark mode slaps.' },
+    { els: () => hooks('email'), text: "That email down here is always one click away, wherever you are." },
     { free: true, text: "That's the tour. Scroll around and enjoy your stay!" },
   ]
 

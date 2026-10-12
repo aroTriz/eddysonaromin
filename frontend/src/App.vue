@@ -13,6 +13,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AppShell from '@/components/layout/AppShell.vue'
+import BackToTop from '@/components/ui/BackToTop.vue'
 import ClickRipple from '@/components/ui/ClickRipple.vue'
 import GuideCursor from '@/components/tour/GuideCursor.vue'
 import SalaryCat from '@/components/ui/SalaryCat.vue'
@@ -68,9 +69,9 @@ const activeRoute = computed(() => (typeof route.name === 'string' ? route.name 
 const isAdmin = computed(() => route.path.startsWith('/aromin'))
 
 /**
- * Analytics — count every public page view (admin pages excluded).
- * The server dedupes visitors by IP (same IP refreshing any number of
- * times = ONE visitor) and stores each view for the dashboard charts.
+ * Analytics — YouTube-style view counting (admin pages excluded).
+ * A view counts only after ~30s of visible watch time, once per tab session:
+ * refreshes and in-site navigation in the same tab are the same viewing.
  * The initial navigation is tracked explicitly (afterEach registered after
  * router.isReady() does not fire for it); later ones via the hook.
  */
@@ -111,6 +112,9 @@ onMounted(async () => {
 
       <!-- Guided tour arrow (bryllim-style) — public side only, desktop only -->
       <GuideCursor />
+
+      <!-- Back-to-top — every long public page; hides itself on short ones -->
+      <BackToTop />
 
       <!-- SalaryCat desktop pet — always mounted, visibility toggled via CSS -->
       <SalaryCat />

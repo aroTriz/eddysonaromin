@@ -89,7 +89,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute blog-db --remote --file=db/sync-localhost-2026-09-16.sql
+          command: d1 execute blog-db --remote --file=db/sync-localhost-2026-10-12.sql
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

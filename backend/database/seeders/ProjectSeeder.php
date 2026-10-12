@@ -35,6 +35,24 @@ class ProjectSeeder extends Seeder
 
             // ── Personal projects ────────────────────────────────────────────
             [
+                'title' => 'codED',
+                'slug' => 'coded',
+                'category' => 'personal',
+                'type' => 'web-app',
+                'summary' => 'codED — my freelancing web development studio. We craft premium websites, mobile apps, and commissioned IT systems for clients on the side.',
+                'tagline' => 'My freelancing studio — premium websites, mobile apps, and commissioned IT systems, crafted on the side.',
+                'description' => 'codED is my freelancing company: a web development studio building websites, mobile apps, and other commissioned IT systems for clients. A sideline outfit run alongside full-time work — every commission is designed, built, and shipped by me, from first sketch to deployed site.',
+                'role' => 'Founder & Lead Developer',
+                'year' => '2025',
+                'featured' => true,
+                'technologies' => ['JavaScript', 'HTML/CSS', 'Cloudflare Pages'],
+                'url' => 'https://coded-freelance.pages.dev/',
+                'source_url' => null,
+                'image_url' => null,
+                'favicon_url' => '/images/projects/icons/coded.svg',
+                'sort_order' => 0,
+            ],
+            [
                 'title' => 'Triz AI',
                 'slug' => 'triz-ai',
                 'category' => 'personal',

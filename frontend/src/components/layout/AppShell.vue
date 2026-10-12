@@ -4,7 +4,7 @@
  * pixel logo, mono nav groups, theme switcher, contact footer.
  */
 import { BadgeCheck, Bot, BriefcaseBusiness, CircleUserRound, Command, Component, FolderGit2, Mail, Menu, MessageCircle, MessagesSquare, MessageSquareQuote, Newspaper, PawPrint, Send, Sparkles, Store, X } from 'lucide-vue-next'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import EmailModal from '@/components/home/EmailModal.vue'
 import AskOverlay from '@/components/ui/AskOverlay.vue'
@@ -13,22 +13,34 @@ import ChatOverlay from '@/components/ui/ChatOverlay.vue'
 import PrivateChatOverlay from '@/components/ui/PrivateChatOverlay.vue'
 import { petConfig, togglePetLocal } from '@/composables/usePetConfig'
 import { profile } from '@/data/profile'
+import { formatCompactVisits } from '@/utils/format'
 import ThemeSwitch from '@/components/ui/ThemeSwitch.vue'
 
 /** Active viewers — fetched from /api/v1/visitors/active, polled every 30s. */
 interface ActiveViewer { device: string; browser: string; os: string; city: string; country: string }
 const activeCount = ref(1)
 const activeViewers = ref<ActiveViewer[]>([])
+
+/** Lifetime profile visits — every page load (refresh included) is a new visit. */
+const totalVisits = ref(0)
+const compactVisits = computed(() => formatCompactVisits(totalVisits.value))
 let activePollTimer: ReturnType<typeof setInterval> | null = null
 
 async function fetchActiveViewers(): Promise<void> {
   try {
     const res = await fetch('/api/v1/visitors/active', { cache: 'no-store' })
     if (!res.ok) return
-    const data = await res.json() as { count: number; viewers: ActiveViewer[] }
+    const data = await res.json() as { count: number; viewers: ActiveViewer[]; total?: number }
     activeCount.value = data.count || 1
     activeViewers.value = data.viewers || []
+    if (typeof data.total === 'number') totalVisits.value = data.total
   } catch { /* fail-open: keep previous count */ }
+}
+
+/** Instant bump when this tab's own page view lands (no waiting for the next poll). */
+function onVisitTracked(e: Event): void {
+  const total = (e as CustomEvent<{ total?: number }>).detail?.total
+  if (typeof total === 'number') totalVisits.value = total
 }
 
 defineProps<{
@@ -109,6 +121,7 @@ function onGlobalKeydown(e: KeyboardEvent): void {
 
 onMounted(() => {
   window.addEventListener('keydown', onGlobalKeydown)
+  window.addEventListener('aromin:visit-tracked', onVisitTracked)
   // Fetch sidebar button visibility settings — cache result to avoid flash on next refresh
   fetch('/api/v1/settings', { cache: 'no-store' })
     .then((r) => r.ok ? r.json() : null)
@@ -138,6 +151,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
+  window.removeEventListener('aromin:visit-tracked', onVisitTracked)
   if (activePollTimer) clearInterval(activePollTimer)
 })
 
@@ -161,16 +175,16 @@ const navGroups = [
     label: 'g2',
     links: [
       { label: 'Projects', to: '/projects', name: 'projects', icon: FolderGit2, guide: 'nav-projects' },
-      { label: 'Experience', to: '/experience', name: 'experience', icon: BriefcaseBusiness, guide: 'nav-story' },
-      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: Component, guide: 'nav-story' },
-      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: BadgeCheck, guide: 'nav-story' },
-      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: MessageSquareQuote, guide: 'nav-story' },
+      { label: 'Experience', to: '/experience', name: 'experience', icon: BriefcaseBusiness, guide: 'nav-experience' },
+      { label: 'Tech Stack', to: '/stack', name: 'stack', icon: Component, guide: 'nav-stack' },
+      { label: 'Certifications', to: '/certifications', name: 'certifications', icon: BadgeCheck, guide: 'nav-certs' },
+      { label: 'Recommendations', to: '/recommendations', name: 'recommendations', icon: MessageSquareQuote, guide: 'nav-recs' },
     ],
   },
   {
     label: 'g3',
     links: [
-      { label: 'About', to: '/about', name: 'about', icon: CircleUserRound, guide: 'nav-story' },
+      { label: 'About', to: '/about', name: 'about', icon: CircleUserRound, guide: 'nav-about' },
       { label: 'Contact', to: '/contact', name: 'contact', icon: Send, guide: 'nav-contact' },
     ],
   },
@@ -232,6 +246,7 @@ const navGroups = [
 
     <button
       type="button"
+      data-guide="ask-triz"
       class="mt-6 inline-flex w-fit items-center gap-2 text-[12px] text-gray-400 hover:text-ink"
       aria-label="Ask Triz.ai — AI chat assistant"
       @click="askTrizRef?.openAsk()"
@@ -267,6 +282,7 @@ const navGroups = [
     <button
       v-if="petConfig.globalEnabled"
       type="button"
+      data-guide="pet"
       class="mt-3 inline-flex w-fit items-center gap-2 whitespace-nowrap text-[12px] transition-colors"
       :class="petConfig.enabled ? 'text-ink' : 'text-gray-400 hover:text-ink'"
       :aria-pressed="petConfig.enabled"
@@ -293,6 +309,9 @@ const navGroups = [
         <b class="presence-num font-bold text-ink dark:text-gray-950">{{ activeCount }}</b>
         {{ activeCount === 1 ? 'person' : 'people' }} viewing now
       </p>
+      <p class="mt-1 whitespace-nowrap font-mono text-[10.5px] tracking-tight text-gray-500 dark:text-gray-400">
+        <b class="font-bold text-ink dark:text-gray-950">{{ compactVisits }}</b> portfolio visits
+      </p>
       <button
         v-if="communityChatEnabled"
         type="button"
@@ -316,7 +335,7 @@ const navGroups = [
     </div>
 
     <div class="mt-6 shrink-0">
-      <div class="mb-4">
+      <div class="mb-4" data-guide="theme">
         <ThemeSwitch />
       </div>
       <p class="text-[12px] leading-relaxed text-gray-500 dark:text-gray-400">

@@ -37,12 +37,17 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       country: r.country_name || '',
     }))
 
+    const totalRow = await env.blog_db
+      .prepare("SELECT COUNT(*) AS total FROM visits WHERE site = 'portfolio'")
+      .first<{ total: number }>()
+    const total = totalRow?.total ?? 0
+
     return new Response(
-      JSON.stringify({ count: viewers.length, viewers }),
+      JSON.stringify({ count: viewers.length, viewers, total }),
       { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } },
     )
   } catch {
-    return new Response(JSON.stringify({ count: 0, viewers: [] }), {
+    return new Response(JSON.stringify({ count: 0, viewers: [], total: 0 }), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     })
   }

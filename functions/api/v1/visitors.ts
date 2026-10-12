@@ -1,13 +1,16 @@
 /**
  * Visitor counter + page-view analytics.
- *   GET  /api/v1/visitors → unique visitor count
- *   POST /api/v1/visitors → record a page view + return the unique count
+ *   GET  /api/v1/visitors → unique visitor count + total profile visits
+ *   POST /api/v1/visitors → record a page view + return the unique count + total
  *
  * Unique visitors are counted by IP: the same IP visiting (or refreshing)
  * any number of times is ONE visitor. Every page view is stored in the
  * `visits` table so the /aromin dashboard can chart trends, top pages,
  * countries, devices, browsers and OSes. `visitors.count` is a
  * denormalized cache of COUNT(DISTINCT ip) over `visits`.
+ *
+ * Total profile visits (`total`) counts EVERY recorded view — a refresh is
+ * a new visit — so it always grows on page load and never resets.
  * Mirrors the Laravel VisitorController.
  */
 
@@ -39,11 +42,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       .prepare('SELECT count FROM visitors WHERE site = ?')
       .bind(SITE)
       .first<{ count: number }>()
-    return new Response(JSON.stringify({ count: row?.count ?? 0 }), {
+    const totalRow = await env.blog_db
+      .prepare('SELECT COUNT(*) AS total FROM visits WHERE site = ?')
+      .bind(SITE)
+      .first<{ total: number }>()
+    return new Response(JSON.stringify({ count: row?.count ?? 0, total: totalRow?.total ?? 0 }), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     })
   } catch {
-    return new Response(JSON.stringify({ count: 0 }), {
+    return new Response(JSON.stringify({ count: 0, total: 0 }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -117,6 +124,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .first<{ count: number }>()
     const unique = row?.count ?? 0
 
+    const totalRow = await env.blog_db
+      .prepare('SELECT COUNT(*) AS total FROM visits WHERE site = ?')
+      .bind(SITE)
+      .first<{ total: number }>()
+    const total = totalRow?.total ?? 0
+
     await env.blog_db
       .prepare(
         `INSERT INTO visitors (site, count, created_at, updated_at) VALUES (?, ?, ?, ?)
@@ -125,11 +138,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .bind(SITE, unique, now, now, unique, now)
       .run()
 
-    return new Response(JSON.stringify({ count: unique }), {
+    return new Response(JSON.stringify({ count: unique, total }), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     })
   } catch {
-    return new Response(JSON.stringify({ count: 0 }), {
+    return new Response(JSON.stringify({ count: 0, total: 0 }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })

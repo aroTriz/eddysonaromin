@@ -113,6 +113,19 @@ export function timeAgo(iso: string | null | undefined, now: Date = new Date()):
 }
 
 /**
+ * Compact visit count for the sidebar presence line — must stay tiny so it
+ * fits beside "N person viewing now" on one line.
+ * 999 → "999", 1000 → "1k+", 2500 → "2k+", 999999 → "999k+",
+ * 1000000 → "1M+", 2500000 → "2M+". Always floors, always "+" when shortened.
+ */
+export function formatCompactVisits(n: number): string {
+  const v = Math.max(0, Math.floor(n))
+  if (v < 1000) return String(v)
+  if (v < 1_000_000) return `${Math.floor(v / 1000)}k+`
+  return `${Math.floor(v / 1_000_000)}M+`
+}
+
+/**
  * "Edited X ago" label — shown when a post was updated after publishing.
  * Returns '' when there is no meaningful edit (same as published, or null).
  */

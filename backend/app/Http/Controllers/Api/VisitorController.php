@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Visitor counter + page-view analytics.
- *   GET  /api/v1/visitors → unique visitor count
+ *   GET  /api/v1/visitors → unique visitor count + total profile visits
  *   POST /api/v1/visitors → record a page view + return the unique count
  *
  * Unique visitors are counted by IP: the same IP visiting (or refreshing)
@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\DB;
  * `visits` table so the /aromin dashboard can chart trends, top pages,
  * countries, devices, browsers and OSes. `visitors.count` is a
  * denormalized cache of COUNT(DISTINCT ip) over `visits`.
+ *
+ * Total profile visits (`total`) counts EVERY recorded view — a refresh is
+ * a new visit — so it always grows on page load and never resets.
  */
 class VisitorController extends Controller
 {
@@ -24,7 +27,7 @@ class VisitorController extends Controller
     {
         $visitor = DB::table('visitors')->where('site', 'portfolio')->first();
 
-        return response()->json(['count' => $visitor->count ?? 0]);
+        return response()->json(['count' => $visitor->count ?? 0, 'total' => $this->totalViews()]);
     }
 
     public function increment(Request $request): JsonResponse
@@ -80,7 +83,15 @@ class VisitorController extends Controller
             ['count' => $unique, 'created_at' => $now, 'updated_at' => $now]
         );
 
-        return response()->json(['count' => $unique]);
+        return response()->json(['count' => $unique, 'total' => $this->totalViews()]);
+    }
+
+    /** Lifetime profile visits — EVERY recorded view (refreshes included). */
+    private function totalViews(): int
+    {
+        return (int) DB::table('visits')
+            ->where('site', 'portfolio')
+            ->count();
     }
 
     /** Lifetime unique visitors — distinct IPs over all recorded visits. */
@@ -128,6 +139,6 @@ class VisitorController extends Controller
             'country' => $r->country_name ?: '',
         ])->all();
 
-        return response()->json(['count' => count($viewers), 'viewers' => $viewers]);
+        return response()->json(['count' => count($viewers), 'viewers' => $viewers, 'total' => $this->totalViews()]);
     }
 }
